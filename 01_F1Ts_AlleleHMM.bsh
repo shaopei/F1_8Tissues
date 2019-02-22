@@ -63,7 +63,7 @@ done
 
 # make_AlleleHMM_output_from_AlleleDB_output_mouse
 wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_PB6_all_R1
   do echo ${folder}
   cd ${wd}/${folder}
   pwd
@@ -73,6 +73,19 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
 done
 
 
+### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
+for i in sub2 sub4 sub8 sub16 total
+  do 
+  bash make_map2ref_bed.bsh SRR1552485_${i} 
+done
+
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX}  > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log &"
+done
 
 
 
