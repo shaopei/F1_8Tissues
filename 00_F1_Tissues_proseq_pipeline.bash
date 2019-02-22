@@ -100,12 +100,14 @@ LC_ALL=C join -1 1 -2 1 -o 1.1,2.2 sample_list.sort sep_withdedup_read_counts.so
 
 
 cat rename_sample_list.txt | awk '{OFS="\t"; t="_"; s="-";c="chr"} {print $1, $2t$3}' > rename_sample_pair.txt
+cat sample_list.txt  | awk '{OFS="\t"; t1="_*_";t="_"; s="-";c="chr"} {print $2t1$3, $2t$4t$3}' > rename_sample_pair.txt
 
 while read c1 c2 
 do
-  echo mv ${c1}_R1.fastq.gz ${c2}_R1.fastq.gz >> rename_sample_pair.bsh
-  echo mv ${c1}_R2.fastq.gz ${c2}_R2.fastq.gz >> rename_sample_pair.bsh
+  echo mv ${c1}_R1.fastq.gz ${c2}_R1.fastq.gz >> rename_sample_pair_2.bsh
+  echo mv ${c1}_R2.fastq.gz ${c2}_R2.fastq.gz >> rename_sample_pair_2.bsh
 done < rename_sample_pair.txt
+
 
 
 

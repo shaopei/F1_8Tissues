@@ -1,0 +1,41 @@
+PREFIX=$1
+wd=$2
+
+cd ${wd}
+Min_count=1
+Max_Pvalus=1
+
+#locations of pipeline
+PL=/workdir/sc2457/tools/After_AlleleDB_pipeline
+
+# only anaysis autosome now
+grep -v X counts_plus.txt > counts_plus_noX.txt &
+grep -v X counts_minus.txt > counts_minus_noX.txt &
+wait
+
+
+# filter input files based on Min reads count and Max P-value
+R --vanilla --slave --args $(pwd) counts_plus_noX.txt ${Min_count} ${Max_Pvalus} < ${PL}/filter_counts_file.R  &
+R --vanilla --slave --args $(pwd) counts_minus_noX.txt ${Min_count} ${Max_Pvalus} < ${PL}/filter_counts_file.R  &
+
+#Input_counts_plus=counts_plus_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt
+#Input_counts_minus=counts_minus_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt
+
+wait
+
+#use for alleleHMM.py
+# $20 0.5 <= CNV <= 1.5
+
+for s in plus minus
+	do
+	head counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt -n 1 |awk 'BEGIN{OFS="\t"} {print $1,$2,$19, $20}' > counts_${s}_hmm.txt 
+	cat counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt |\
+	awk 'BEGIN{OFS="\t"} ($20 <1.5 && $20 >0.5) {print "chr"$1,$2,$19, $20}' >> ${PREFIX}_counts_${s}_hmm.txt &
+done
+wait
+
+mkdir AlleleHMM
+cd AlleleHMM
+ln -s ../${PREFIX}_counts_*_hmm.txt . 
+ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/AlleleHMM.py .
+python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} &

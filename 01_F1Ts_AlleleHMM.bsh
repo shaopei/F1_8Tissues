@@ -3,29 +3,77 @@
 # only use R1 for the folowing analysis
 
 
-dir_in_sc2457=/workdir/sc2457/F1_Tissues/Brain
-
-for file in BN_*_R1.fastq.gz
-do 
-  f=`echo ${file} | rev | cut -d . -f 3 | rev`
-  echo $f
-  cd ${dir_in_sc2457}
-  mkdir ${f}
-  cd ${f}
-  ln -s ../${f}.fastq.gz .
-  ln -s ../../alleledb_strandSpecific_9.sh .
-
-
-  bash alleledb_strandSpecific_9.sh \
-  ${f} \
-  NA12878_hg19_150109_w_transcriptome \
-  /workdir/sc2457/alleleseq.gersteinlab.org/NA12878_diploid/NA12878_diploid_2015_feb5_3versions/1kgp3-svs-pass_NA12878_hg19_150109_w_transcriptome \
-  /workdir/sc2457/SNP/1000genome_vol1.ftp.release.20130502/snp.calls.bed \
-  ${dir_in_sc2457}/${f} \
-  ${f} \
-  /workdir/sc2457/alleleDB/alleledb_pipeline \
-  ${dir_in_sc2457}/PIPELINE_StrandSpecific.mk \
-  0.1 \
-  ase \
-  0 > ${f}_alleledb_strandSpecific_9.log  2>&1 &
+for tissue in GI HT LG LV SK SP ST
+  do
+for cross in MB6 PB6
+ do echo "zcat ${tissue}_${cross}_*_R1.fastq.gz |gzip  > ../${tissue}_${cross}_all_R1.fastq.gz &"
 done
+done
+
+
+
+dir_in_sc2457=/workdir/sc2457/F1_Tissues/Brain
+cd ${dir_in_sc2457}
+ln -s ../alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh .
+
+fastq_dir=/workdir/sc2457/F1_Tissues/Brain
+for file in /workdir/sc2457/F1_Tissues/Brain/*.gz  #*/
+do 
+  name=`echo ${file} | rev | cut -d / -f 1 |cut -d . -f 3 | rev`
+  echo $name
+  cd ${dir_in_sc2457}
+echo "
+bash alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh \
+${name} \
+PersonalGenome_P.CAST_M.B6 \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed \
+${fastq_dir} \
+${name} \
+/workdir/sc2457/alleleDB/alleledb_pipeline_mouse \
+/workdir/sc2457/mouse_AlleleSpecific/PIPELINE_StrandSpecific_P.CAST_M.B6.mk \
+0.1 \
+ase \
+0 > allelicbias-PersonalGenome_P.CAST_M.B6-${name}.log 2>&1  & " >${name}.bsh
+done
+
+
+num=1
+for f in *PB6_all_R1.bsh
+  do
+echo "at now +$num hours -f ${f}"
+num=$((num + 1)) 
+#echo $num
+done
+
+
+at now +1 minutes -f HT_MB6_all_R1.bsh  #job 5 at Sat Feb 16 09:36:00 2019
+at now +2 hours -f GI_MB6_all_R1.bsh   #job3       Sat Feb 16 11:30:00 2019 a sc2457
+
+#remove job
+#at -r [job number]
+
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo "gzip /workdir/sc2457/F1_Tissues/${folder}/1-alignment-${PREFIX}/*.bowtie& " #*/  
+  echo "gzip /workdir/sc2457/F1_Tissues/${folder}/2-*/*.bed & " #*/ 
+done
+
+
+# make_AlleleHMM_output_from_AlleleDB_output_mouse
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+  do echo ${folder}
+  cd ${wd}/${folder}
+  pwd
+  ln -s ../make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh .
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  bash ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.log
+done
+
+
+
+
+
+
