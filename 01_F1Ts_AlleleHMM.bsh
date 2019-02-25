@@ -63,10 +63,12 @@ done
 
 # make_AlleleHMM_output_from_AlleleDB_output_mouse
 wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_PB6_all_R1
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
   do echo ${folder}
   cd ${wd}/${folder}
   pwd
+  #mkdir toremove
+  #mv AlleleHMM toremove/.
   ln -s ../make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh .
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
   bash ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.log
@@ -74,11 +76,6 @@ done
 
 
 ### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
-for i in sub2 sub4 sub8 sub16 total
-  do 
-  bash make_map2ref_bed.bsh SRR1552485_${i} 
-done
-
 wd=/workdir/sc2457/F1_Tissues/
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
   do #echo ${folder}
@@ -88,5 +85,50 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
 done
 
 
+### Perform Binomial test in the AlleleHMM blocks
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash BinoTest_multiTao_F1Tissues.bsh ${PREFIX}  > BinoTest_multiTao_${PREFIX}.log  2>&1"
+done
 
 
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
+  do #echo ${folder}
+cd ${wd}/${folder}/AlleleHMM
+mkdir toremove
+mv *iden_cov.bed *mat_cov.bed *pat_cov.bed *temp_cov.bed *merged_cov.bed toremove/.
+
+
+# dREG of merged bigwig
+# make merged bigwig
+while read c1 c2 c3 c4 
+  do
+  mv ${c1}_plus.bw ${c2}_${c3}_${c4}_plus.bw 
+  mv ${c1}_minus.bw ${c2}_${c3}_${c4}_minus.bw 
+done < ../sample_list.txt
+
+
+
+for t in `cat ../sample_list.txt |cut -f 2 |uniq`
+  do echo $t
+  for s in plus minus
+    do
+    bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ../${t}_all_${s}.bw ${t}_*_${s}.bw &
+done
+done
+
+
+done
+
+
+for s in plus minus
+    do
+  for 
+    echo bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo Kurpios_heart_10_${s}.bw s_2177_MUT_dedup_QC_end_${s}.bw  s_2182_MUT_dedup_QC_end_${s}.bw  s_4581_WT_dedup_QC_end_${s}.bw  s_4594_WT_dedup_QC_end_${s}.bw  s_7114_PHDHET_Cont_dedup_QC_end_${s}.bw s_2181_MUT_dedup_QC_end_${s}.bw  s_2183_MUT_dedup_QC_end_${s}.bw  s_4590_WT_dedup_QC_end_${s}.bw  s_4595_WT_dedup_QC_end_${s}.bw  s_7119_PHDHET_Cont_dedup_QC_end_${s}.bw &
+done
+
+# submit to dREG gateway

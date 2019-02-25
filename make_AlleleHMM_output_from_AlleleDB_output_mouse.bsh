@@ -9,8 +9,8 @@ Max_Pvalus=1
 PL=/workdir/sc2457/tools/After_AlleleDB_pipeline
 
 # only anaysis autosome now
-grep -v X counts_plus.txt > counts_plus_noX.txt &
-grep -v X counts_minus.txt > counts_minus_noX.txt &
+grep -v X counts_plus.txt | grep -v Y > counts_plus_noX.txt &
+grep -v X counts_minus.txt | grep -v Y > counts_minus_noX.txt &
 wait
 
 
@@ -28,7 +28,7 @@ wait
 
 for s in plus minus
 	do
-	head counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt -n 1 |awk 'BEGIN{OFS="\t"} {print $1,$2,$19, $20}' > counts_${s}_hmm.txt 
+	head counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt -n 1 |awk 'BEGIN{OFS="\t"} {print $1,$2,$19, $20}' > ${PREFIX}_counts_${s}_hmm.txt 
 	cat counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt |\
 	awk 'BEGIN{OFS="\t"} ($20 <1.5 && $20 >0.5) {print "chr"$1,$2,$19, $20}' >> ${PREFIX}_counts_${s}_hmm.txt &
 done
