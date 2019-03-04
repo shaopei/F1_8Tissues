@@ -24,13 +24,13 @@ R --vanilla --slave --args $(pwd) counts_minus_noX.txt ${Min_count} ${Max_Pvalus
 wait
 
 #use for alleleHMM.py
-# $20 0.5 <= CNV <= 1.5
+# $18 0.5 <= CNV <= 1.5
 
 for s in plus minus
 	do
 	head counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt -n 1 |awk 'BEGIN{OFS="\t"} {print $1,$2,$19, $20}' > ${PREFIX}_counts_${s}_hmm.txt 
 	cat counts_${s}_noX_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt |\
-	awk 'BEGIN{OFS="\t"} ($20 <1.5 && $20 >0.5) {print "chr"$1,$2,$19, $20}' >> ${PREFIX}_counts_${s}_hmm.txt &
+	awk 'BEGIN{OFS="\t"} ($18 <1.5 && $18 >0.5) {print "chr"$1,$2,$19, $20}' >> ${PREFIX}_counts_${s}_hmm.txt &
 done
 wait
 
