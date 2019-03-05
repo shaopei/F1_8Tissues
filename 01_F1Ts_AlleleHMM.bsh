@@ -64,14 +64,32 @@ done
 # make_AlleleHMM_output_from_AlleleDB_output_mouse
 wd=/workdir/sc2457/F1_Tissues/
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
-  do echo ${folder}
-  cd ${wd}/${folder}
-  pwd
+  do 
+  #echo ${folder}
+  #cd ${wd}/${folder}
+  #pwd
+  #rm counts_minus_hmm.txt counts_plus_hmm.txt
+  #rm toremove -r
   #mkdir toremove
   #mv AlleleHMM toremove/.
-  ln -s ../make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh .
+  #ln -s ../make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh .
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  bash ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.log
+  #echo $PREFIX
+  echo "bash make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/${folder}/make_AlleleHMM_output_from_AlleleDB_output_mouse.log 2>&1 & "
+done
+
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
+  do 
+  cd ${wd}/${folder}/AlleleHMM
+  pwd
+  #mkdir toremove
+  #mv *bed toremove/.
+  #mv *_FDR.txt toremove/.
+  #mv parameters/* .  #*/ 
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo $PREFIX
+  python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} --predict=T
 done
 
 
@@ -87,11 +105,11 @@ done
 
 ### Perform Binomial test in the AlleleHMM blocks
 wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
   #echo ${PREFIX}
-  echo "bash BinoTest_multiTao_F1Tissues.bsh ${PREFIX}  > BinoTest_multiTao_${PREFIX}.log  2>&1"
+  echo "bash BinoTest_multiTao_F1Tissues.bsh ${PREFIX}  > BinoTest_multiTao_${PREFIX}.log  2>&1 &"
 done
 
 
@@ -101,6 +119,19 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
 cd ${wd}/${folder}/AlleleHMM
 mkdir toremove
 mv *iden_cov.bed *mat_cov.bed *pat_cov.bed *temp_cov.bed *merged_cov.bed toremove/.
+
+
+### examine sensitivity and specificity with Tao
+
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 &"
+done
+
+
+
 
 
 # dREG of merged bigwig
@@ -132,3 +163,12 @@ for s in plus minus
 done
 
 # submit to dREG gateway
+
+
+for f in `find -name *.map2ref.sorted.bed`
+do
+echo "gzip $f &"
+done
+
+
+
