@@ -11,6 +11,7 @@ PL=/workdir/sc2457/tools/After_AlleleDB_pipeline
 # only anaysis autosome now
 grep -v X counts_plus.txt | grep -v Y > counts_plus_noX.txt &
 grep -v X counts_minus.txt | grep -v Y > counts_minus_noX.txt &
+
 wait
 
 
@@ -38,4 +39,4 @@ mkdir AlleleHMM
 cd AlleleHMM
 ln -s ../${PREFIX}_counts_*_hmm.txt . 
 ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/AlleleHMM.py .
-python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} &
+python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} --predict=T  

@@ -1,4 +1,6 @@
 PREFIX=$1 #PREFIX=HT_MB6_all_R1
+WD=$2
+${WD:=/workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}}
 PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
 MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
 MATBOWTIE=${PREFIX}.mat.bowtie.gz
@@ -7,8 +9,8 @@ FDR_SIMS=10
 FDR_CUTOFF=0.1
 unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
 
-
-cd /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}
+echo ${WD}
+cd ${WD}
 
 # remove AMB reads and sort by index
 ln -s 1-alignment-${PREFIX}/${MATBOWTIE} .

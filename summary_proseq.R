@@ -3,6 +3,8 @@ df=read.csv("proseq_HT_F1_samples_combined.csv")
 View(df)
 df$cross = "PB6"
 df$cross[df$mousePool %in% c("A","F", "G")]="MB6"
+new_level=levels(df$mousePool)[c(1,7,8,2:7)]
+df$mousePool <- factor(df$mousePool, levels = new_level)
 df$Sample_ID=as.factor(paste(df$tissue, df$mousePool, sep="_"))
 df$tissue_cross=as.factor(paste(df$tissue, df$cross, sep="_"))
 new_level=levels(df$tissue_cross)[c(1,2,5,6,11,12,13,14,3,4,15, 16,9,10,7,8 )]
@@ -21,6 +23,12 @@ plot(df$tissue_cross, df$sep_raw/1000000, ylab='raw read counts (millions)', col
 plot(df$tissue_cross, 100*(df$sep_noadapt.sep_raw), ylab='noadapt/raw read counts (%)', col=c("pink", "light blue"), las=2)
 plot(df$tissue_cross, 100*(df$mapping.rate..map.sep.), ylab='mapped reads / nodup_sep read counts (%)', col=c("pink", "light blue"), las=2)
 
+
+library(ggplot2)
+ggplot(df, aes(Sample_ID,mapped.reads, fill= mousePool))+ geom_bar(stat = "identity")+ scale_fill_brewer(palette="Dark2")+ theme(axis.text.x = element_text(angle = 90))
+ggplot(df, aes(Sample_ID,map.sep_raw, fill= mousePool))+ geom_bar(stat = "identity")+ 
+  scale_fill_brewer(palette="Dark2")+ theme(axis.text.x = element_text(angle = 90)) + 
+  ylab("map reads / raw_sep reads")
 
 
 
