@@ -1,0 +1,29 @@
+human_chinfo=/local/storage/data/hg19/hg19.chromInfo
+mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+CI=${mouse_chinfo}
+
+function normBw {
+    echo $1
+    PREFIX=$1
+    tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+    bigWigToBedGraph ${PREFIX}_plus.bw ${tmp}_plus.bedGraph  &
+    bigWigToBedGraph ${PREFIX}_minus.bw ${tmp}_minus.bedGraph  &
+    wait
+    R --vanilla --slave --args ${tmp}_plus.bedGraph ${tmp}_minus.bedGraph readCount.${tmp} <ReadCounts_bedGraph.R
+    #R CMD BATCH ReadCounts_bedGraph.R
+    readCount=`cat readCount.${tmp}`
+
+    cat ${tmp}_plus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4*1000*1000/'$readCount'/1}' > ${tmp}_plus.rpm.bedGraph  &
+    cat ${tmp}_minus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4*1000*1000/'$readCount'/1}' > ${tmp}_minus.rpm.bedGraph  &
+    wait
+    bedGraphToBigWig ${tmp}_plus.rpm.bedGraph $CI ${PREFIX}_plus.rpm.bw &
+    bedGraphToBigWig ${tmp}_minus.rpm.bedGraph $CI ${PREFIX}_minus.rpm.bw &
+    wait
+    rm ${tmp}_plus.bedGraph ${tmp}_minus.bedGraph ${tmp}_plus.rpm.bedGraph ${tmp}_minus.rpm.bedGraph readCount.${tmp}
+}
+
+for f in *_plus.bw
+	do PREFIX=`echo $f|rev|cut -d _ -f 2-|rev`
+    echo $PREFIX
+    normBw $PREFIX &
+done
