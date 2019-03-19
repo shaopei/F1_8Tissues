@@ -110,7 +110,14 @@ done < rename_sample_pair.txt
 
 
 
+### QC in the samples
+# mouse mm10_GRCm38
+# make bed from gtf from GENCODE
+gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
 
+#transcript
+cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="transcript"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > gencode.vM20.annotation_transcript.bed
 
+R --vanilla --slave  < getCounts.R
 
 
