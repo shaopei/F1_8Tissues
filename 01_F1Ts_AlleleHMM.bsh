@@ -138,8 +138,9 @@ echo "R --vanilla --slave --args $(pwd) $PREFIX < sen_spec_matrix.R &"
 done
 
 ## change the M and P to B6 and Cast 
-wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+wd=/workdir/sc2457/F1_Tissues/second_batch
+cd ${wd}
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_*_R1
   do #echo ${folder}
   cd ${wd}/${folder}/AlleleHMM
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
@@ -159,9 +160,10 @@ for f in ${PREFIX}_plus*_SigBlocks.bed
   done
 done
 
-wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_PB6_all_R1
-  do #echo ${folder}
+wd=/workdir/sc2457/F1_Tissues/second_batch
+cd ${wd}
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_PB6_*_R1
+  do echo ${folder}
   cd ${wd}/${folder}/AlleleHMM
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
   echo ${PREFIX}
@@ -250,8 +252,8 @@ for OR in BN LV SK SP
   do
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 done
 
@@ -260,8 +262,8 @@ for OR in GI ST
   do
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 done
 
@@ -269,19 +271,28 @@ OR=HT
 for s in plus minus 
   do
 T=4
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
 T=5
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
+
+
+T=5
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+done
+
 
 for f in *_HMM_minus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
-sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, NR, "-"}' | bgzip > ${PREFIX}_HMM_sorted_minus.bed.gz
+sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), NR, $6}' | bgzip > ${PREFIX}_HMM_sorted_minus.bed.gz
 tabix -p bed ${PREFIX}_HMM_sorted_minus.bed.gz
 done
 
 for f in *_HMM_plus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
-sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, NR, "+"}' | bgzip > ${PREFIX}_HMM_sorted_plus.bed.gz
+sort-bed $f |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), NR, $6}'  | bgzip > ${PREFIX}_HMM_sorted_plus.bed.gz
 tabix -p bed ${PREFIX}_HMM_sorted_plus.bed.gz
 done

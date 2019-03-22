@@ -1,10 +1,15 @@
+# bash BigWig_RPM_normalization.bsh PathToChromInfo
+
 human_chinfo=/local/storage/data/hg19/hg19.chromInfo
 mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
-CI=${mouse_chinfo}
+#CI=${mouse_chinfo}
+CI=$1
+
 
 function normBw {
-    echo $1
+    echo "Normalizing by rpm..."
     PREFIX=$1
+    CI=$2
     tmp=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
     bigWigToBedGraph ${PREFIX}_plus.bw ${tmp}_plus.bedGraph  &
     bigWigToBedGraph ${PREFIX}_minus.bw ${tmp}_minus.bedGraph  &
@@ -25,5 +30,5 @@ function normBw {
 for f in *_plus.bw
 	do PREFIX=`echo $f|rev|cut -d _ -f 2-|rev`
     echo $PREFIX
-    normBw $PREFIX &
-done
+    normBw $PREFIX ${CI} &
+do

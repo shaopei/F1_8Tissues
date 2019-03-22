@@ -120,3 +120,4 @@ for s in plus minus
 done 
 done
 
+R --vanilla --slave --args $(pwd) ${PREFIX} < sen_spec_matrix.R
