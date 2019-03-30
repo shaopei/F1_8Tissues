@@ -1,0 +1,50 @@
+ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/*.bsh .     
+ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/*.py .      #*/
+
+
+for bed in *_HMM_minus.bed
+do 
+Head=`echo ${bed} | cut -d _ -f 1-2` #BN_MB6
+bed_dir=map2ref_bed
+for f in ${bed_dir}/${Head}_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+do PREFIX=`echo $f|cut -d . -f 1`
+echo $PREFIX
+MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed
+PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed
+IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed
+
+#bash BinomialTest.bsh -sorted -b ${Head}_HMM_plus.bed -m <(zcat ${MAT_READ_BED}.gz) -p <(zcat ${PAT_READ_BED}.gz) -i <(zcat ${IDENTICAL_READ_BED}.gz)  
+bash BinomialTest.bsh -sorted -b ${Head}_HMM_minus.bed -m <(zcat ${MAT_READ_BED}.gz) -p <(zcat ${PAT_READ_BED}.gz) -i <(zcat ${IDENTICAL_READ_BED}.gz)  
+
+P=`echo $PREFIX| cut -d / -f 2`
+#mv ${Head}_HMM_plus_binomtest.bed ${P}_HMM_plus_binomtest.bed
+#mv ${Head}_HMM_plus_binomtest_FDR.txt ${P}_HMM_plus_binomtest_FDR.txt
+#mv ${Head}_HMM_plus_binomtest_SigBlocks.bed ${P}_HMM_plus_binomtest_SigBlocks.bed 
+mv ${Head}_HMM_minus_binomtest.bed ${P}_HMM_minus_binomtest.bed
+mv ${Head}_HMM_minus_binomtest_FDR.txt ${P}_HMM_minus_binomtest_FDR.txt
+mv ${Head}_HMM_minus_binomtest_SigBlocks.bed ${P}_HMM_minus_binomtest_SigBlocks.bed 
+done
+done
+
+
+# use ${P}_HMM_plus_binomtest.bed ${P}_HMM_minus_binomtest.bed
+# exmaine the direction is correct
+for f in *MB6*HMM_*_binomtest.bed
+	do P=`echo $f| cut -d _ -f 1-6` #ST_MB6_all_R1_HMM_plus
+in_bed=${P}_binomtest.bed
+out_bed=${P}_binomtest_Con.bed
+cat $in_bed | awk 'BEGIN {OFS="\t"} (substr($4,1,1)=="M" && $6 > $7) {print $0}
+(substr($4,1,1)=="P" && $6 < $7) {print $0}' > $out_bed
+done
+
+for f in *PB6*HMM_*_binomtest.bed
+	do P=`echo $f| cut -d _ -f 1-6` #ST_PB6_all_R1_HMM_plus
+in_bed=${P}_binomtest.bed
+out_bed=${P}_binomtest_Con.bed
+cat $in_bed | awk 'BEGIN {OFS="\t"} (substr($4,1,1)=="P" && $6 > $7) {print $0}
+(substr($4,1,1)=="M" && $6 < $7) {print $0}' > $out_bed
+done
+
+
+
+# eamine if significant?

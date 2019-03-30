@@ -12,12 +12,12 @@ done
 
 
 
-dir_in_sc2457=/workdir/sc2457/F1_Tissues/
+dir_in_sc2457=/workdir/sc2457/F1_Tissues/3rd_batch
 cd ${dir_in_sc2457}
 ln -s ../alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh .
 
-fastq_dir=/workdir/sc2457/F1_Tissues/tissue_Lung
-for file in /workdir/sc2457/F1_Tissues/tissue_Lung/*.gz  #*/
+fastq_dir=/workdir/sc2457/F1_Tissues/sep_fastq
+for file in ${fastq_dir}/*_R1.fastq.gz  #*/
 do 
   name=`echo ${file} | rev | cut -d / -f 1 |cut -d . -f 3 | rev`
   echo $name
@@ -36,13 +36,15 @@ ase \
 0 > allelicbias-PersonalGenome_P.CAST_M.B6-${name}.log 2>&1  & " >${name}.bsh
 done
 
-
-num=1
-for f in *PB6_all_R1.bsh
+num=10
+for tissue in GI HT LG LV SK SP ST
   do
-echo "at now +$num hours -f ${f}"
-num=$((num + 1)) 
+for f in ${tissue}*_R1.bsh
+  do
+echo "at now +$num minutes -f ${f}"
+num=$((num + 10)) 
 #echo $num
+done
 done
 
 
@@ -52,13 +54,53 @@ at now +2 hours -f GI_MB6_all_R1.bsh   #job3       Sat Feb 16 11:30:00 2019 a sc
 #remove job
 #at -r [job number]
 
-wd=/workdir/sc2457/F1_Tissues/second_batch
+wd=/workdir/sc2457/F1_Tissues/3rd_batch
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
   echo "gzip ${wd}/${folder}/1-alignment-${PREFIX}/*.bowtie & " #*/  
   echo "gzip ${wd}/${folder}/2-*/*.bed & " #*/ 
 done
+
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do 
+  echo ${folder}
+  diff ${folder}/originalmatpatreads.toremove.ids ${folder}/toremove/originalmatpatreads.toremove.ids
+done
+
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 20 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  name=$PREFIX
+echo "bash alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh \
+${name} \
+PersonalGenome_P.CAST_M.B6 \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed \
+${fastq_dir} \
+${name} \
+/workdir/sc2457/alleleDB/alleledb_pipeline_mouse \
+/workdir/sc2457/mouse_AlleleSpecific/PIPELINE_StrandSpecific_P.CAST_M.B6.mk \
+0.1 \
+ase \
+9  > ${name}_9.log 2>&1  " >${name}_9.bsh
+done
+
+
+for f in *_9.bsh
+  do bash $f &
+wait_a_second
+done
+
 
 
 # make_AlleleHMM_output_from_AlleleDB_output_mouse
@@ -81,18 +123,19 @@ done
 
 #wd=/workdir/sc2457/F1_Tissues/
 #for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S*_all_R1
-wd=/workdir/sc2457/F1_Tissues/second_batch
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S[KP]*_R1
   do 
   cd ${wd}/${folder}/AlleleHMM
   pwd
+  rm toremove -r
   mkdir toremove
   mv *bed toremove/.
   mv *_FDR.txt toremove/.
-  #mv parameters/* .  #*/ 
+  mv parameters/* .  #*/ 
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
   echo $PREFIX
-  #python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} --predict=T &
+  python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} --predict=T &
   #tail *.bed -n 3
   cd ${wd}
 done
@@ -101,19 +144,36 @@ done
 ### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
 #wd=/workdir/sc2457/F1_Tissues/
 #for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
-wd=/workdir/sc2457/F1_Tissues/second_batch
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+wd=/workdir/sc2457/F1_Tissues/3rd_batch
+for folder in towork/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  #echo ${PREFIX}
-  echo "bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/${folder} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log &"
+  echo ${PREFIX}
+  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
+  wait_a_second
 done
 
+wait_a_second() {
+  core=$1
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= ${core} ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+wd=/workdir/sc2457/F1_Tissues/3rd_batch
+while read s; do
+  PREFIX=${s}_R1
+  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
+  wait_a_second 5
+done < rerun.txt
 
 ### Perform Binomial test in the AlleleHMM blocks
 #wd=/workdir/sc2457/F1_Tissues/
 #for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
-wd=/workdir/sc2457/F1_Tissues/second_batch
+wd=/workdir/sc2457/F1_Tissues/
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
@@ -128,7 +188,7 @@ for folder in ../allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d "/" -f 1|cut -d - -f 1 |rev`
   #echo ${PREFIX}
-  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 "
+  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 &"
 done
 
 for f in LG*_SNP_Allele_Specificity_matrix_t1E-09.bed
@@ -138,7 +198,7 @@ echo "R --vanilla --slave --args $(pwd) $PREFIX < sen_spec_matrix.R &"
 done
 
 ## change the M and P to B6 and Cast 
-wd=/workdir/sc2457/F1_Tissues/second_batch
+wd=/workdir/sc2457/F1_Tissues/
 cd ${wd}
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_*_R1
   do #echo ${folder}
@@ -152,7 +212,7 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_*_R1
   cat $f | awk 'BEGIN {OFS="\t"; t=","} {print $1, $2, $3, $4t$6t$7,"." ,"-"}' > ${f_head}_IGV.bed
   done
 
-for f in ${PREFIX}_plus*_SigBlocks.bed
+ for f in ${PREFIX}_plus*_SigBlocks.bed
     do 
   f_head=`echo $f | rev |cut -d . -f 2- |rev `
   echo ${f_head}
@@ -160,7 +220,7 @@ for f in ${PREFIX}_plus*_SigBlocks.bed
   done
 done
 
-wd=/workdir/sc2457/F1_Tissues/second_batch
+wd=/workdir/sc2457/F1_Tissues/
 cd ${wd}
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_PB6_*_R1
   do echo ${folder}

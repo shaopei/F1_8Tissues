@@ -1,0 +1,4 @@
+
+PREFIX=$1 #BN_PB6_all_R1
+
+###### used the genes allele-specificity that was calculated using full dataset (combined samples from the same tissue and cross)

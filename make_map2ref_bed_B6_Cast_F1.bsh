@@ -42,9 +42,12 @@ echo "liftOver to reference genome"
 # rm pat2ref.chain mat2ref.chain
 ln -s 2-map.back.ref-${PREFIX}/pat2ref.chain .  #pat2ref.chain is from output of AlleleDB
 ln -s 2-map.back.ref-${PREFIX}/mat2ref.chain .
-liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.log &
+echo "liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.log"
+liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.log
+echo "liftOver ${PATBOWTIE}_AMBremoved_sorted_specific.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${PATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.log"
 liftOver ${PATBOWTIE}_AMBremoved_sorted_specific.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${PATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.log &
-liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.log &
+echo "liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.log"
+liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.log
 
 wait
 # remove reads that DONOT overlape with a SNP in ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed and  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed 
@@ -59,3 +62,4 @@ mv ${MATBOWTIE}_AMBremoved_sorted_specific.bed ${PATBOWTIE}_AMBremoved_sorted_sp
 mv ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.bed ${PATBOWTIE}_AMBremoved_sorted_identical.map2ref.bed toremove/.
 mv  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.bed toremove/.
 echo "done!"
+
