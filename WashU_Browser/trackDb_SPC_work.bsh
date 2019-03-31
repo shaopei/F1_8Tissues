@@ -1,0 +1,285 @@
+#for f in *_HMM_plus.bed
+#  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+#sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, NR, "+"}' | bgzip > ${PREFIX}_HMM_sorted_plus.bed.gz
+#tabix -p bed ${PREFIX}_HMM_sorted_plus.bed.gz
+#done
+
+for f in *.bed.gz
+  do tabix -p bed $f
+done
+
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1/*_specific.map2ref.sorted.bed.gz . #*/
+
+for f in *at.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+  do
+#f=BN_MB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+j=`echo $f | cut -d . -f 1-2`
+
+zcat ${f} | awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $2, $2+1, ".", ".", $6} ; ($6 == "-") {print $1, $3-1, $3, ".", ".", $6}'  | bgzip > ${j}.1bp.bed.gz &
+
+
+
+CHINFO=/local/storage/data/mm10/mm10.chromInfo
+## Convert to bedGraph ... 
+
+
+   bedtools genomecov -bg -i ${j}.1bp.bed.gz -g ${CHINFO} -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_plus.bedGraph &
+   bedtools genomecov -bg -i ${j}.1bp.bed.gz -g ${CHINFO} -strand - |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_minus.noinv.bedGraph &
+   wait
+## Invert minus strand.
+   cat  ${j}_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${j}_minus.bedGraph & ## Invert read counts on the minus strand.
+   cat  ${j}_plus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${j}_plus.inv.bedGraph &
+wait
+   ## Then to bigWig
+   bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_1bp_plus.bw &
+   bedGraphToBigWig $j\_minus.bedGraph ${CHINFO} $j\_1bp_minus.bw &
+   bedGraphToBigWig ${j}_plus.inv.bedGraph ${CHINFO} $j\_1bp_inv_plus.bw &
+   bedGraphToBigWig ${j}_minus.noinv.bedGraph  ${CHINFO} $j\_1bp_inv_minus.bw &
+
+#mv ${j}_plus.bedGraph ${j}_minus.noinv.bedGraph ${j}_minus.bedGraph toremove/.
+done
+
+
+
+
+
+for f in *_MB6_*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+  do
+j=`echo $f | cut -d . -f 1-2`
+# change pat plus to oppsite direction
+cat  ${j}_plus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${j}_plus.inv.bedGraph  ## Invert read counts on the minus strand.
+wait
+bedGraphToBigWig ${j}_plus.inv.bedGraph ${CHINFO} $j\_1bp_plus.inv.bw &
+wait
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+d=`echo $PWD |cut -d / -f 5-`
+WD=ftp://cbsuftp.tc.cornell.edu/danko/${d}
+
+BigWig() {
+  sample=$1
+  name=$2
+  head=$3
+  tail=$4
+  max=$5
+  min=-${max}
+  echo "{
+  type:\"bigwig\",
+  url:\"${WD}/${sample}_plus.bw\",
+  name: \"${name}, PRO-seq(+)\",
+  fixedscale:{min:0,max:${max:=10}},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#fffef7\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${sample}_minus.bw\",
+  name: \"${name}, PRO-seq(-)\",
+  fixedscale:{min:${min:=-10},max:0},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#fffef7\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"min\",
+},
+{
+  type:\"bedgraph\",
+  url: \"${WD}/${sample}.dREG.peak.score.bed.gz\",
+  fixedscale:{min:0,max:0.00001},
+  name: \"${name} dREG peak\",
+  colorpositive:\"#99d8c9\",
+  height:10,
+  mode: \"show\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${sample}.dREG.infp.bw\",
+  name: \"${name}, dREG prediction score\",
+  fixedscale:{min:0,max:1.5},
+  colorpositive:\"#99d8c9\",
+  colornegative:\"#0000e5\",
+  height:20,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_MB6_${tail}_R1.mat_1bp_plus.bw\",
+  name: \"${name}, M:B6 mat read counts(+)\",
+  fixedscale:{min:0,max:${max:=10}},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#fcf7ed\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_MB6_${tail}_R1.mat_1bp_minus.bw\",
+  name: \"${name}, M:B6 mat read counts(-)\",
+  fixedscale:{min:${min:=-10},max:0},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#fcf7ed\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"min\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_MB6_${tail}_R1.pat_1bp_plus.bw\",
+  name: \"${name}, M:B6 pat read counts(+)\",
+  fixedscale:{min:0,max:${max:=10}},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#edfcfb\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_MB6_${tail}_R1.pat_1bp_minus.bw\",
+  name: \"${name}, M:B6 pat read counts(-)\",
+  fixedscale:{min:${min:=-10},max:0},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#edfcfb\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"min\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:B6 (+) AlleleHMM\",
+url:\"${WD}/${head}_MB6_HMM_sorted_plus.bb\",
+mode:\"show\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:B6 (-) AlleleHMM\",
+url:\"${WD}/${head}_MB6_HMM_sorted_minus.bb\",
+mode:\"show\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_PB6_${tail}_R1.pat_1bp_plus.bw\",
+  name: \"${name}, M:Cast mat read counts(+)\",
+  fixedscale:{min:0,max:${max:=10}},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#fcf7ed\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_PB6_${tail}_R1.pat_1bp_minus.bw\",
+  name: \"${name}, M:Cast mat read counts(-)\",
+  fixedscale:{min:${min:=-10},max:0},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#fcf7ed\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"min\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_PB6_${tail}_R1.mat_1bp_plus.bw\",
+  name: \"${name}, M:Cast pat read counts(+)\",
+  fixedscale:{min:0,max:${max:=10}},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#edfcfb\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
+{
+  type:\"bigwig\",
+  url:\"${WD}/${head}_PB6_${tail}_R1.mat_1bp_minus.bw\",
+  name: \"${name}, M:Cast pat read counts(-)\",
+  fixedscale:{min:${min:=-10},max:0},
+  colorpositive:\"#ff0000\",
+  colornegative:\"#0000e5\",
+  backgroundcolor:\"#edfcfb\",
+  height:50,
+  mode:\"show\",
+  summarymethod: \"min\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:Cast (+) AlleleHMM\",
+url:\"${WD}/${head}_PB6_HMM_sorted_plus.bb\",
+mode:\"show\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:Cast (-) AlleleHMM\",
+url:\"${WD}/${head}_PB6_HMM_sorted_minus.bb\",
+mode:\"show\",
+},
+"
+}
+
+
+file_name=trackDb_SPC_work.json
+
+echo "# http://epigenomegateway.wustl.edu/browser/?genome=mm10&datahub=${WD}/${file_name}
+# Example here: http://vizhub.wustl.edu/hubSample/hg19/hub.json
+
+# Note: Epigenome browser does not seem to support bigBed: 
+[" > ${file_name}
+
+while read s l ; do
+head=`echo ${s} | cut -d _ -f 1`
+tail=`echo ${s} | cut -d _ -f 2`
+BigWig ${s} ${l} ${head} ${tail} 10 >> ${file_name}
+done <sample_list.txt
+
+echo "
+{
+type: \"bed\",
+name: \"SNP density\",
+url:\"ftp://cbsuftp.tc.cornell.edu/danko/hub/F1_Tissues/mm10/SNP.bed.gz\",
+fixedscale:{min:0,max:10},
+mode:\"density\",
+},
+" >> ${file_name}
+
+
+
+echo "# a pack of native tracks (supplied by the browser server)
+{
+type:\"native_track\",list:[
+  {name:\"refGene\",mode:\"full\"},
+  ],
+},
+]" >> ${file_name} 
+
+
+
+

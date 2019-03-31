@@ -16,7 +16,7 @@ BigWig() {
   min=-${max}
   echo "{
   type:\"bigwig\",
-  url:\"${WD}/${sample}_plus.rpm.bw\",
+  url:\"${WD}/${sample}_plus.bw\",
   name: \"${name}, PRO-seq(+)\",
   fixedscale:{min:0,max:${max:=10}},
   colorpositive:\"#ff0000\",
@@ -28,7 +28,7 @@ BigWig() {
 },
 {
   type:\"bigwig\",
-  url:\"${WD}/${sample}_minus.rpm.bw\",
+  url:\"${WD}/${sample}_minus.bw\",
   name: \"${name}, PRO-seq(-)\",
   fixedscale:{min:${min:=-10},max:0},
   colorpositive:\"#ff0000\",
@@ -86,15 +86,15 @@ mode:\"show\",
 }
 
 
-echo "# http://epigenomegateway.wustl.edu/browser/?genome=mm10&datahub=${WD}/trackDb.json
+echo "# http://epigenomegateway.wustl.edu/browser/?genome=mm10&datahub=${WD}/trackDb_raw.json
 # Example here: http://vizhub.wustl.edu/hubSample/hg19/hub.json
 
 # Note: Epigenome browser does not seem to support bigBed: 
-[" > trackDb.json
+[" > trackDb_raw.json
 
 while read s l ; do
 ss=`echo ${s} | cut -d _ -f 1`
-BigWig ${s} ${l} ${ss} 0.5 >> trackDb.json
+BigWig ${s} ${l} ${ss} 10 >> trackDb_raw.json
 done <sample_list.txt
 
 echo "# a pack of native tracks (supplied by the browser server)
@@ -103,5 +103,5 @@ type:\"native_track\",list:[
   {name:\"refGene\",mode:\"full\"},
   ],
 },
-]" >> trackDb.json 
+]" >> trackDb_raw.json 
 
