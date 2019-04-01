@@ -188,7 +188,7 @@ for folder in ../allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d "/" -f 1|cut -d - -f 1 |rev`
   #echo ${PREFIX}
-  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 &"
+  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 "
 done
 
 for f in LG*_SNP_Allele_Specificity_matrix_t1E-09.bed
@@ -345,14 +345,59 @@ ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_C
 done
 
 
+# use bed in WashU browser
 for f in *_HMM_minus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
 sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), NR, $6}' | bgzip > ${PREFIX}_HMM_sorted_minus.bed.gz
-tabix -p bed ${PREFIX}_HMM_sorted_minus.bed.gz
+tabix -p bed ${PREFIX}_HMM_sorted_minus.bed.gz -f 
 done
 
 for f in *_HMM_plus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
 sort-bed $f |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), NR, $6}'  | bgzip > ${PREFIX}_HMM_sorted_plus.bed.gz
-tabix -p bed ${PREFIX}_HMM_sorted_plus.bed.gz
+tabix -p bed ${PREFIX}_HMM_sorted_plus.bed.gz -f 
 done
+
+# bash Find_consistent_blocks.bsh
+
+
+# use bigbed
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/*_strict_agreenAmong_*_samples.bed  #*/
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+for f in *_HMM_minus.bed
+  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+bedtools intersect -a $f -b ${PREFIX}_*_minus_agreeCount_strict_agreenAmong_*_samples.bed | \
+sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), 111, $6}' > ${PREFIX}_HMM_sorted_minus.bed
+bedToBigBed ${PREFIX}_HMM_sorted_minus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_minus.bb
+rm ${PREFIX}_HMM_sorted_minus.bed
+done
+
+for f in *_HMM_plus.bed
+  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+bedtools intersect -a $f -b ${PREFIX}_*_plus_agreeCount_strict_agreenAmong_*_samples.bed | \
+sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), 111, $6}'  > ${PREFIX}_HMM_sorted_plus.bed
+bedToBigBed  ${PREFIX}_HMM_sorted_plus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_plus.bb
+rm ${PREFIX}_HMM_sorted_plus.bed
+done
+
+
+# find a place where all tissues has AlleleHMM blocks
+cp LG_PB6_HMM_sorted_minus.bed tmp.bed
+for f in *_HMM_sorted_minus.bed
+do 
+echo $f
+bedtools intersect -a tmp.bed -b $f > tmp2.bed
+mv tmp2.bed tmp.bed
+done
+
+cp LG_PB6_HMM_sorted_plus.bed tmp_p.bed
+for f in *_HMM_sorted_plus.bed
+do 
+echo $f
+bedtools intersect -a tmp_p.bed -b $f > tmp2.bed
+mv tmp2.bed tmp_p.bed
+done
+
+
+
+
