@@ -362,20 +362,24 @@ done
 
 
 # use bigbed
-ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/*_strict_agreenAmong_*_samples.bed  #*/
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/*0.05* . #*/
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 for f in *_HMM_minus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
-bedtools intersect -a $f -b ${PREFIX}_*_minus_agreeCount_strict_agreenAmong_*_samples.bed | \
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_minus_agreeCount_strict_P0.05.bed | \
 sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), 111, $6}' > ${PREFIX}_HMM_sorted_minus.bed
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_minus_agreeCount_strict_P0.05.bed | \
+sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}' > IGV/${PREFIX}_HMM_sorted_minus.bed
 bedToBigBed ${PREFIX}_HMM_sorted_minus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_minus.bb
 rm ${PREFIX}_HMM_sorted_minus.bed
 done
 
 for f in *_HMM_plus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
-bedtools intersect -a $f -b ${PREFIX}_*_plus_agreeCount_strict_agreenAmong_*_samples.bed | \
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
 sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), 111, $6}'  > ${PREFIX}_HMM_sorted_plus.bed
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
+sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > IGV/${PREFIX}_HMM_sorted_plus.bed
 bedToBigBed  ${PREFIX}_HMM_sorted_plus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_plus.bb
 rm ${PREFIX}_HMM_sorted_plus.bed
 done
@@ -399,5 +403,9 @@ mv tmp2.bed tmp_p.bed
 done
 
 
+for f in allelicbias-PersonalGenome_P.CAST_M.B6-*
+  do echo $f
+  ls ${f}/toremove/
+done
 
 
