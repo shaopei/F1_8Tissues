@@ -1,7 +1,10 @@
 # genetics, both B6 or both Cast
 # imprinting, both M or both P
 
+
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/strict
 ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/*strict* .
+
 
 
 for f in *_agreeCount_strict_agreenAmong_*_samples.bed
@@ -54,3 +57,37 @@ bedtools intersect -wo -f 0.1 -F 0.1 -sorted -a <( cat $f| awk 'BEGIN{OFS="\t"}{
 > ${head}_MB6_PB6_${s}_intersect_0.1.bed
 bedtools intersect -wo -sorted -a <( cat $f| awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4'}) -b <(cat ${head}_PB6_${tail} | awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4}') \
 > ${head}_MB6_PB6_${s}_intersect_1bp.bed
+
+
+##### redo with stric blocks with p value <=0.05
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/strict_p0.05
+cp /local/ftp/pub/hub/F1_Tissues/mm10/IGV/* .
+
+
+for f in *_MB6_HMM_sorted_*.bed
+	do head=`echo $f |cut -d _ -f 1`
+	s=`echo $f |rev|cut -d _ -f 1| rev |cut -d . -f 1 `
+	bedtools intersect -wo -f 0.1 -F 0.1 -sorted -a $f -b ${head}_PB6_HMM_sorted_${s}.bed \
+	> ${head}_MB6_PB6_${s}_intersect_0.1.bed
+	bedtools intersect -wo -sorted -a $f -b ${head}_PB6_HMM_sorted_${s}.bed \
+	> ${head}_MB6_PB6_${s}_intersect_1bp.bed
+done
+
+for f in *_intersect_*.bed
+do 
+cat $f | awk 'BEGIN {OFS="\t"} substr($4,1,1)!=substr($10,1,1) {print $0}' > ${f}_strain.bed # M.P in PB6 is correct
+cat $f | awk 'BEGIN {OFS="\t"} substr($4,1,1)==substr($10,1,1) {print $0}' > ${f}_imprint.bed
+done
+
+wc -l *0.1* | paste - - -  
+
+
+rm imprint.txt
+for f in *_intersect_0.1.bed_imprint.bed
+do echo $f >> imprint.txt
+cat $f | awk 'BEGIN {OFS="\t"; l1=":"; l2="-"} {print $1l1$2l2$3, $0}'  >> imprint.txt
+done
+
+
+
+

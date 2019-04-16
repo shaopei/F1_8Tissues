@@ -367,7 +367,7 @@ export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 for f in *_HMM_minus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
 bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_minus_agreeCount_strict_P0.05.bed | \
-sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), 111, $6}' > ${PREFIX}_HMM_sorted_minus.bed
+sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}' > ${PREFIX}_HMM_sorted_minus.bed
 bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_minus_agreeCount_strict_P0.05.bed | \
 sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}' > IGV/${PREFIX}_HMM_sorted_minus.bed
 bedToBigBed ${PREFIX}_HMM_sorted_minus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_minus.bb
@@ -377,7 +377,7 @@ done
 for f in *_HMM_plus.bed
   do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
 bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
-sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), 111, $6}'  > ${PREFIX}_HMM_sorted_plus.bed
+sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > ${PREFIX}_HMM_sorted_plus.bed
 bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
 sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > IGV/${PREFIX}_HMM_sorted_plus.bed
 bedToBigBed  ${PREFIX}_HMM_sorted_plus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_plus.bb
