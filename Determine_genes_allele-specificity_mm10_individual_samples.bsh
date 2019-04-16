@@ -1,0 +1,123 @@
+# mouse mm10_GRCm38
+# make bed from gtf from GENCODE
+# gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
+
+# avoid multiple count of genes share similarl location, need to merge bed of overlaping genes as follows:
+# cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="gene"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > gencode.vM20.annotation_gene.bed
+# bedtools merge -i <(cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="gene"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V ) -s -o collapse,distinct,distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V > gencode.vM20.annotation_geneMerged.bed
+
+PREFIX=$1 #BN_PB6_all_R1
+PREFIX_FileDir=/workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}
+###### indentify genes allele-specificity
+### counts the maternal, paternal reads, and the reads that cannot tell where it from, in the regions the bed file
+# perform BinomialTest and filter by FDR<= FDR_CUTOFF
+# the allele-specificity of genes
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}/*map2ref.sorted.bed.gz .  #*/
+
+
+
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+MATBOWTIE=${PREFIX}.mat.bowtie.gz
+PATBOWTIE=${PREFIX}.pat.bowtie.gz
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+
+
+bed_f=gencode.vM20.annotation_geneMerged.bed
+j=${PREFIX}_gencode.vM20.annotation_geneMerged
+
+bedtools coverage -sorted -a ${bed_f} -b <(zcat ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed.gz) -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.mat_cov.bed &
+bedtools coverage -sorted -a ${bed_f} -b <(zcat ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed.gz) -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.pat_cov.bed &
+wait
+join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.8,2.8 ${j}.mat_cov.bed ${j}.pat_cov.bed > ${j}.temp_cov.bed &
+bedtools coverage -sorted -a ${bed_f} -b <(zcat ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.sorted.bed.gz) -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.iden_cov.bed &
+wait
+join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,2.8 ${j}.temp_cov.bed ${j}.iden_cov.bed | LC_ALL=C sort -k1,2V -k2,3n --parallel=30 > ${j}.merged_cov.bed
+mkdir toremove
+mv ${j}.temp_cov.bed ${j}.mat_cov.bed ${j}.pat_cov.bed ${j}.iden_cov.bed toremove
+mv ${j}.merged_cov.bed ${j}.merged_cov.bed_temp
+# keep genes with at lease 1 allele-specific read
+cat ${j}.merged_cov.bed_temp | awk 'BEGIN{OFS="\t"} ($6+$7 >0) {print $0}' | awk 'BEGIN{OFS="\t"} {split($1,a,"_"); print $2, $3, $4, a[4], $6, $7, $8, $5}' > ${j}.merged_cov.bed
+
+python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}.merged_cov_binomtest.bed
+mv ${j}.merged_cov.bed ${j}.merged_cov.bed_temp toremove
+# output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
+python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}.merged_cov_binomtest_FDR.txt &
+
+## calulate multiple FDR
+python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} 0.1 > ${j}.merged_cov_binomtest_FDR_0.1.txt &
+python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} 0.05 > ${j}.merged_cov_binomtest_FDR_0.05.txt &
+python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} 0.01 > ${j}.merged_cov_binomtest_FDR_0.01.txt &
+
+wait
+## determine sym and biased use different FDR value
+awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR.txt) < ${j}.merged_cov_binomtest.bed | awk 'BEGIN {OFS="\t"} ($6>$7) {print $1, $2, $3, "M", $9, $4, $6, $7, $8}; ($6<$7){print $1, $2, $3, "P", $9, $4, $6, $7, $8}' > ${j}_interestingHets.bed
+awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR_0.01.txt) < ${j}.merged_cov_binomtest.bed | awk 'BEGIN {OFS="\t"} ($6>$7) {print $1, $2, $3, "M", $9, $4, $6, $7, $8}; ($6<$7){print $1, $2, $3, "P", $9, $4, $6, $7, $8}' > ${j}_AlleleBiased.bed
+# anything > FDR0.1, S
+awk 'NR==1 { print $0 } NR>1 && $9 > thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR_0.1.txt) < ${j}.merged_cov_binomtest.bed | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, "S", $9, $4, $6, $7, $8}' > ${j}_AlleleSym.bed
+
+head -n 1 ${j}_AlleleBiased.bed > ${j}_withAllele-specificity_FDR.bed
+cat ${j}_AlleleBiased.bed | awk 'NR>1 {print $0}' > tmp.bed
+cat ${j}_AlleleSym.bed | awk 'NR>1 {print $0}' >> tmp.bed
+cat tmp.bed | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 >> ${j}_withAllele-specificity_FDR.bed
+rm tmp.bed
+
+##### identify SNP with at least 1 reads, and within gene annotation_withAllele-specificity
+#PREFIX=BN_MB6_all_R1
+#PREFIX_FileDir=/workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}
+
+s=plus
+intersectBed -u -s -a <(cat ${PREFIX_FileDir}/counts_plus_noX_MinCount1_MaxPvalue1.txt | awk 'BEGIN{OFS="\t"}  (NR>1) {print "chr"$1, $2-1, $2, ".", ".", "+" }') -b ${j}_withAllele-specificity_FDR.bed > ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed
+s=minus
+intersectBed -u -s -a <(cat ${PREFIX_FileDir}/counts_minus_noX_MinCount1_MaxPvalue1.txt | awk 'BEGIN{OFS="\t"}  (NR>1) {print "chr"$1, $2-1, $2, ".", ".", "-" }') -b ${j}_withAllele-specificity_FDR.bed > ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed
+
+
+##### annotate SNP with at least 1 reads, and within gene annotation, with gene allele-specificity
+for s in plus minus
+	do 
+    # SNPs (with at least 1 read mapped) covered by gene annotation_withAllele-specificity
+    intersectBed -wb -s -a ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed -b ${j}_withAllele-specificity_FDR.bed > ${PREFIX}_SNP_${s}_geneAS
+done
+
+##### annotate SNP with at least 1 reads, and within gene annotation, with AlleleDB allele-specificity
+for s in plus minus
+	do 
+    # SNPs (with at least 1 read mapped) covered by gene annotation_withAllele-specificity
+    intersectBed -wb -a ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed -b <(cat ${PREFIX_FileDir}/interestingHets_${s}.txt | grep -v X |grep -v Y | awk 'BEGIN{OFS="\t"} (NR>1) {print "chr"$1, $2-1, $2, $14 }') | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6, $10}'> SNP_${s}_AlleleDB_temp
+    intersectBed -v  -a ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed -b <(cat ${PREFIX_FileDir}/interestingHets_${s}.txt | grep -v X |grep -v Y | awk 'BEGIN{OFS="\t"} (NR>1) {print "chr"$1, $2-1, $2, $14 }') | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6, "S"}'>> SNP_${s}_AlleleDB_temp
+    cat SNP_${s}_AlleleDB_temp | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${PREFIX}_SNP_${s}_AlleleDB
+    rm SNP_${s}_AlleleDB_temp 
+done
+
+
+##### annotate SNP with at least 1 reads, and within gene annotation, with AlleleHMM allele-specificity
+for T in {1..9}
+  do
+    for s in plus minus; do 
+    intersectBed -wb -a ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed -b ${PREFIX_FileDir}/AlleleHMM/${PREFIX}_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6, $10}' > SNP_${s}_AlleleHMM_temp
+    intersectBed -v  -a ${PREFIX}_SNP_${s}_in_${j}_withAllele-specificity_FDR.bed -b ${PREFIX_FileDir}/AlleleHMM/${PREFIX}_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6, "S"}' >> SNP_${s}_AlleleHMM_temp
+    cat SNP_${s}_AlleleHMM_temp | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${PREFIX}_SNP_${s}_AlleleHMM_t1E-0${T}
+    rm SNP_${s}_AlleleHMM_temp
+  done
+done
+
+
+## make a matrix 
+for T in {1..9}
+  do
+echo -e '#chr\tchromStart\tchromEnd\tSNPreadCount\tvalue\tStrand\tgeneAS\tAlleleDB\tAlleleHMM\tgeneMat/Allele-specificReads\tgeneMat/TotalReads\tMAt\tPat\tIde' > ${PREFIX}_SNP_Allele_Specificity_matrix_t1E-0${T}.bed
+for s in plus minus
+  do 
+  cat ${PREFIX}_SNP_${s}_geneAS | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $1,$2,$3,$4,$5,$6, $10, $13/($13+$14), $13/($13+$14+$15), $13, $14, $15 }' | LC_ALL=C sort --parallel=30 > SNP_${s}_matrix_temp_1
+  cat ${PREFIX}_SNP_${s}_AlleleDB | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $7}' | LC_ALL=C sort --parallel=30 > SNP_${s}_matrix_temp_2
+  LC_ALL=C join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.2,1.9,1.10,1.11,1.12,1.13 SNP_${s}_matrix_temp_1 SNP_${s}_matrix_temp_2 | LC_ALL=C sort --parallel=30 > SNP_${s}_matrix_temp_3
+  cat ${PREFIX}_SNP_${s}_AlleleHMM_t1E-0${T} | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, substr($7,1,1)}' | LC_ALL=C sort --parallel=30 > SNP_${s}_matrix_temp_4
+  LC_ALL=C join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.2,1.10,1.11,1.12,1.13,1.14 SNP_${s}_matrix_temp_3 SNP_${s}_matrix_temp_4  | LC_ALL=C sort --parallel=30 > SNP_${s}_matrix_temp_5
+  cat SNP_${s}_matrix_temp_5 | awk 'BEGIN {OFS="\t"} {print $2,$3,$4,$5,$6,$7,$8,$9,$10, $11, $12, $13, $14, $15}' >>  ${PREFIX}_SNP_Allele_Specificity_matrix_t1E-0${T}.bed
+
+  rm SNP_${s}_matrix_temp_[12345]
+done 
+done
+
+R --vanilla --slave --args $(pwd) ${PREFIX} < sen_spec_matrix.R
