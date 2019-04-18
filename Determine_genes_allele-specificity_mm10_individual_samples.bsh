@@ -31,8 +31,9 @@ FDR_CUTOFF=0.1
 bed_f=gencode.vM20.annotation_transcript.bed
 
 mkdir toremove
-#for bed in map2ref_bed/*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
-for bed in map2ref_bed/notall/*.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
+for bed in map2ref_bed/*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
+#for bed in map2ref_bed/LG*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
+#for bed in map2ref_bed/notall/*.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
   do Head=`echo ${bed} |rev | cut -d / -f 1|rev |cut -d _ -f 1-3` #BN_MB6_A
   echo $Head
   PREFIX=${Head}_R1
@@ -57,7 +58,23 @@ for bed in map2ref_bed/notall/*.mat.bowtie.gz_AMBremoved_sorted_identical.map2re
   cat ${j}.merged_cov_binomtest.bed_temp | awk 'BEGIN{OFS="\t"} NR==1 {print $0, "strand", "TRX_ID"}  NR>1 {print $0}' > ${j}.merged_cov_binomtest.bed
   mv ${j}.merged_cov_binomtest.bed_temp toremove
   python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt &
-  #awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}.merged_cov_binomtest.bed  > ${j}_interestingHets.bed
+#  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}.merged_cov_binomtest.bed  > ${j}_interestingHets.bed
 done
 
-join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.8,2.8 ${j}.mat_cov.bed ${j}.pat_cov.bed
+for f in LG_PB6_CDE_R1*
+  do #echo $f
+PREFIX=`echo $f |cut -d . -f 1`
+tail=`echo $f |cut -d . -f 2-`
+echo "mv $f LG_PB6_all_R1.${tail}"
+done
+
+
+## combine p-value in one file
+for t in `ls *all_R1_gencode.vM20.annotation_transcript_interestingHets.bed |cut -d _ -f 1 |uniq`
+  do 
+R --vanilla --slave --args $(pwd) $t < Find_consistent-allelicbiased_gene.R
+done
+
+
+
+
