@@ -4,6 +4,14 @@
 #tabix -p bed ${PREFIX}_HMM_sorted_plus.bed.gz
 #done
 
+for f in *.dREG.peak.score.bed.gz
+  do 
+PREFIX=`echo $f|rev |cut -d . -f 3-|rev`
+zcat $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3}'> tmp.bed
+bedToBigBed tmp.bed ${mouse_chinfo}  ${PREFIX}.bb
+done
+
+
 
 d=`echo $PWD |cut -d / -f 5-`
 WD=ftp://cbsuftp.tc.cornell.edu/danko/${d}
@@ -38,15 +46,7 @@ BigWig() {
   mode:\"show\",
   summarymethod: \"min\",
 },
-{
-  type:\"bedgraph\",
-  url: \"${WD}/${sample}.dREG.peak.score.bed.gz\",
-  fixedscale:{min:0,max:0.00001},
-  name: \"${name} dREG peak\",
-  colorpositive:\"#99d8c9\",
-  height:10,
-  mode: \"show\",
-},
+
 {
   type:\"bigwig\",
   url:\"${WD}/${sample}.dREG.infp.bw\",
@@ -80,6 +80,27 @@ mode:\"show\",
 type: \"bigbed\",
 name: \"${name} M:Cast (-) AlleleHMM\",
 url:\"${WD}/${head}_PB6_HMM_sorted_minus.bb\",
+mode:\"show\",
+},
+{
+  type:\"bedgraph\",
+  url: \"${WD}/${sample}.dREG.peak.score.bed.gz\",
+  fixedscale:{min:0,max:0.00001},
+  name: \"${name} dREG peak\",
+  colorpositive:\"#99d8c9\",
+  height:10,
+  mode: \"show\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:B6 ASE Transcript\",
+url:\"${WD}/${head}_MB6_transcript_ABconsistent_FisherMethodP0.05.bb\",
+mode:\"show\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:Cast ASE Transcript\",
+url:\"${WD}/${head}_PB6_transcript_ABconsistent_FisherMethodP0.05.bb\",
 mode:\"show\",
 },
 "

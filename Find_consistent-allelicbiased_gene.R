@@ -63,7 +63,8 @@ PB6_sumlog <- function(Tissue, strand){
   for (pool in c("B", "C", "D", "E")){
     file=paste(Group, pool, "R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed", sep = "_")
     if (file.exists(file)){
-      sub_f=read.table(file = file)    colnames(sub_f)[grep("V4",colnames(sub_f))]=paste("V4", pool, sep=".")
+      sub_f=read.table(file = file)
+      colnames(sub_f)[grep("V4",colnames(sub_f))]=paste("V4", pool, sep=".")
       colnames(sub_f)[grep("V9",colnames(sub_f))]=paste("V9", pool, sep=".")
       #colnames(sub_f)[grep("V12",colnames(sub_f))]=paste("V12", pool, sep=".")
       df=merge(df,sub_f, by =col_to_merge, suffixes =c(".x",paste(".",pool, sep="")))

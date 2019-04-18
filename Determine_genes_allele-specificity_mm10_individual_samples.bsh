@@ -32,7 +32,6 @@ bed_f=gencode.vM20.annotation_transcript.bed
 
 mkdir toremove
 for bed in map2ref_bed/*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
-#for bed in map2ref_bed/LG*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
 #for bed in map2ref_bed/notall/*.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
   do Head=`echo ${bed} |rev | cut -d / -f 1|rev |cut -d _ -f 1-3` #BN_MB6_A
   echo $Head
@@ -61,20 +60,48 @@ for bed in map2ref_bed/*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref
 #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}.merged_cov_binomtest.bed  > ${j}_interestingHets.bed
 done
 
-for f in LG_PB6_CDE_R1*
-  do #echo $f
-PREFIX=`echo $f |cut -d . -f 1`
-tail=`echo $f |cut -d . -f 2-`
-echo "mv $f LG_PB6_all_R1.${tail}"
-done
 
 
 ## combine p-value in one file
 for t in `ls *all_R1_gencode.vM20.annotation_transcript_interestingHets.bed |cut -d _ -f 1 |uniq`
   do 
+echo $t
 R --vanilla --slave --args $(pwd) $t < Find_consistent-allelicbiased_gene.R
 done
 
+# use bigbed
+cd /local/ftp/pub/hub/F1_Tissues/mm10
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_consisntency/*gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed . #*/
 
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+
+for f in *MB6_R1_gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed
+  do 
+PREFIX=`echo $f|cut -d _ -f 1-2`
+sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$7,111,$4}' > ${PREFIX}_transcript_ABconsistent_FisherMethodP0.05.bed
+bedToBigBed  ${PREFIX}_transcript_ABconsistent_FisherMethodP0.05.bed ${mouse_chinfo}  ${PREFIX}_transcript_ABconsistent_FisherMethodP0.05.bb
+done
+
+# switch Pat,Mat for PB6
+for f in *PB6_R1_gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed
+  do 
+PREFIX=`echo $f|cut -d _ -f 1-2`
+sort-bed $f | awk  'BEGIN {OFS="\t"; t=","; M="P"; P="M"} (substr($7, 1, 1)=="M") {split($7,a,","); print $1, $2, $3, M,a[3], a[2], 111 ,$4} (substr($7, 1, 1)=="P") {split($7,a,","); print $1, $2, $3, P,a[3], a[2], 111 ,$4}'  \
+|  awk  'BEGIN {OFS="\t"; t=","} {print $1,$2,$3, $4t$5t$6, $7, $8}' > ${PREFIX}_transcript_ABconsistent_FisherMethodP0.05.bed
+bedToBigBed  ${PREFIX}_transcript_ABconsistent_FisherMethodP0.05.bed ${mouse_chinfo}  ${PREFIX}_transcript_ABconsistent_FisherMethodP0.05.bb
+done
+
+# fraction of gene allelic biased 
+rm tmp.txt
+for f in *all_R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed
+  do wc -l $f >> tmp.txt
+  p=`echo $f|cut -d _ -f 1-2`
+  wc -l ${p}_R1_gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed >> tmp.txt
+done
+cat tmp.txt |paste - -
+
+
+-rw-rw-r-- 1 sc2457 sc2457 1126994 Apr 18 13:09 LG_MB6_R1_gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed
+-rw-rw-r-- 1 sc2457 sc2457 7159130 Apr 17 19:01 LG_MB6_all_R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed
 
 
