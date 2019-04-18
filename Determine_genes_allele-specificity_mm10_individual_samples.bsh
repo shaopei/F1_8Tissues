@@ -5,7 +5,7 @@ cd /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_consisntency
 # gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
 # use transcript annotation
 # cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="transcript"){print $1, $2, $3, $4, $5, $6}' \
-|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > gencode.vM20.annotation_transcript.bed
+|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  |uniq > gencode.vM20.annotation_transcript.bed
 
 
 ###### indentify genes allele-specificity
@@ -14,8 +14,6 @@ cd /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_consisntency
 # the allele-specificity of genes
 
 ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
-ln -s ../AlleleHMM/*.py
-ln -s ../AlleleHMM/*.bsh #*/
 
 wait_a_second() {
   joblist=($(jobs -p))
@@ -32,32 +30,34 @@ FDR_SIMS=10
 FDR_CUTOFF=0.1
 bed_f=gencode.vM20.annotation_transcript.bed
 
-for bed in map2ref_bed/*.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
-  do 
-  Head=`echo ${bed} | cut -d / -f 2- |cut -d _ -f 1-3` #BN_MB6_A
+mkdir toremove
+#for bed in map2ref_bed/*all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
+for bed in map2ref_bed/notall/*.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #*/
+  do Head=`echo ${bed} |rev | cut -d / -f 1|rev |cut -d _ -f 1-3` #BN_MB6_A
   echo $Head
   PREFIX=${Head}_R1
   echo $PREFIX
   MATBOWTIE=map2ref_bed/${PREFIX}.mat.bowtie.gz
   PATBOWTIE=map2ref_bed/${PREFIX}.pat.bowtie.gz
   j=${PREFIX}_gencode.vM20.annotation_transcript
-
-  bedtools coverage -sorted -a ${bed_f} -b <(zcat ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed.gz) -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.mat_cov.bed &
-  bedtools coverage -sorted -a ${bed_f} -b <(zcat ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed.gz) -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.pat_cov.bed &
+  # -F  Minimum overlap required as a fraction of B. Default is 1E-9 (i.e., 1bp).
+  # only count reads that 0.9 of the length is within the transcript annotation
+  bedtools coverage -s -F 0.9 -sorted -a ${bed_f} -b <(zcat ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed.gz) | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.mat_cov.bed &
+  bedtools coverage -s -F 0.9 -sorted -a ${bed_f} -b <(zcat ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed.gz) | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.pat_cov.bed &
   wait
-  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.8,2.8 ${j}.mat_cov.bed ${j}.pat_cov.bed > ${j}.merged_cov.bed_temp &
-  #bedtools coverage -sorted -a ${bed_f} -b <(zcat ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.sorted.bed.gz) -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $0}' |LC_ALL=C sort -k1,1 --parallel=30 > ${j}.iden_cov.bed &
-  #wait
-  #join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,2.8 ${j}.temp_cov.bed ${j}.iden_cov.bed | LC_ALL=C sort -k1,2V -k2,3n --parallel=30 > ${j}.merged_cov.bed
-  mkdir toremove
-  mv ${j}.mat_cov.bed ${j}.pat_cov.bed toremove
   # keep genes with at lease 1 allele-specific read
-  cat ${j}.merged_cov.bed_temp | awk 'BEGIN{OFS="\t"} ($6+$7 >0) {print $0}' \
-  | awk 'BEGIN{OFS="\t"} ($6>$7) {split($1,a,"_"); print $2, $3, $4, "M", $6, $7, a[4], $5}  ($6<=$7) {split($1,a,"_"); print $2, $3, $4, "P", $6, $7, a[4], $5}' \
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.8,2.8 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($6+$7 >0) {print $0}' | \
+ awk 'BEGIN{OFS="\t"; t=","} ($6>$7) {split($1,a,"_"); print $2, $3, $4, "M"t$6t$7, $6, $7, "-" ,a[4], $5, "M"}  ($6<=$7) {split($1,a,"_"); print $2, $3, $4, "P"t$6t$7, $6, $7, "-", a[4], $5, "P"}' \
   | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
-  python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}.merged_cov_binomtest.bed
-  mv ${j}.merged_cov.bed ${j}.merged_cov.bed_temp toremove
+  mv ${j}.mat_cov.bed ${j}.pat_cov.bed toremove
   # output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
-  #python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt &
-  #wait
+  python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}.merged_cov_binomtest.bed
+  mv ${j}.merged_cov.bed toremove
+  mv ${j}.merged_cov_binomtest.bed ${j}.merged_cov_binomtest.bed_temp
+  cat ${j}.merged_cov_binomtest.bed_temp | awk 'BEGIN{OFS="\t"} NR==1 {print $0, "strand", "TRX_ID"}  NR>1 {print $0}' > ${j}.merged_cov_binomtest.bed
+  mv ${j}.merged_cov_binomtest.bed_temp toremove
+  python ${PL}/FalsePosFor_merged_cov.bed.py ${j}.merged_cov_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt &
+  #awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}.merged_cov_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}.merged_cov_binomtest.bed  > ${j}_interestingHets.bed
 done
+
+join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.8,2.8 ${j}.mat_cov.bed ${j}.pat_cov.bed

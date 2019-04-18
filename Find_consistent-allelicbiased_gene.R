@@ -22,19 +22,28 @@ write.bed<-function ( df.bed, file.bed, compress=FALSE ) {
 
 MB6_sumlog <- function(Tissue, strand){
   Group=paste(Tissue,"MB6", sep="_")
-  df=read.table("gencode.vM20.annotation_transcript.bed")
-  df=df[,1:3]
+  df=read.table(paste(Group,"all_R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed", sep = "_"))
+  colnames(df)[grep("V4",colnames(df))]="win_count_all_samples"
+  colnames(df)[grep("V9",colnames(df))]="p_value_all_samples"
+  #colnames(df)[grep("V12",colnames(df))]="V12.all"
+  col_to_keep=c("V1","V2", "V3", "V10", "V11", "V12","win_count_all_samples","p_value_all_samples")
+  col_to_merge=c("V1","V2", "V3", "V10", "V11", "V12")
+  df=df[,col_to_keep]
+  #df=df[,1:3]
   for (pool in c("A", "F", "G")){
     sub_f=read.table(file = paste(Group, pool, "R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed", sep = "_"))
-    #BN_MB6_A_R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed
-    df=merge(df,sub_f, by =c("V1","V2", "V3"),suffixes =c(".x",paste(".",pool, sep="")))
+    colnames(sub_f)[grep("V4",colnames(sub_f))]=paste("V4", pool, sep=".")
+    colnames(sub_f)[grep("V9",colnames(sub_f))]=paste("V9", pool, sep=".")
+    #colnames(sub_f)[grep("V12",colnames(sub_f))]=paste("V12", pool, sep=".")
+    df=merge(df,sub_f, by =col_to_merge, suffixes =c(".x",paste(".",pool, sep="")))
+    # only keep the rows that are present in all samples
+    df=df[,c(col_to_keep,colnames(df)[grep("V4",colnames(df))],colnames(df)[grep("V9",colnames(df))])]
   }
-  df=df[,c("V1","V2", "V3",colnames(df)[grep("V9",colnames(df))])]
-  df[,4:dim(df)[2]][df[,4:dim(df)[2]]==0]=1e-20
-  result = unlist( apply( df[,4:dim(df)[2]],1, function(x) { r<-sumlog(x); r$p;}) )
+  df[,grep("V9",colnames(df))][df[,grep("V9",colnames(df))]==0]=1e-20
+  result = unlist( apply( df[,grep("V9",colnames(df))],1, function(x) { r<-sumlog(x); r$p;}) )
   df$sumlog=result
-  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"all_R1_HMM", strand, "agreeCount_strict_P0.05.bed", sep = "_"))
-  write.bed(df, file=paste(Group,"all_R1_HMM", strand, "agreeCount_strict.bed", sep = "_"))
+  write.bed(df[df$sumlog<=0.05,], file=paste(Group, pool, "R1_gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed", sep = "_"))
+  write.bed(df, file=paste(Group, pool, "R1_gencode.vM20.transcript_ABconsistent.bed", sep = "_"))
 }
 
 
