@@ -101,7 +101,3 @@ done
 cat tmp.txt |paste - -
 
 
--rw-rw-r-- 1 sc2457 sc2457 1126994 Apr 18 13:09 LG_MB6_R1_gencode.vM20.transcript_ABconsistent_FisherMethodP0.05.bed
--rw-rw-r-- 1 sc2457 sc2457 7159130 Apr 17 19:01 LG_MB6_all_R1_gencode.vM20.annotation_transcript.merged_cov_binomtest.bed
-
-
