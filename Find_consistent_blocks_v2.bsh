@@ -1,36 +1,28 @@
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 were not corrected.
-# eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed
-# map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
-# identify blocks that have the same allele bias in all smaples from  the same tissue and cross
+# eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
+# combine the significant alleleHMM blocks from the same tissue but different cross
+
+# map reads from each individual sample from the same tissue and cross to the combined_cross AlleleHMM blocks
+# identify blocks that have the same allele bias in all samples from the same tissue and cross
 # use fishers method to combine p-value from multiple samples
 
-
-
-cd /workdir/sc2457/F1_Tissues/3rd_batch/map2ref
+cd /workdir/sc2457/F1_Tissues/Find_consistent_blocks
 
 ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/*.bsh .     
 ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/*.py .      #*/
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
 
-mkdir map2ref_bed
-cd map2ref_bed
-# ln -s ...
-#LG_PB6_E_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz    ST_PB6_E_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-#LG_PB6_E_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz     ST_PB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
-#LG_PB6_E_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-
-
-cd ..
 mkdir HMM_bed
 cd HMM_bed
 
-## use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 were not corrected.
+## use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 T=5
 for OR in BN LV SK SP
   do
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 done
 
@@ -39,8 +31,8 @@ for OR in GI ST
   do
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 done
 
@@ -48,17 +40,24 @@ OR=HT
 for s in plus minus 
   do
 T=4
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
 T=5
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed ${OR}_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 
 
 T=5
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed LG_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks.bed LG_PB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+done
+
+mkdir combined_cross
+for bed in *_MB6_HMM_minus.bed  #*/
+do t=`echo $bed |cut -d _ -f 1`
+cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |LC_ALL=C sort -k1,1V -k2,2n > combined_cross/${t}_HMM_minus.bed
+cat ${t}_PB6_HMM_plus.bed  ${t}_MB6_HMM_plus.bed  |grep -v "#" |LC_ALL=C sort -k1,1V -k2,2n  > combined_cross/${t}_HMM_plus.bed
 done
 
 cd ..
@@ -74,27 +73,44 @@ wait_a_second() {
 
 ## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
 
-for bed in HMM_bed/*_HMM_minus.bed  #*/
+for bed in HMM_bed/combined_cross/*_HMM_minus.bed  #*/
 do 
-Head=`echo ${bed} | cut -d / -f 2- |cut -d _ -f 1-2` #BN_MB6
+Head=`echo ${bed} |rev| cut -d / -f 1 |rev |cut -d _ -f 1` #BN
 echo $Head
 bed_dir=map2ref_bed
-for f in ${bed_dir}/${Head}_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
-do PREFIX=`echo $f|cut -d . -f 1`
-echo $PREFIX
-MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed
-PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed
-IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed
+  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
 
-P=`echo $PREFIX| cut -d / -f 2`
-cat HMM_bed/${Head}_HMM_plus.bed  | awk 'BEGIN {OFS="\t"; t=","} {print $1, $2, $3, $4t$6t$7,".", "+"}' > ${P}_HMM_plus.bed
-cat HMM_bed/${Head}_HMM_minus.bed | awk 'BEGIN {OFS="\t"; t=","} {print $1, $2, $3, $4t$6t$7,".", "-"}' > ${P}_HMM_minus.bed
-bash BinomialTest.bsh -sorted -b ${P}_HMM_plus.bed  -m <(zcat ${MAT_READ_BED}.gz) -p <(zcat ${PAT_READ_BED}.gz) -i <(zcat ${IDENTICAL_READ_BED}.gz) &  
-bash BinomialTest.bsh -sorted -b ${P}_HMM_minus.bed -m <(zcat ${MAT_READ_BED}.gz) -p <(zcat ${PAT_READ_BED}.gz) -i <(zcat ${IDENTICAL_READ_BED}.gz) &
-wait_a_second
-done
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
+    ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
+    bash BinomialTest.bsh -sorted -b ${P}_HMM_plus.bed  -m <(zcat ${MAT_READ_BED}) -p <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&  
+    bash BinomialTest.bsh -sorted -b ${P}_HMM_minus.bed -m <(zcat ${MAT_READ_BED}) -p <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&
+    wait_a_second
+  done
+
+  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
+    ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
+    bash BinomialTest.bsh -sorted -b ${P}_HMM_plus.bed  -p <(zcat ${MAT_READ_BED}) -m <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&  
+    bash BinomialTest.bsh -sorted -b ${P}_HMM_minus.bed -p <(zcat ${MAT_READ_BED}) -m <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&
+    wait_a_second
+  done
+
 done
 
+#Here April 18 2019
 
 ## identify blocks that have the same allele bias in all smaples from  the same tissue and cross
 # use ${P}_HMM_plus_binomtest.bed ${P}_HMM_minus_binomtest.bed
