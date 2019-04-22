@@ -54,6 +54,7 @@ ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_C
 done
 
 mkdir combined_cross HMM cross (eg: comnined BN_MB6 and BN_PB6)
+# remove duplicates 
 for bed in *_MB6_HMM_minus.bed  #*/
 do t=`echo $bed |cut -d _ -f 1`
 cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |LC_ALL=C sort -k1,1V -k2,2n > combined_cross/${t}_HMM_minus.bed
@@ -117,9 +118,9 @@ done
 # identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
 ## use fishers method to combine p-value from multiple samples  
 ## combine p-value in one file
-for t in `ls *_agreeCount.bed |cut -d _ -f 1 |uniq`
+for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`
   do 
-R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks.R
+R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks_v2.R
 done
 
 
