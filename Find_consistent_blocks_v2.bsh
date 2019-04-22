@@ -8,8 +8,7 @@
 
 cd /workdir/sc2457/F1_Tissues/Find_consistent_blocks
 
-ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/*.bsh .     
-ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/*.py .      #*/
+
 ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
 
 mkdir HMM_bed
@@ -57,8 +56,8 @@ mkdir combined_cross HMM cross (eg: comnined BN_MB6 and BN_PB6)
 # remove duplicates 
 for bed in *_MB6_HMM_minus.bed  #*/
 do t=`echo $bed |cut -d _ -f 1`
-cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |LC_ALL=C sort -k1,1V -k2,2n > combined_cross/${t}_HMM_minus.bed
-cat ${t}_PB6_HMM_plus.bed  ${t}_MB6_HMM_plus.bed  |grep -v "#" |LC_ALL=C sort -k1,1V -k2,2n  > combined_cross/${t}_HMM_plus.bed
+cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_minus.bed
+cat ${t}_PB6_HMM_plus.bed  ${t}_MB6_HMM_plus.bed  |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_plus.bed
 done
 
 cd ..
@@ -70,6 +69,37 @@ wait_a_second() {
       sleep 1
       joblist=($(jobs -p))
   done
+}
+
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+
+BinomialTest(){
+  # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
+  f=$1
+  j=$2
+  MAT_READ_BED=$3
+  PAT_READ_BED=$4
+
+  bedtools coverage -a $f -b ${MAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+  bedtools coverage -a $f -b ${PAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+  #bedtools coverage -a $f -b ${IDENTICAL_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  wait
+
+  # filter the block and only keep block with at lease 1 allele-specific read
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($5+$6 >0) {print $0}' | \
+  awk 'BEGIN{OFS="\t"; t=","} ($5>$6) {print $2, $3, $4, "M"t$5t$6, $5, $6, "-" }  ($5<=$6) {print $2, $3, $4, "P"t$5t$6, $5, $6, "-"}' \
+  | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
+
+  mv ${j}.mat_cov.bed ${j}.pat_cov.bed toremove
+  # output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
+  python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}_binomtest.bed
+  mv ${j}.merged_cov.bed toremove
+
+  python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
+  #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
 }
 
 ## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
@@ -84,33 +114,33 @@ bed_dir=map2ref_bed
     echo $PREFIX
     MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
     PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
 
     P=`echo $PREFIX| cut -d / -f 2`
     ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
     ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
-    bash BinomialTest.bsh -sorted -b ${P}_HMM_plus.bed  -m <(zcat ${MAT_READ_BED}) -p <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&  
-    bash BinomialTest.bsh -sorted -b ${P}_HMM_minus.bed -m <(zcat ${MAT_READ_BED}) -p <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
     wait_a_second
   done
 
   for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
     do PREFIX=`echo $f|cut -d . -f 1`
     echo $PREFIX
-    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+    # switch -m and -p for PB6
+    PAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    MAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
 
     P=`echo $PREFIX| cut -d / -f 2`
     ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
     ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
 
     # switch -m and -p for PB6
-    bash BinomialTest.bsh -sorted -b ${P}_HMM_plus.bed  -p <(zcat ${MAT_READ_BED}) -m <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&  
-    bash BinomialTest.bsh -sorted -b ${P}_HMM_minus.bed -p <(zcat ${MAT_READ_BED}) -m <(zcat ${PAT_READ_BED}) -i <(zcat ${IDENTICAL_READ_BED})&
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
     wait_a_second
   done
-
 done
 
 #Here April 18 2019
@@ -123,91 +153,57 @@ for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`
 R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks_v2.R
 done
 
+wc -l *_ABconsistent* |paste - -
+sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
 
 
-## identify blocks that have the same allele bias in all smaples from  the same tissue and cross
-# use ${P}_HMM_plus_binomtest.bed ${P}_HMM_minus_binomtest.bed
-# exmaine the direction is correct
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*AB*0.05* .   #*/
 
-for bed in HMM_bed/*_HMM_minus.bed  #*/
-do 
-Head=`echo ${bed} | cut -d / -f 2- |cut -d _ -f 1-2` #BN_MB6
-echo $Head
-bedtools intersect -sorted -filenames -a ${Head}_all_R1_HMM_plus_binomtest.bed -b ${Head}_*_R1_HMM_plus_binomtest.bed -c > ${Head}_all_R1_HMM_plus_agreeCount.bed
-bedtools intersect -sorted -filenames -a ${Head}_all_R1_HMM_minus_binomtest.bed -b ${Head}_*_R1_HMM_minus_binomtest.bed -c > ${Head}_all_R1_HMM_minus_agreeCount.bed
+
+join_AB(){
+  file1=$1
+  file2=$2
+  file3=$3
+  cat ${file1} ${file2} |grep -v "#" | awk 'BEGIN{t="-"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="-"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="-"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"-"); print a[1],a[2],a[3], $2, $3}' > ${file3}
+  rm ${file1}.tmp*
+}
+
+
+
+# make a table with AB at MB6 and PB6
+for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+  do t=`echo $f|cut -d _ -f 1`
+  join_AB ${t}_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed ${t}_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed ${t}_ABconsistent_FMp0.05.bed
+  sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${t}_ABconsistent_FMp0.05.bed
+  grep S ${t}_ABconsistent_FMp0.05.bed > ${t}_effect_NA.bed
+  grep -v S ${t}_ABconsistent_FMp0.05.bed | awk -v t=$t 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> t"_effect_imprinting.bed"} substr($4,1,1)!=substr($5,1,1) {print $0 >> t"_effect_strain.bed"}' 
+
 done
 
-Head=LG_PB6
-bedtools intersect -sorted -filenames -a ${Head}_CDE_R1_HMM_plus_binomtest.bed -b ${Head}_*_R1_HMM_plus_binomtest.bed -c > ${Head}_all_R1_HMM_plus_agreeCount.bed
-bedtools intersect -sorted -filenames -a ${Head}_CDE_R1_HMM_minus_binomtest.bed -b ${Head}_*_R1_HMM_minus_binomtest.bed -c > ${Head}_all_R1_HMM_minus_agreeCount.bed
-Head=LG_MB6
-bedtools intersect -sorted -filenames -a ${Head}_FG_R1_HMM_plus_binomtest.bed -b ${Head}_*_R1_HMM_plus_binomtest.bed -c > ${Head}_all_R1_HMM_plus_agreeCount.bed
-bedtools intersect -sorted -filenames -a ${Head}_FG_R1_HMM_minus_binomtest.bed -b ${Head}_*_R1_HMM_minus_binomtest.bed -c > ${Head}_all_R1_HMM_minus_agreeCount.bed
+#April 22
 
 
-for f in *_agreeCount.bed 
-	do s=`cat $f| rev | cut -f 1 |sort |uniq -c |tail -n 1 |awk '{print $2}'`
-echo $f
-echo $s
-P=`echo $f |rev | cut -d . -f 2 |rev`
-# Strict: same dirrection in all samples
-cat $f | awk 'BEGIN {OFS="\t"} ($10 >= '$s'){print $0}' >  ${P}_strict_agreenAmong_$((s-1))_samples.bed
-# Medium: same direction in all but 1 sample
-cat $f | awk 'BEGIN {OFS="\t"} ($10 >= '$s-1'){print $0}' >  ${P}_allbut1_agreenAmong_$((s-2))_samples.bed
-done
-
-## use fishers method to combine p-value from multiple samples  
-## combine p-value in one file
-for t in `ls *_agreeCount.bed |cut -d _ -f 1 |uniq`
-  do 
-R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks.R
-done
 
 
-## How many blocks before and after the filter of consistency
-rm Block_stats.txt
-for f in *_all_R1_HMM_minus_agreeCount.bed
-	do Head=`echo $f |cut -d _ -f 1-2` #LG_PB6
-echo ${Head}
 
-echo ${Head}_minus > ${Head}_temp.1
-for f in ${Head}_all_R1_HMM_minus_agreeCount*
-do
-wc -l $f
-cat $f |wc -l>> ${Head}_temp.1
-done
 
-echo ${Head}_plus >> ${Head}_temp.1
-for f in ${Head}_all_R1_HMM_plus_agreeCount*
-do
-wc -l $f
-cat $f |wc -l >> ${Head}_temp.1
-done
 
-cat ${Head}_temp.1 | paste - - - - - - >> Block_stats.txt
-done
+
+
 
 
 ### find consistentb blocks without intersect or overlap
-## consistent across tissue
 ## consistent across cross
 # combine blocks in two cross, identify the ones that are consistent
 
-cd /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/HMM_bed/
-mkdir combine_cross
-
-for bed in *_MB6_HMM_minus.bed  #*/
-do t=`echo $bed |cut -d _ -f 1`
-cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |sort-bed - > combine_cross/${t}_HMM.minus.bed
-cat ${t}_PB6_HMM_plus.bed ${t}_MB6_HMM_plus.bed |grep -v "#" |sort-bed - > combine_cross/${t}_HMM.plus.bed
-
-
-
-ST_MB6_all_R1_HMM_plus.bed
-for f in *_all_R1_HMM_*.bed
-  do echo $f
-done
 
 
 
 
+
+
+
+## consistent across tissue

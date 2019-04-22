@@ -50,8 +50,8 @@ MB6_sumlog <- function(Tissue, strand){
   result = unlist( apply( df[,grep("V9",colnames(df))],1, function(x) { r<-sumlog(x); r$p;}) )
   df$sumlog=result
   df=df[,c(col_to_keep,"sumlog", colnames(df)[grep("V9",colnames(df))])]
-  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"R1_HMM", strand, "ABconsistent_FisherMethodP0.05.bed", sep = "_"))
-  write.bed(df, file=paste(Group,"R1_HMM", strand, "ABconsistent.bed", sep = "_"))
+  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"combined_R1_HMM", strand, "ABconsistent_FisherMethodP0.05.bed", sep = "_"))
+  write.bed(df, file=paste(Group,"combined_R1_HMM", strand, "ABconsistent.bed", sep = "_"))
 }
   
 
@@ -86,8 +86,8 @@ PB6_sumlog <- function(Tissue, strand){
   result = unlist( apply( df[,grep("V9",colnames(df))],1, function(x) { r<-sumlog(x); r$p;}) )
   df$sumlog=result
   df=df[,c(col_to_keep,"sumlog", colnames(df)[grep("V9",colnames(df))])]
-  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"R1_HMM", strand, "ABconsistent_FisherMethodP0.05.bed", sep = "_"))
-  write.bed(df, file=paste(Group,"R1_HMM", strand, "ABconsistent.bed", sep = "_"))
+  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"combined_R1_HMM", strand, "ABconsistent_FisherMethodP0.05.bed", sep = "_"))
+  write.bed(df, file=paste(Group,"combined_R1_HMM", strand, "ABconsistent.bed", sep = "_"))
 }
 
 
