@@ -159,26 +159,6 @@ cat ${Head}_temp.1 | paste - - - - - - >> Block_stats.txt
 done
 
 
-### find consistentb blocks without intersect or overlap
-## consistent across tissue
-## consistent across cross
-# combine blocks in two cross, identify the ones that are consistent
-
-cd /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/HMM_bed/
-mkdir combine_cross
-
-for bed in *_MB6_HMM_minus.bed  #*/
-do t=`echo $bed |cut -d _ -f 1`
-cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |sort-bed - > combine_cross/${t}_HMM.minus.bed
-cat ${t}_PB6_HMM_plus.bed ${t}_MB6_HMM_plus.bed |grep -v "#" |sort-bed - > combine_cross/${t}_HMM.plus.bed
-
-
-
-ST_MB6_all_R1_HMM_plus.bed
-for f in *_all_R1_HMM_*.bed
-  do echo $f
-done
-
 
 
 
