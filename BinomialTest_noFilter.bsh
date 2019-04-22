@@ -1,0 +1,221 @@
+#!/usr/bin/bash
+#
+while test $# -gt 0; do
+        case "$1" in
+                -h|--help)
+      echo "Perform binomial tests in the genomic regions specified in BinomTest_BED file (-b)"
+      echo "using the mapping location of allele-specific reads in file MAT_READ_BED (-m) and PAT_READ_BED (-p)"
+      echo "Reads need to map to diploid genomes, and then liftOver to the reference genome"
+      echo ""
+      echo "Requirements in current working directory:"
+      echo "bedtools, BinomialTestForBed.py, FalsePosForBed.py"
+      echo ""
+      echo "bash BinomialTest.bsh [options] -b BinomTest_BED -m MAT_READ_BED -p PAT_READ_BED"
+      echo " "
+      echo "options:"
+      echo "To get help:"
+      echo "-h, --help             Show this brief help menu."
+      echo " "
+      echo "Required options:"
+      echo "-b,--BinomTest_BED=PATH    Path to a bed file containing regions to perform binomial tests"
+      echo "-m,--MAT_READ_BED=PATH     Path to a bed file containing the mapping location of maternal specific reads (liftOver to reference genome)"
+      echo "-p,--PAT_READ_BED=PATH     Path to a bed file containing the mapping location of paternal specific reads (liftOver to reference genome)"
+      echo ""
+      echo "Optional operations:"
+      echo "-i,--IDENTICAL_READ_BED=PATH   Path to a bed file containing the mapping location of reads that cannot tell which allele it mapps to"
+      echo "-fs,--FDR_SIMS=INT             Number of simulation for FDR test [default=20]"
+      echo "-fc,--FDR_CUTOFF=FLOAT         FDR cut off value [default=0.1]"
+      echo "-ns                            Non-strand-specific analysis. Report hits in MAT_READ_BED, PAT_READ_BED, and IDENTICAL_READ_BED that overlap BinomTest_BED regardless of the strand. Strandedness is forced by default. [default=off]"
+
+                        exit 0
+                        ;;
+              -b)
+                    shift
+                    if test $# -gt 0; then
+                        export BinomTest_BED=$1
+                    else
+                        echo "-b No path to a bed file containing regions to perform binomial tests was specified"
+                        exit 1
+                    fi
+                    shift
+                    ;;
+              --BinomTest_BED*)
+                    export BinomTest_BED=`echo $1 | sed -e 's/^[^=]*=//g'`
+                    shift
+                    ;;
+              -m)
+                    shift
+                    if test $# -gt 0; then
+                        export MAT_READ_BED=$1
+                    else
+                        echo "-m No path to a bed file containing the mapping location of maternal specific reads was specified"
+                        exit 1
+                    fi
+                    shift
+                    ;;
+              --MAT_READ_BED*)
+                    export MAT_READ_BED=`echo $1 | sed -e 's/^[^=]*=//g'`
+                    shift
+                    ;;
+              -p)
+                    shift
+                    if test $# -gt 0; then
+                        export PAT_READ_BED=$1
+                    else
+                        echo "-p No path to a bed file containing the mapping location of paternal specific reads was specified"
+                        exit 1
+                    fi
+                    shift
+                    ;;
+              --PAT_READ_BED*)
+                    export PAT_READ_BED=`echo $1 | sed -e 's/^[^=]*=//g'`
+                    shift
+                    ;;
+              -i)
+                    shift
+                    if test $# -gt 0; then
+                        export IDENTICAL_READ_BED=$1
+                    else
+                        echo "-i No file path was specified"
+                        exit 1
+                    fi
+                    shift
+                    ;;
+              --IDENTICAL_READ_BED*)
+                    export IDENTICAL_READ_BED=`echo $1 | sed -e 's/^[^=]*=//g'`
+                    shift
+                    ;;
+              -fs)
+                    shift
+                    if test $# -gt 0; then
+                        export FDR_SIMS=$1
+                    else
+                        echo "-fs No number was specified"
+                        exit 1
+                    fi
+                    shift
+                    ;;
+              --FDR_SIMS*)
+                    export FDR_SIMS=`echo $1 | sed -e 's/^[^=]*=//g'`
+                    shift
+                    ;;
+              -fc)
+                    shift
+                    if test $# -gt 0; then
+                        export FDR_CUTOFF=$1
+                    else
+                        echo "-fc No FDR cutoff value was specified"
+                        exit 1
+                    fi
+                    shift
+                    ;;
+              --FDR_CUTOFF*)
+                    export FDR_CUTOFF=`echo $1 | sed -e 's/^[^=]*=//g'`
+                    shift
+                    ;;
+              -ns)
+                    export STRANDNESS="FALSE"
+                    shift
+                    ;;
+              -sorted)
+                    export SORTED="YES"
+                    shift
+                    ;;
+                *)
+                        break
+                        ;;
+        esac
+done
+
+## CHECK ARGUMENTS.
+if [ -z "$BinomTest_BED" ]; then
+  echo " -b Path to a bed file containing regions to perform binomial tests is required."
+  echo " use bash BinomialTest.bsh --help."
+  exit 1
+fi
+if [ -z "$MAT_READ_BED" ]; then
+  echo " -m Path to a bed file containing the mapping location of maternal specific reads is required."
+  echo " use bash BinomialTest.bsh --help."
+  exit 1
+fi
+if [ -z "$PAT_READ_BED" ]; then
+  echo " -p Path to a bed file containing the mapping location of paternal specific reads is required."
+  echo " use bash BinomialTest.bsh --help."
+  exit 1
+fi
+if [ -z "$IDENTICAL_READ_BED" ]; then
+        echo "No IDENTICAL_READ_BED specified.  Using i_temp.bed"
+        IDENTICAL_READ_BED=${PAT_READ_BED}_i_temp.bed
+        echo > ${PAT_READ_BED}_i_temp.bed
+fi
+if [ -z "$FDR_SIMS" ]; then
+        echo "No FDR_SIMS specified.  Using 20"
+        FDR_SIMS=20
+fi
+if [ -z "$FDR_CUTOFF" ]; then
+        echo "No FDR_CUTOFF specified.  Using 0.1"
+        FDR_CUTOFF=0.1
+fi
+if [ -z "$STRANDNESS" ]; then
+   STRANDNESS="TRUE"
+fi
+if [ -z "$SORTED" ]; then
+   SORTED="NO"
+fi
+
+echo "BinomTest_BED                  $BinomTest_BED"
+echo "MAT_READ_BED                   $MAT_READ_BED"
+echo "PAT_READ_BED                   $PAT_READ_BED"
+echo "IDENTICAL_READ_BED             $IDENTICAL_READ_BED"
+echo "FORCE STRANDNESS               $STRANDNESS"
+echo "FDR_SIMS                       $FDR_SIMS"
+echo "FDR_CUTOFF                     $FDR_CUTOFF"
+echo "Input file sorted?             $SORTED"
+
+
+### counts the maternal, paternal reads, and the reads that cannot tell where it from, in the regions of hmm predictions
+# perform BinomialTest and filter by FDR<= FDR_CUTOFF
+
+f=${BinomTest_BED}
+j=`echo $f|rev|cut -d . -f 2-|rev`
+
+if [[ ${STRANDNESS} == "TRUE" ]]; then 
+  if [[ ${SORTED} == "YES" ]]; then 
+    bedtools coverage -a $f -b ${MAT_READ_BED} -s -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+    bedtools coverage -a $f -b ${PAT_READ_BED} -s -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+    bedtools coverage -a $f -b ${IDENTICAL_READ_BED} -s -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  else
+    bedtools coverage -a $f -b ${MAT_READ_BED} -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+    bedtools coverage -a $f -b ${PAT_READ_BED} -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+    bedtools coverage -a $f -b ${IDENTICAL_READ_BED} -s | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  fi
+else
+  if [[ ${SORTED} == "YES" ]]; then 
+    bedtools coverage -a $f -b ${MAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+    bedtools coverage -a $f -b ${PAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+    bedtools coverage -a $f -b ${IDENTICAL_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+    else
+    bedtools coverage -a $f -b ${MAT_READ_BED} | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+    bedtools coverage -a $f -b ${PAT_READ_BED} | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+    bedtools coverage -a $f -b ${IDENTICAL_READ_BED} | awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $0}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  fi
+fi
+
+wait
+# filter the block and only keep M (if mat reads > pat reads) or P (if pat reads > mat reads)
+join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.8,2.8 ${j}.mat_cov.bed ${j}.pat_cov.bed > ${j}.temp_cov.bed
+join -t $'\t' -j 1 -o 1.2,1.3,1.4,1.5,1.6,1.7,2.8 ${j}.temp_cov.bed ${j}.iden_cov.bed | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 | awk 'BEGIN {OFS="\t"} (substr($4,1,1) =="M" && $5>$6) {print $0} (substr($4,1,1) =="P" && $5<$6) {print $0} (substr($4,1,1) =="S") {print $0}' > ${j}.merged_cov.bed
+rm ${j}.temp_cov.bed ${j}.mat_cov.bed ${j}.pat_cov.bed ${j}.iden_cov.bed
+
+# output of BinomialTestForBed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can be M,P, or S), otherwise S.
+python BinomialTestForBed.py ${j}.merged_cov.bed ${j}_binomtest.bed
+rm ${j}.merged_cov.bed
+
+python FalsePosForBed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR.txt
+awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR.txt) < ${j}_binomtest.bed | awk '($4 != "S") {print $0}' > ${j}_binomtest_SigBlocks.bed
+
+
+
+if [ -f ${PAT_READ_BED}_i_temp.bed ]; then
+rm ${PAT_READ_BED}_i_temp.bed
+fi
