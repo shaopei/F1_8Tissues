@@ -82,6 +82,20 @@ name: \"${name} M:Cast (-) AlleleHMM\",
 url:\"${WD}/${head}_PB6_HMM_sorted_minus.bb\",
 mode:\"show\",
 },
+
+{
+type: \"bigbed\",
+name: \"${name} M:B6 Combined AlleleHMM Fisher p<0.05\",
+url:\"${WD}/${head}_MB6_combined_R1_HMM_ABconsistent_FisherMethodP0.05.bb\",
+mode:\"show\",
+},
+{
+type: \"bigbed\",
+name: \"${name} M:Cast Combined AlleleHMM Fisher p<0.05\",
+url:\"${WD}/${head}_PB6_combined_R1_HMM_ABconsistent_FisherMethodP0.05.bb\",
+mode:\"show\",
+},
+
 {
   type:\"bedgraph\",
   url: \"${WD}/${sample}.dREG.peak.score.bed.gz\",
