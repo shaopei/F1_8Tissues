@@ -1,4 +1,4 @@
-# use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 were not corrected.
+# use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
 # combine the significant alleleHMM blocks from the same tissue but different cross
 
@@ -232,24 +232,14 @@ bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
 rm ${h}.tmp ${h}.tmp.sort.bed
 done
 
-SP_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
-SP_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
 
-SP_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-ST_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-
-
-for f in *_HMM_plus.bed
-  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
-bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
-sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > ${PREFIX}_HMM_sorted_plus.bed
-bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
-sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > IGV/${PREFIX}_HMM_sorted_plus.bed
-bedToBigBed  ${PREFIX}_HMM_sorted_plus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_plus.bb
-rm ${PREFIX}_HMM_sorted_plus.bed
-done
-
-
+# check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
+f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
+rm tmp.txt
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+do wc -l $f >>tmp.txt
+bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
+wc -l ${f}_overlap_incosistent >>tmp.txt
 
 
 ## consistent across tissue
