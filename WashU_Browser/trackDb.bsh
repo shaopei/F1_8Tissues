@@ -140,3 +140,25 @@ type:\"native_track\",list:[
 },
 ]" >> trackDb.json 
 
+
+
+#individaul tissues
+while read s l ; do
+  ss=`echo ${s} | cut -d _ -f 1`
+  echo "# http://epigenomegateway.wustl.edu/browser/?genome=mm10&datahub=${WD}/trackDb_${ss}.json
+  # Example here: http://vizhub.wustl.edu/hubSample/hg19/hub.json
+
+  # Note: Epigenome browser does not seem to support bigBed: 
+  [" > trackDb_${ss}.json
+
+  BigWig ${s} ${l} ${ss} 0.5 >> trackDb_${ss}.json
+
+  echo "# a pack of native tracks (supplied by the browser server)
+  {
+  type:\"native_track\",list:[
+    {name:\"refGene\",mode:\"full\"},
+    ],
+  },
+  ]" >> trackDb_${ss}.json 
+done <sample_list.txt
+

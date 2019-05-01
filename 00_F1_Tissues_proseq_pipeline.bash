@@ -121,3 +121,11 @@ cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="transc
 R --vanilla --slave  < getCounts.R
 
 
+while read field1 field2 ; do
+  head=${field1}
+  echo cp ${field1}_minus.bw tmp/${field2}_${head}_minus.bw
+  echo cp ${field1}_plus.bw tmp/${field2}_${head}_plus.bw
+  echo cp ${field1}.sort.bam tmp/${field2}_${head}.bam
+done <sample_group.txt
+
+
