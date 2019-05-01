@@ -1,0 +1,245 @@
+# use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
+# eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
+# combine the significant alleleHMM blocks from the same tissue but different cross
+
+# map reads from each individual sample from the same tissue and cross to the combined_cross AlleleHMM blocks
+# identify blocks that have the same allele bias in all samples from the same tissue and cross
+# use fishers method to combine p-value from multiple samples
+
+cd /workdir/sc2457/F1_Tissues/Find_consistent_blocks
+
+
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
+
+mkdir HMM_bed
+cd HMM_bed
+
+## use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
+T=5
+for OR in BN LV SK SP
+  do
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
+done
+done
+
+T=4
+for OR in GI ST
+  do
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
+done
+done
+
+OR=HT
+for s in plus minus 
+  do
+T=4
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+T=5
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
+done
+
+
+T=5
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+done
+
+
+# Combine AlleleHMM significantly biased blocks from MB6 and PB6(eg: comnined BN_MB6 and BN_PB6)
+# remove duplicate blocks
+mkdir combined_cross 
+for bed in *_MB6_HMM_minus.bed  #*/
+do t=`echo $bed |cut -d _ -f 1`
+cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3, ".",".","-"}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_minus.bed
+cat ${t}_PB6_HMM_plus.bed  ${t}_MB6_HMM_plus.bed  |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3,".",".","+"}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_plus.bed
+done
+
+cd ..
+
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 10 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+
+BinomialTest(){
+  # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
+  f=$1
+  j=$2
+  MAT_READ_BED=$3
+  PAT_READ_BED=$4
+
+  bedtools coverage -s -a $f -b ${MAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+  bedtools coverage -s -a $f -b ${PAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+  #bedtools coverage -s -a $f -b ${IDENTICAL_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  wait
+
+  # filter the block and only keep block with at lease 1 allele-specific read
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($5+$6 >0) {print $0}' | \
+  awk 'BEGIN{OFS="\t"; t=","} ($5>$6) {print $2, $3, $4, "M"t$5t$6, $5, $6, "-" }  ($5<$6) {print $2, $3, $4, "P"t$5t$6, $5, $6, "-"}  ($5==$6) {print $2, $3, $4, "S"t$5t$6, $5, $6, "-"} '  \
+  | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
+
+  mv ${j}.mat_cov.bed ${j}.pat_cov.bed toremove
+  # output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
+  python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}_binomtest.bed
+  mv ${j}.merged_cov.bed toremove
+
+  python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
+  #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
+}
+
+## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
+
+for bed in HMM_bed/combined_cross/*_HMM_minus.bed  #*/   #comnined_corss from each tissue
+do 
+Head=`echo ${bed} |rev| cut -d / -f 1 |rev |cut -d _ -f 1` #BN
+echo $Head
+bed_dir=map2ref_bed
+  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
+    ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
+    wait_a_second
+  done
+
+  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    # switch -m and -p for PB6
+    PAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    MAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
+    ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
+
+    # switch -m and -p for PB6
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
+    wait_a_second
+  done
+done
+
+#Here April 23
+
+# identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
+## use fishers method to combine p-value from multiple samples  
+## combine p-value in one file
+for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`
+  do 
+R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks_v2.R
+done
+
+wc -l *_ABconsistent* |paste - -
+sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
+
+
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent* .   #*/
+
+
+join_AB(){
+  file1=$1
+  file2=$2
+  file3=$3
+  cat ${file1} ${file2} |grep -v "#" | awk 'BEGIN{t="-"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="-"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="-"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"-"); print a[1],a[2],a[3], $2, $3}' > ${file3}
+  rm ${file1}.tmp*
+}
+
+#Here April 22
+
+# make a table with AB at MB6 and PB6
+for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+  do t=`echo $f|cut -d _ -f 1`
+  for s in plus minus
+    do 
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.05.bed 
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.05.bed 
+    join_out=${t}_combined_HMM_${s}_ABconsistent_FMp0.05.bed
+    h=${t}_${s}_p0.05_effect
+
+    join_AB ${join_in1} ${join_in2} ${join_out}
+    grep S ${join_out} > ${h}_NA.bed
+    im=${h}_imprinting.bed
+    st=${h}_strain.bed
+    rm ${im} ${st}
+    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
+    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
+  done
+done
+
+
+for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
+  do t=`echo $f|cut -d _ -f 1`
+  for s in plus minus
+    do
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent.bed 
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent.bed 
+    join_out=${t}_combined_HMM_${s}_ABconsistent.bed
+    h=${t}_${s}_effect
+
+    join_AB ${join_in1} ${join_in2} ${join_out}
+    grep S ${join_out} > ${h}_NA.bed
+    im=${h}_imprinting.bed
+    st=${h}_strain.bed
+    rm ${im} ${st}
+    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
+    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
+  done
+done
+
+
+
+# put the combined consistent blocks on WashU browser
+cd /local/ftp/pub/hub/F1_Tissues/mm10
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent_* .   #*/
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+do 
+h=`echo $f|cut -d _ -f 1-5`
+t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
+cat ${h}_minus_${t}.bed |grep -v "#"| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "-"}' > ${h}.tmp
+cat ${h}_plus_${t}.bed |grep -v "#" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "+"}' >> ${h}.tmp
+sort-bed ${h}.tmp > ${h}.tmp.sort.bed
+bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
+rm ${h}.tmp ${h}.tmp.sort.bed
+done
+
+
+# check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
+f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
+rm tmp.txt
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+do wc -l $f >>tmp.txt
+bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
+wc -l ${f}_overlap_incosistent >>tmp.txt
+
+
+## consistent across tissue
