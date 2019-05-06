@@ -46,18 +46,6 @@ BigWig() {
   mode:\"show\",
   summarymethod: \"min\",
 },
-
-{
-  type:\"bigwig\",
-  url:\"${WD}/${sample}.dREG.infp.bw\",
-  name: \"${name}, dREG prediction score\",
-  fixedscale:{min:0,max:1.5},
-  colorpositive:\"#99d8c9\",
-  colornegative:\"#0000e5\",
-  height:20,
-  mode:\"show\",
-  summarymethod: \"max\",
-},
 {
 type: \"bigbed\",
 name: \"${name} M:B6 (+) AlleleHMM\",
@@ -82,7 +70,17 @@ name: \"${name} M:Cast (-) AlleleHMM\",
 url:\"${WD}/${head}_PB6_HMM_sorted_minus.bb\",
 mode:\"show\",
 },
-
+{
+  type:\"bigwig\",
+  url:\"${WD}/${sample}.dREG.infp.bw\",
+  name: \"${name}, dREG prediction score\",
+  fixedscale:{min:0,max:1.5},
+  colorpositive:\"#99d8c9\",
+  colornegative:\"#0000e5\",
+  height:20,
+  mode:\"show\",
+  summarymethod: \"max\",
+},
 {
 type: \"bigbed\",
 name: \"${name} M:B6 Combined AlleleHMM Fisher p<0.05\",
@@ -91,11 +89,10 @@ mode:\"show\",
 },
 {
 type: \"bigbed\",
-name: \"${name} M:Cast Combined AlleleHMM Fisher p<0.05\",
-url:\"${WD}/${head}_PB6_combined_R1_HMM_ABconsistent_FisherMethodP0.05.bb\",
+name: \"${name} M:B6 ASE Transcript\",
+url:\"${WD}/${head}_MB6_transcript_ABconsistent_FisherMethodP0.05.bb\",
 mode:\"show\",
 },
-
 {
   type:\"bedgraph\",
   url: \"${WD}/${sample}.dREG.peak.score.bed.gz\",
@@ -107,8 +104,8 @@ mode:\"show\",
 },
 {
 type: \"bigbed\",
-name: \"${name} M:B6 ASE Transcript\",
-url:\"${WD}/${head}_MB6_transcript_ABconsistent_FisherMethodP0.05.bb\",
+name: \"${name} M:Cast Combined AlleleHMM Fisher p<0.05\",
+url:\"${WD}/${head}_PB6_combined_R1_HMM_ABconsistent_FisherMethodP0.05.bb\",
 mode:\"show\",
 },
 {
