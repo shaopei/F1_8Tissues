@@ -272,9 +272,9 @@ for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
   # make a table with the same first column
   for head in BN HT SK SP LG LV GI ST
     do 
-      echo -e "#chrm-chrStart-chrEnd\t${head}_MB6\t${head}PB6" > join_${head}${body}
+      echo -e "#chrm_chrStart_chrEnd\t${head}_MB6\t${head}PB6" > join_${head}${body}
       join -a 1 -t $'\t' -e EMPTY -j 1 -o 1.1,2.5,2.6 bed3.txt  <(< ${head}${body}  awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) >> join_${head}${body}
   done
   # paste the tables from tissues into a big table
-  paste join_*${body} | awk 'BEGIN {OFS="\t";m=":";d="-"}{split($1,a,"-"); print a[1],a[2],a[3],$2,$3,$5,$6,$8,$9,$11,$12,$14,$15,$17,$18,$20,$21,$23,$24}' |awk 'BEGIN {OFS="\t";m=":";d="-"}{print $1m$2d$3, $0}' > T8_Merge${body}
+  paste join_*${body} | awk 'BEGIN {OFS="\t";m=":";d="-"}{split($1,a,"_"); print a[1],a[2],a[3],$2,$3,$5,$6,$8,$9,$11,$12,$14,$15,$17,$18,$20,$21,$23,$24}'  > T8_Merge${body}
 done
