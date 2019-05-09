@@ -232,6 +232,41 @@ cat tmp.txt |paste - -
 #Chr7: Zim1 (BN and SK skeletal muscle) zim1 maternal expressed in Brain and Skeletal muscle. Within a paternal imprinting locus nearby in most tissues 
 
 
+### identify strain-effect culster and imprinting clusters
+# calculate the distances to the closest region, ignore overlap ones
+# -io Ignore features in B that overlap A. That is, we want close, yet not touching features only.
+# -d report distance
+
+#for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+  do
+  rm tmp${body}
+  for head in BN HT  SK  SP  LG  LV  GI  ST
+    do f=${head}${body}
+    cat $f |awk -v h=$head 'BEGIN {OFS="\t"}{print $1,$2,$3, h}'>> tmp${body}
+  done
+  sort-bed tmp${body} > T8${body}_sort
+  bedtools closest -io -d -a T8${body}_sort -b T8${body}_sort > T8_closest_io${body}
+done
+
+## a distribution of distances
+# Indentify_cluster.R
+## Set cut off distance to ???
+
+# use bedtools merge then the blocks that are overlap. 
+# One with plus and minus seperate. The other combine blocks from plus and minus strand
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+  do
+  echo T8${body}_sort
+  #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}'
+  bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
+  bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
+done
+
+
+
+
 
 # put the combined consistent blocks on WashU browser
 cd /local/ftp/pub/hub/F1_Tissues/mm10
