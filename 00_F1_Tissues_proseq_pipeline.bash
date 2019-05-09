@@ -122,7 +122,7 @@ R --vanilla --slave  < getCounts.R
 
 
 while read field1 field2 ; do
-  head=${field1}
+  head=`echo ${field1} |rev |cut -d _ -f 3`
   echo cp ${field1}_minus.bw tmp/${field2}_${head}_minus.bw
   echo cp ${field1}_plus.bw tmp/${field2}_${head}_plus.bw
   echo cp ${field1}.sort.bam tmp/${field2}_${head}.bam
