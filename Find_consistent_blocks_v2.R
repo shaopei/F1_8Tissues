@@ -1,9 +1,15 @@
-#R --vanilla --slave --args $(pwd) Tissue < Find_consistent_blocks_v2.R
+#R --vanilla --slave --args $(pwd) Tissue pvlaue_cutoff < Find_consistent_blocks_v2.R
 
 #arguments here
 args=(commandArgs(TRUE))
 setwd(args[1])
 Tissue=args[2]
+if (length(args) <3){
+  pvlaue_cutoff=0.05
+}else{
+pvlaue_cutoff=as.numeric(args[3])
+}
+
 
 #setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/consistent_block")
 library("metap")
@@ -50,7 +56,7 @@ MB6_sumlog <- function(Tissue, strand){
   result = unlist( apply( df[,grep("V9",colnames(df))],1, function(x) { r<-sumlog(x); r$p;}) )
   df$sumlog=result
   df=df[,c(col_to_keep,"sumlog", colnames(df)[grep("V9",colnames(df))])]
-  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"combined_R1_HMM", strand, "ABconsistent_FisherMethodP0.05.bed", sep = "_"))
+  write.bed(df[df$sumlog<=pvlaue_cutoff,], file=paste(Group,"_combined_R1_HMM_", strand, "_ABconsistent_FisherMethodP",pvlaue_cutoff,".bed", sep = ""))
   write.bed(df, file=paste(Group,"combined_R1_HMM", strand, "ABconsistent.bed", sep = "_"))
 }
   
@@ -86,7 +92,7 @@ PB6_sumlog <- function(Tissue, strand){
   result = unlist( apply( df[,grep("V9",colnames(df))],1, function(x) { r<-sumlog(x); r$p;}) )
   df$sumlog=result
   df=df[,c(col_to_keep,"sumlog", colnames(df)[grep("V9",colnames(df))])]
-  write.bed(df[df$sumlog<=0.05,], file=paste(Group,"combined_R1_HMM", strand, "ABconsistent_FisherMethodP0.05.bed", sep = "_"))
+  write.bed(df[df$sumlog<=pvlaue_cutoff,], file=paste(Group,"_combined_R1_HMM_", strand, "_ABconsistent_FisherMethodP",pvlaue_cutoff,".bed", sep = ""))
   write.bed(df, file=paste(Group,"combined_R1_HMM", strand, "ABconsistent.bed", sep = "_"))
 }
 

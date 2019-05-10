@@ -145,10 +145,15 @@ done
 # identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
 ## use fishers method to combine p-value from multiple samples  
 ## combine p-value in one file
-for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`
+for t in BN HT SK SP LG LV GI ST
   do 
-R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks_v2.R
+R --vanilla --slave --args $(pwd) $t 0.05 < Find_consistent_blocks_v2.R
 done
+
+for t in BN HT SK SP LG LV GI ST
+  do 
+R --vanilla --slave --args $(pwd) $t 0.01 < Find_consistent_blocks_v2.R
+done 
 
 wc -l *_ABconsistent* |paste - -
 sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
@@ -189,6 +194,25 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
   done
 done
 
+for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.1.bed
+  do t=`echo $f|cut -d _ -f 1`
+  for s in plus minus
+    do 
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.1.bed 
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.1.bed 
+    join_out=${t}_combined_HMM_${s}_ABconsistent_FMp0.1.bed
+    h=${t}_${s}_p0.1_effect
+
+    join_AB ${join_in1} ${join_in2} ${join_out}
+    grep S ${join_out} > ${h}_NA.bed
+    im=${h}_imprinting.bed
+    st=${h}_strain.bed
+    rm ${im} ${st}
+    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
+    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
+  done
+done
+
 
 for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
   do t=`echo $f|cut -d _ -f 1`
@@ -208,6 +232,57 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
     sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
   done
 done
+
+
+join1(){
+  file1=$1
+  file2=$2
+  file3=$3
+  cat ${file1} |grep -v "#" | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="_"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"_"); print a[1],a[2],a[3], $2, $3}' > ${file3}
+  rm ${file1}.tmp*
+}
+
+join2(){
+  file1=$1
+  file2=$2
+  file3=$3
+  cat ${file2} |grep -v "#" | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="_"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"_"); print a[1],a[2],a[3], $2, $3}' > ${file3}
+  rm ${file1}.tmp*
+}
+
+### The block is Fisher method p<=0.05 in MB6 or PB6 (or both) 
+for head in BN HT SK SP LG LV GI ST
+  do t=${head}
+  for s in plus minus
+    do 
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.05.bed 
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.1.bed
+    join_outM=${t}_combined_HMM_${s}_ABconsistent_MFMp0.05.bed
+    join1 ${join_in1} ${join_in2} ${join_outM}
+
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.1.bed
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.05.bed 
+    join_outP=${t}_combined_HMM_${s}_ABconsistent_PFMp0.05.bed
+    join2 ${join_in1} ${join_in2} ${join_outP}
+    h=${t}_${s}_1FMp0.05_effect
+    cat ${join_outM} ${join_outP} |sort-bed - |uniq > ${h}_all_withDuplicates.bed
+    cat ${h}_all_withDuplicates.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3}'|uniq > ${h}_all_withoutDuplicates.bed
+    im=${h}_imprinting.bed
+    st=${h}_strain.bed
+    rm ${im} ${st}
+    grep -v S ${h}_all_withDuplicates.bed | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
+  done
+done
+
+for head in BN HT SK SP LG LV GI ST
+  do wc -l ${head}*_1FMp0.05_effect* |paste - - - - - - - -
+done
+
+
 
 # check overlap blocks of imprinting and see if there is inconsistency. eg: one MM, the other PP
 #f=LG_plus_p0.05_effect_imprinting.bed
@@ -238,7 +313,9 @@ cat tmp.txt |paste - -
 # -d report distance
 
 #for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+#for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+#for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
+for body in _plus_p0.1_effect_imprinting.bed _minus_p0.1_effect_imprinting.bed
   do
   rm tmp${body}
   for head in BN HT  SK  SP  LG  LV  GI  ST
@@ -253,18 +330,55 @@ done
 # Indentify_cluster.R
 ## Set cut off distance to ???
 
-# use bedtools merge then the blocks that are overlap. 
-# One with plus and minus seperate. The other combine blocks from plus and minus strand
-for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+### use bedtools merge then the blocks that are overlap (d=0). 
+## One with plus and minus seperate. The other combine blocks from plus and minus strand
+# plus and minus seperate.
+#for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+#for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
   do
   echo T8${body}_sort
-  #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}'
-  bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
-  bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
+  bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8${body}_cluster
+  #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
+  #bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
 done
 
+#combine blocks from plus and minus strand
+rm T8_2Strand_1FMp0.05_effect_imprinting.bed 
+for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
+  do
+  cat T8${body}_sort >> T8_2Strand_1FMp0.05_effect_imprinting.bed 
+done
+bedtools merge -i <(sort-bed  T8_2Strand_1FMp0.05_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster
 
+rm T8_2Strand_p0.05_effect_imprinting.bed 
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+  do
+  cat T8${body}_sort >> T8_2Strand_p0.05_effect_imprinting.bed 
+done
+bedtools merge -i <(sort-bed  T8_2Strand_p0.05_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.05_effect_imprinting.bed_cluster
+
+rm T8_2Strand_p0.1_effect_imprinting.bed 
+for body in _plus_p0.1_effect_imprinting.bed _minus_p0.1_effect_imprinting.bed
+  do
+  cat T8${body}_sort >> T8_2Strand_p0.1_effect_imprinting.bed 
+done
+bedtools merge -i <(sort-bed  T8_2Strand_p0.1_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.1_effect_imprinting.bed_cluster
+
+# make a table to compare among different p-value cut off
+rm tmp.join
+for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
+    do 
+      cat $f |cut -f 2 >> tmp.join  # a list of bed regions
+done
+sort tmp.join |uniq > tmp.sort  # remove duplicates
+for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
+    do 
+      join -a 1 -t $'\t' -e EMPTY -1 1 -2 2 -o 1.1,2.6 tmp.sort  <(sort -k 2 $f) > ${f}_join_tmp
+  done
+# paste the tables from tissues into a big table
+echo *_join_tmp
+paste *_join_tmp 
 
 
 
@@ -294,7 +408,7 @@ wc -l ${f}_overlap_incosistent >>tmp.txt
 
 
 ## consistent across tissue
-# how common is imprting across tissues?
+# how common is imprting across tissues?  (This script use blocks, not clusters. Blocks can be overlapped)
 for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
   do
   # make a list with all blocks from 8 tissues
