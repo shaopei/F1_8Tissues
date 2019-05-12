@@ -387,6 +387,7 @@ cd /local/ftp/pub/hub/F1_Tissues/mm10
 ln -f -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks_across_8tissue/*_ABconsistent_* .   #*/
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.1.bed
 do 
 h=`echo $f|cut -d _ -f 1-5`
 t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
