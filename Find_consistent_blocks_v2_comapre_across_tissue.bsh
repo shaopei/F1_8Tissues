@@ -334,8 +334,8 @@ done
 ## One with plus and minus seperate. The other combine blocks from plus and minus strand
 # plus and minus seperate.
 #for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-#for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
-for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
+for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+#for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
   do
   echo T8${body}_sort
   bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8${body}_cluster
@@ -364,6 +364,15 @@ for body in _plus_p0.1_effect_imprinting.bed _minus_p0.1_effect_imprinting.bed
   cat T8${body}_sort >> T8_2Strand_p0.1_effect_imprinting.bed 
 done
 bedtools merge -i <(sort-bed  T8_2Strand_p0.1_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.1_effect_imprinting.bed_cluster
+
+coreBody=_p0.05_effect_strain
+rm T8_2Strand${coreBody}.bed 
+for body in _plus${coreBody}.bed _minus${coreBody}.bed
+  do
+  cat T8${body}_sort >> T8_2Strand${coreBody}.bed 
+done
+bedtools merge -i <(sort-bed  T8_2Strand${coreBody}.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand${coreBody}.bed_cluster
+
 
 # make a table to compare among different p-value cut off
 rm tmp.join

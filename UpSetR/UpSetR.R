@@ -40,7 +40,7 @@ for (kkk in c( "BN","HT","SK","SP","LG","LV","GI","ST")){
 }
 upset(df, nsets = 8, sets =c( "BN","HT","SK","SP","LG","LV","GI","ST"), keep.order = T, order.by = "degree")
 
-# cluster regardless of strandness
+# imprinting cluster regardless of strandness
 Tissue_list=c( "BN","HT","SK","SP","LG","LV","GI","ST")
 df=read.table("T8_2Strand_p0.05_effect_imprinting.bed_cluster", header = F)
 df=read.table("T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster", header = F)
@@ -50,7 +50,7 @@ for (kkk in Tissue_list){
   df$tmp[grepl(kkk, df$V6)]=1
   colnames(df)[grep("tmp", colnames(df))]=kkk
 }
-#upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree")
+upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree")
 df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
 a=hist(df$TissueCounts, breaks = seq(-0.5,9,1))
 a$counts
@@ -75,7 +75,7 @@ legend("topright",
        , bty = "n"
 )
 
-
+# strain effect cluster regardless of strandness
 
 
 
