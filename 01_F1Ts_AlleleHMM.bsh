@@ -275,11 +275,12 @@ done < ../sample_list.txt
 
 
 
-for t in `cat ../sample_list.txt |cut -f 2 |uniq`
+#for t in `cat ../sample_list.txt |cut -f 2 |uniq`
+for t in BN HT  SK  SP  LG  LV  GI  ST
   do echo $t
   for s in plus minus
     do
-    bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ../${t}_all_${s}.bw ${t}_*_${s}.bw &
+    bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ${t}_all_${s}.bw sep/${t}_*_${s}.bw &
 done
 done
 

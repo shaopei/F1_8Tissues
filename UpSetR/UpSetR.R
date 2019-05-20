@@ -76,6 +76,36 @@ legend("topright",
 )
 
 # strain effect cluster regardless of strandness
+Tissue_list=c( "BN","HT","SK","SP","LG","LV","GI","ST")
+df=read.table("T8_2Strand_p0.05_effect_strain.bed_cluster", header = F)
+for (kkk in Tissue_list){
+  df$tmp=0
+  df$tmp[grepl(kkk, df$V6)]=1
+  colnames(df)[grep("tmp", colnames(df))]=kkk
+}
+upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree", nintersects=100)
+df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
+a=hist(df$TissueCounts, breaks = seq(-0.5,9,1))
+barplot(a$counts, names.arg=seq(1,8,1))
 
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="blue",las=1, ylim=c(0,80))
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="blue",las=1,add=T)
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="red", density=25,angle=45,add=T)
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="red", density=25,angle=45)
+sum(df$TissueCounts==1)
+
+legend("topright", 
+       legend = c("100%", "25%"),
+       #pch=c(15,15),
+       cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25,10000),
+       angle=c(45,180),
+       #angle=45,
+       fill=c("blue", "yellow")
+       , bty = "n"
+)
 
 
