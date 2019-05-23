@@ -52,7 +52,7 @@ dregBED.covar <- function(dataset, dreg.bed) {
       idx = which(bed.i[,2] <= pos & bed.i[,3] > pos)
 
       if (length(idx) >= 1)
-        return(max(bed.i[idx, 4]))
+        return(max(bed.i[idx, 4])) # use 4 for bedgraph. 5 for 6 bed
       return(0)
     })
 
