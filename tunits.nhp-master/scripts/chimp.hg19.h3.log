@@ -1,0 +1,22 @@
+cd ..
+mkdir -p run/chimp.hg19.h3
+cd run/chimp.hg19.h3
+
+for i in ../../data/chimp/C-U*hg19*; do ln -s $i .; done
+
+# reference chromosome
+Rscript ../../scripts/run.hmm.h3.R chr22 C-U.TSS_hg19.bed.gz C-U_plus.hg19.bw C-U_minus.hg19.bw
+
+# other chroms
+../../scripts/parallel.sh -j 4 -r "Rscript ../../scripts/run.hmm.h3.R * C-U.TSS_hg19.bed.gz C-U_plus.hg19.bw C-U_minus.hg19.bw chr22.params.Rdata" `Rscript ../../scripts/get.chroms.R C-U_plus.hg19.bw | grep -v "^chr22$" | grep -v "_"`
+
+# merge results
+rm -f C-U.preds.bed C-U.preds.full.bed C-U.preds.ext.bed
+
+echo 'track name="TU S3iop_nb" description="TU HMM Split 3iop_nb" itemRgb=On' > C-U.preds.bed
+echo 'track name="TU S3iop_nb F" description="TU HMM Split 3iop_nb (full)" itemRgb=On' > C-U.preds.full.bed
+echo 'track name="TU S3iop_nb E" description="TU HMM Split 3iop_nb (ext)" itemRgb=On' > C-U.preds.ext.bed
+
+cat chr*.preds.bed | grep -v "track" | bedtools sort >> C-U.preds.bed
+cat chr*.preds.full.bed | grep -v "track" | bedtools sort >> C-U.preds.full.bed
+cat chr*.preds.ext.bed | grep -v "track" | bedtools sort >> C-U.preds.ext.bed

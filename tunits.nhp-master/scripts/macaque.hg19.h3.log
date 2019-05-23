@@ -1,0 +1,22 @@
+cd ..
+mkdir -p run/macaque.hg19.h3
+cd run/macaque.hg19.h3
+
+for i in ../../data/macaque/M-U*hg19*; do ln -s $i .; done
+
+# reference chromosome
+Rscript ../../scripts/run.hmm.h3.R chr22 M-U.TSS_hg19.bed.gz M-U_plus.hg19.bw M-U_minus.hg19.bw
+
+# other chroms
+../../scripts/parallel.sh -j 2 -r "Rscript ../../scripts/run.hmm.h3.R * M-U.TSS_hg19.bed.gz M-U_plus.hg19.bw M-U_minus.hg19.bw chr22.params.Rdata" `Rscript ../../scripts/get.chroms.R M-U_plus.hg19.bw | grep -v "^chr22$" | grep -v "_"`
+
+# merge results
+rm -f M-U.preds.bed M-U.preds.full.bed M-U.preds.ext.bed
+
+echo 'track name="TU S3iop_nb" description="TU HMM Split 3iop_nb" itemRgb=On' > M-U.preds.bed
+echo 'track name="TU S3iop_nb F" description="TU HMM Split 3iop_nb (full)" itemRgb=On' > M-U.preds.full.bed
+echo 'track name="TU S3iop_nb E" description="TU HMM Split 3iop_nb (ext)" itemRgb=On' > M-U.preds.ext.bed
+
+cat chr*.preds.bed | grep -v "track" | bedtools sort >> M-U.preds.bed
+cat chr*.preds.full.bed | grep -v "track" | bedtools sort >> M-U.preds.full.bed
+cat chr*.preds.ext.bed | grep -v "track" | bedtools sort >> M-U.preds.ext.bed
