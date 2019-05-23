@@ -1,0 +1,9 @@
+[submodule "rpkgs/tunits"]
+	path = rpkgs/tunits
+	url = https://github.com/andrelmartins/tunits.git
+[submodule "rpkgs/bigWig"]
+	path = rpkgs/bigWig
+	url = https://github.com/andrelmartins/bigWig.git
+[submodule "rpkgs/QHMM"]
+	path = rpkgs/QHMM
+	url = https://github.com/andrelmartins/QHMM.git
