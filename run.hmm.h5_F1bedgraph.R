@@ -17,22 +17,16 @@ scriptPath <- function() {
 }
 
 library(tunits)
-source("hmm.prototypes.R")
+source(paste(scriptPath(), "hmm.prototypes.R", sep="/"))
 
 step = 50
 
 args <- commandArgs(trailingOnly=TRUE)
 
-chrom = "chr1"
-bed.path = args[2] #BN_all.dREG.peak.score.bed.gz
-bwPlus.path = args[3] #BN_all_plus.bw
-bwMinus.path = args[4] #BN_all_minus.bw
-ref.params.path = args[5]
-
-chrom = "chr1"
-bed.path = "BN_all.dREG.peak.score.bed.gz"
-bwPlus.path = "BN_all_plus.bw"
-bwMinus.path = "BN_all_minus.bw"
+chrom = args[1]
+bed.path = args[2]
+bwPlus.path = args[3]
+bwMinus.path = args[4]
 ref.params.path = args[5]
 
 #
@@ -54,7 +48,7 @@ dregBED.covar <- function(dataset, dreg.bed) {
       idx = which(bed.i[,2] <= pos & bed.i[,3] > pos)
 
       if (length(idx) >= 1)
-        return(max(bed.i[idx, 4]))
+        return(max(bed.i[idx, 5]))
       return(0)
     })
 
@@ -84,8 +78,6 @@ for (i in 1:length(all.dset)) {
 #
 # create HMM instance
 hmm.dreg = splithmm3.hmm(0.153, with.shortcut = TRUE, no.egrps = TRUE, poisson.decay = TRUE, use.negbinom = TRUE)
-hmm.dreg = splithmm4.hmm(with.shortcut = TRUE, no.egrps = FALSE, use.negbinom = TRUE)
-
 
 #
 # if present, pre-load starting parameters
@@ -112,7 +104,7 @@ preds.dreg = decode.dataset(hmm.dreg, all.dset.c, 2, covar.lst = covars.clamp)
 write.track(preds.dreg, chrom, chrom, paste(chrom, ".preds.bed", sep=''))
 
 # 2. full version
-preds.full.dreg = decode.dataset(hmm.dreg, all.dset.c, 2:5, covar.lst = covars.clamp)
+preds.full.dreg = decode.dataset(hmm.dreg, all.dset.c, 2:3, covar.lst = covars.clamp)
 write.track(preds.full.dreg, chrom, chrom, paste(chrom, ".preds.full.bed", sep=''))
 
 # 3. extended version
