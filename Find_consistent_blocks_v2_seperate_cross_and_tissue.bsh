@@ -1,12 +1,13 @@
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
-# combine the significant alleleHMM blocks from the same tissue but different cross
+# WITHOUT combine the significant alleleHMM blocks from the same tissue but different cross
+# Find blocks that are consistent in all samples from each group eg.BN_MB6(BN_A,BN_F,BN_G)
 
-# map reads from each individual sample from the same tissue and cross to the combined_cross AlleleHMM blocks
+# map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
 # identify blocks that have the same allele bias in all samples from the same tissue and cross
 # use fishers method to combine p-value from multiple samples
 
-cd /workdir/sc2457/F1_Tissues/Find_consistent_blocks
+cd Find_consistent_blocks_Tissue_cross_Specific/
 
 
 ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
@@ -50,16 +51,6 @@ for s in plus minus
   do
 ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
 ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
-done
-
-
-# Combine AlleleHMM significantly biased blocks from MB6 and PB6(eg: comnined BN_MB6 and BN_PB6)
-# remove duplicate blocks
-mkdir combined_cross 
-for bed in *_MB6_HMM_minus.bed  #*/
-do t=`echo $bed |cut -d _ -f 1`
-cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3, ".",".","-"}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_minus.bed
-cat ${t}_PB6_HMM_plus.bed  ${t}_MB6_HMM_plus.bed  |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3,".",".","+"}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_plus.bed
 done
 
 cd ..
@@ -106,12 +97,14 @@ BinomialTest(){
 
 ## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
 
-for bed in HMM_bed/combined_cross/*_HMM_minus.bed  #*/   #comnined_corss from each tissue
+for bed in HMM_bed/*_HMM_minus.bed  #*/   #each AlleleHMM blocks (NO comnined_corss) from each tissue and cross
 do 
 Head=`echo ${bed} |rev| cut -d / -f 1 |rev |cut -d _ -f 1` #BN
-echo $Head
+cross=`echo ${bed} |rev| cut -d / -f 1 |rev |cut -d _ -f 2`
+echo $Head #BN
+echo $cross #MB6
 bed_dir=map2ref_bed
-  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+  for f in ${bed_dir}/${Head}_${cross}_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
     do PREFIX=`echo $f|cut -d . -f 1`
     echo $PREFIX
     MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
@@ -119,41 +112,34 @@ bed_dir=map2ref_bed
     #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
 
     P=`echo $PREFIX| cut -d / -f 2`
-    ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
-    ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
+    ln -s HMM_bed/${Head}_${cross}_HMM_plus.bed ${P}_HMM_plus.bed
+    ln -s HMM_bed/${Head}_${cross}_HMM_minus.bed ${P}_HMM_minus.bed
+
+  if [[ "$cross" == "MB6" ]] ; then
     BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
     BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
-    wait_a_second
-  done
-
-  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
-    do PREFIX=`echo $f|cut -d . -f 1`
-    echo $PREFIX
+  elif [[ "$cross" == "PB6" ]]  ; then
     # switch -m and -p for PB6
-    PAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    MAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${PAT_READ_BED} ${MAT_READ_BED} 
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${PAT_READ_BED} ${MAT_READ_BED} 
+  fi
 
-    P=`echo $PREFIX| cut -d / -f 2`
-    ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
-    ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
 
-    # switch -m and -p for PB6
-    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
-    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
-    wait_a_second
   done
 done
 
-#Here April 23
+ ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/Find_consistent_blocks_v2.R .
 
 # identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
 ## use fishers method to combine p-value from multiple samples  
 ## combine p-value in one file
-for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`
+for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`  #BN
   do 
 R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks_v2.R
 done
+
+## May 29th. Stop here. Use tunit for allele-bias instead
+
 
 wc -l *_ABconsistent* |paste - -
 sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
