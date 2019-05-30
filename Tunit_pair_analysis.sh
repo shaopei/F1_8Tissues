@@ -60,34 +60,34 @@ BinomialTest(){
 # map reads from each individual sample from the same tissue and cross to the tunit predicts
 
 for Head in BN HT SK SP LG LV GI ST
-	do 
-	echo $Head #BN
-	bed_dir=map2ref_bed
-	for cross in MB6 PB6
-		do echo $cross #MB6
-		  for f in ${bed_dir}/${Head}_${cross}_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
-			do echo $f  #map2ref_bed/ST_PB6_B_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
-			PREFIX=`echo $f|cut -d . -f 1`   #map2ref_bed/ST_PB6_B_R1
-			echo $PREFIX
-			MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-			PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-			#IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+    do 
+    echo $Head #BN
+    bed_dir=map2ref_bed
+    for cross in MB6 PB6
+        do echo $cross #MB6
+          for f in ${bed_dir}/${Head}_${cross}_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+            do echo $f  #map2ref_bed/ST_PB6_B_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+            PREFIX=`echo $f|cut -d . -f 1`   #map2ref_bed/ST_PB6_B_R1
+            echo $PREFIX
+            MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+            PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+            #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
 
-			P=`echo $PREFIX| cut -d / -f 2` #ST_PB6_B_R1
-			ln -s tunit_preds/${Head}_all_h5.preds_plus.bed ${P}_plus.bed
-			ln -s tunit_preds/${Head}_all_h5.preds_minus.bed ${P}_minus.bed
+            P=`echo $PREFIX| cut -d / -f 2` #ST_PB6_B_R1
+            ln -s tunit_preds/${Head}_all_h5.preds_plus.bed ${P}_plus.bed
+            ln -s tunit_preds/${Head}_all_h5.preds_minus.bed ${P}_minus.bed
 
-			if [[ "$cross" == "MB6" ]] ; then
-				BinomialTest ${P}_plus.bed ${P}_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-				BinomialTest ${P}_minus.bed ${P}_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-			elif [[ "$cross" == "PB6" ]]  ; then
-			# switch -m and -p for PB6
-				BinomialTest ${P}_plus.bed ${P}_plus ${PAT_READ_BED} ${MAT_READ_BED} &
-				BinomialTest ${P}_minus.bed ${P}_minus ${PAT_READ_BED} ${MAT_READ_BED} &
-			fi
-	      done
-	done
-	wait
+            if [[ "$cross" == "MB6" ]] ; then
+                BinomialTest ${P}_plus.bed ${P}_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+                BinomialTest ${P}_minus.bed ${P}_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+            elif [[ "$cross" == "PB6" ]]  ; then
+            # switch -m and -p for PB6
+                BinomialTest ${P}_plus.bed ${P}_plus ${PAT_READ_BED} ${MAT_READ_BED} &
+                BinomialTest ${P}_minus.bed ${P}_minus ${PAT_READ_BED} ${MAT_READ_BED} &
+            fi
+          done
+    done
+    wait
 done
 
 # identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
@@ -119,7 +119,7 @@ join_AB(){
 
 # annotate the tunit predicts with Allelic Bias (AB) at MB6 and PB6 
 for t in BN HT SK SP LG LV GI ST
-	do
+    do
 for cross in MB6 PB6
 do
   for s in plus minus
@@ -137,24 +137,34 @@ cd tunit_preds/
 cluster_distance=500000
 d=500K
 for t in BN HT SK SP LG LV GI ST
-	do
-	for cross in MB6 PB6
-		do 
-		#chrm   chrmStart       chrmEnd winP_count_all_samples  p_value_all_samples     winP    p_value_Fisher  p_value_individual_samples
-		cat ${t}_all_h5.preds_plus_${cross}_ABconsistent_FisherMethodP0.05.bed |awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4, substr($5,1,1), "+"}' |grep -v "#" > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed
-		cat ${t}_all_h5.preds_minus_${cross}_ABconsistent_FisherMethodP0.05.bed |awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4, substr($5,1,1),"-"}'|grep -v "#" >> ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed
-  		bedtools cluster -d ${cluster_distance} -i ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05_cluster${d}.bed
-	done
+    do
+    for cross in MB6 PB6
+        do 
+        #chrm   chrmStart       chrmEnd winP_count_all_samples  p_value_all_samples     winP    p_value_Fisher  p_value_individual_samples
+        cat ${t}_all_h5.preds_plus_${cross}_ABconsistent_FisherMethodP0.05.bed |awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4, substr($5,1,1), "+"}' |grep -v "#" > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed
+        cat ${t}_all_h5.preds_minus_${cross}_ABconsistent_FisherMethodP0.05.bed |awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4, substr($5,1,1),"-"}'|grep -v "#" >> ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed
+          bedtools cluster -d ${cluster_distance} -i <(sort-bed ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed) > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05_cluster${d}.bed
+    done
 done
 
 # pairs within clusters
+# label Con/Dis/OneS and TSS distance
+for t in BN HT SK SP LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        python Pair_of_bedregions_withincluster.py ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05_cluster${d}.bed ${t}_${cross}_paires_within_cluster${d}.txt
+    done
+done
 
-
-
-
-
-
-
+#make histogram
+for t in BN HT SK SP LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        Rscript Tunit_pair_analysis_histgram.R  $(pwd) ${t}_${cross}_paires_within_cluster${d}.txt ${t}_${cross}_paires_within_cluster${d}.pdf 
+    done
+done
 
 
 
@@ -170,40 +180,40 @@ done
 # get a stats
 rm  tunit_aHMM_hit.summary.txt
 for t in BN HT SK SP LG LV GI ST
-	do 
-	for strand in plus minus
-		do
-		tunit_bed=${t}_all_h5.preds_${strand}.bed
-		ahmm_bed=combined_cross/${t}_HMM_${strand}.bed
-		log=${tunit_bed}.stats.txt
+    do 
+    for strand in plus minus
+        do
+        tunit_bed=${t}_all_h5.preds_${strand}.bed
+        ahmm_bed=combined_cross/${t}_HMM_${strand}.bed
+        log=${tunit_bed}.stats.txt
 
-		#total tunit
-		echo -e "${tunit_bed}\t " > ${log}
-		wc -l ${tunit_bed} >> ${log}
-		# tunit without no interesct --> no allele-specificifty
-		bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF==0) {print $0}' | wc -l > tmp
-		echo "0" >> tmp
-		cat tmp |paste - - >> ${log}
-		# tunit with intersect
-		bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF!=0) {print $0}' | cut -f 4 |uniq -c  |sort | awk '{print $1}' |uniq -c | awk 'BEGIN{OFS="\t"} {print $1, $2}' >> ${log}
-		cat ${log} |awk 'BEGIN{OFS="\t"}  NR<=5 {print $1}'|paste - - - - - >> tunit_aHMM_hit.summary.txt
-	done
+        #total tunit
+        echo -e "${tunit_bed}\t " > ${log}
+        wc -l ${tunit_bed} >> ${log}
+        # tunit without no interesct --> no allele-specificifty
+        bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF==0) {print $0}' | wc -l > tmp
+        echo "0" >> tmp
+        cat tmp |paste - - >> ${log}
+        # tunit with intersect
+        bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF!=0) {print $0}' | cut -f 4 |uniq -c  |sort | awk '{print $1}' |uniq -c | awk 'BEGIN{OFS="\t"} {print $1, $2}' >> ${log}
+        cat ${log} |awk 'BEGIN{OFS="\t"}  NR<=5 {print $1}'|paste - - - - - >> tunit_aHMM_hit.summary.txt
+    done
 done
 
 # annotate
 for t in BN HT SK SP LG LV GI ST
-	do 
-	for strand in plus minus
-		do
-		tunit_bed=${t}_all_h5.preds_${strand}.bed
-		ahmm_bed=combined_cross/${t}_HMM_${strand}.bed
-		log=${tunit_bed}.stats.txt
+    do 
+    for strand in plus minus
+        do
+        tunit_bed=${t}_all_h5.preds_${strand}.bed
+        ahmm_bed=combined_cross/${t}_HMM_${strand}.bed
+        log=${tunit_bed}.stats.txt
 
-		# tunit without no interesct --> no allele-specificifty
-		bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF==0) {print $1,$2,$3,$4,$5,$6,$7,$8,$9, "S"}' > ${tunit_bed}_S
-		# tunit with 1 intersect
-		bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF!=0) {print $0}' | cut -f 4 |uniq -c  |sort | awk '{print $1}' |uniq -c | awk 'BEGIN{OFS="\t"} {print $1, $2}' >> ${log}
-		cat ${log} |awk 'BEGIN{OFS="\t"}  NR<=5 {print $1}'|paste - - - - - >> tunit_aHMM_hit.summary.txt
+        # tunit without no interesct --> no allele-specificifty
+        bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF==0) {print $1,$2,$3,$4,$5,$6,$7,$8,$9, "S"}' > ${tunit_bed}_S
+        # tunit with 1 intersect
+        bedtools intersect -a ${tunit_bed} -b ${ahmm_bed}  -wao |awk 'BEGIN{OFS="\t"} ($NF!=0) {print $0}' | cut -f 4 |uniq -c  |sort | awk '{print $1}' |uniq -c | awk 'BEGIN{OFS="\t"} {print $1, $2}' >> ${log}
+        cat ${log} |awk 'BEGIN{OFS="\t"}  NR<=5 {print $1}'|paste - - - - - >> tunit_aHMM_hit.summary.txt
 
 
 # stats
