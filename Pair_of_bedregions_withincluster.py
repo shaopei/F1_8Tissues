@@ -89,8 +89,9 @@ p_list=pair_within_cluster
 # Seperate into three group, Concordant (M,M)(P,P), Discordant (M,P)(P,M), OneS (S,M),(S,P)(P,S)(M,S)
 pair_within_cluster=np.array(pair_within_cluster)
 AS_group =  np.chararray(pair_within_cluster.shape[0],itemsize=4)
-AS_group[:] = 'OneS'
+AS_group[:] = 'TwoS'
 
+OneS = np.logical_or(pair_within_cluster[:,tunit_AS_site]!='S',pair_within_cluster[:,tunit_AS_site+Column_Number]!='S')
 NoS = np.logical_and(pair_within_cluster[:,tunit_AS_site]!='S',pair_within_cluster[:,tunit_AS_site+Column_Number]!='S')
 Con = np.logical_and(NoS, pair_within_cluster[:,tunit_AS_site]== pair_within_cluster[:,tunit_AS_site+Column_Number])
 Dis = np.logical_and(NoS,pair_within_cluster[:,tunit_AS_site]!= pair_within_cluster[:,tunit_AS_site+Column_Number])
@@ -98,6 +99,7 @@ print "NoS", np.count_nonzero(NoS)
 print "Con", np.count_nonzero(Con)
 print "Dis", np.count_nonzero(Dis)
 
+AS_group[OneS]="OneS"
 AS_group[Con]="Con"
 AS_group[Dis]="Dis"
 print "OneS", np.count_nonzero(AS_group=="OneS")

@@ -101,7 +101,7 @@ legend("topright",
 dev.off()
 
 
-maxD=1000000
+maxD=1000000 #1Mb, 1000K
 df=t[t$V16<=maxD,]
 pdf(paste(pdf_name, "_PairesWithin1Mb.pdf", sep=""))
 d=50000 #50K
@@ -129,4 +129,27 @@ legend("topright",
 dev.off()
 
 
+pdf(paste(pdf_name, "_PairesWithin1Mb_2.pdf", sep=""))
+d=100000 #50K
+breaks = seq(0,maxD,d)
+hist(df$V16[df$V15=="Con"], main=df_fp,xlab = "distance between TSS of Tunit pairs within cluster", 
+     breaks = breaks ,
+     freq = F, col="blue", density=25,angle=135)
+hist(df$V16[df$V15=="Dis"] , breaks = breaks ,freq = F, col="dark orange", density=25,angle=45, add=T)
+hist(df$V16[df$V15=="OneS"], breaks = breaks , freq = F, add=T)
 
+
+legend("topright", 
+       legend = c("OneS", "Concordant", "Discordant"),
+       #pch=c(15,15),
+       cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25,25,25),
+       angle=c(180, 135,45),
+       #angle=45,
+       fill=c("white","blue", "dark orange")
+       , bty = "n"
+)
+dev.off()

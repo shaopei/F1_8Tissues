@@ -134,8 +134,8 @@ done
 
 cd tunit_preds/
 # form clusters
-cluster_distance=500000
-d=500K
+cluster_distance=1000000
+d=1M
 for t in BN HT SK SP LG LV GI ST
     do
     for cross in MB6 PB6
@@ -143,7 +143,7 @@ for t in BN HT SK SP LG LV GI ST
         #chrm   chrmStart       chrmEnd winP_count_all_samples  p_value_all_samples     winP    p_value_Fisher  p_value_individual_samples
         cat ${t}_all_h5.preds_plus_${cross}_ABconsistent_FisherMethodP0.05.bed |awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4, substr($5,1,1), "+"}' |grep -v "#" > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed
         cat ${t}_all_h5.preds_minus_${cross}_ABconsistent_FisherMethodP0.05.bed |awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4, substr($5,1,1),"-"}'|grep -v "#" >> ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed
-          bedtools cluster -d ${cluster_distance} -i <(sort-bed ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed) > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05_cluster${d}.bed
+        bedtools cluster -d ${cluster_distance} -i <(sort-bed ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05.bed) > ${t}_all_h5.preds_2strands_${cross}_ABconsistent_FisherMethodP0.05_cluster${d}.bed
     done
 done
 
@@ -165,6 +165,41 @@ for t in BN HT SK SP LG LV GI ST
         Rscript Tunit_pair_analysis_histgram.R  $(pwd) ${t}_${cross}_paires_within_cluster${d}.txt ${t}_${cross}_paires_within_cluster${d}.pdf 
     done
 done
+
+
+#####
+for t in BN HT SK SP LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        echo ${t}_${cross}
+        python TSS_run_over.py ${t}_${cross}_paires_within_cluster${d}.txt ${t}_${cross}_paires_within_cluster${d}_overlapped_pairs.txt
+
+
+
+
+
+
+
+t=BN
+cross=MB6
+# keep line with tunit on different strand (+,-).
+# remove lines with TwoS
+# for OneS, Keep S on the left
+cat ${t}_${cross}_paires_within_cluster${d}.txt |awk 'BEGIN{OFS="\t"} ($6 != $13 && $15 != "TwoS"){print $0}' \
+| awk 'BEGIN{OFS="\t"} ($15 != "OneS") { print $0} ($15 == "OneS" && $12 =="S") {print $8,$9,10, $11,$12,$13, $14,$1,$2,$3,$4,$5,$6,$7,$15,$16} ($15 == "OneS" && $12 != "S") {print $0} ($15 != "OneS"){print $0}' \
+> ${t}_${cross}_paires_within_cluster${d}_filtered.txt  
+
+#| awk 'BEGIN{OFS="\t"} {print $0, $2-$9, $3-$10}' # calculate chromStart1 - chromStart2. ChromEnd1 - ChromEnd2
+
+
+
+
+
+
+
+
+
 
 
 
