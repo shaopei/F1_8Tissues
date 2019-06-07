@@ -41,6 +41,10 @@ def bed_overlap(bed1, bed2):
     else: 
         s1, e1 = bed2
         s2, e2 = bed1
+        s1 = int(s1)
+        s2 = int(s2)
+        e1 = int(e1)
+        e2 = int(e2)
         return (s2 < e1 and e1 <= e2) or (s2 <= s1 and s1 < e2)
 
 

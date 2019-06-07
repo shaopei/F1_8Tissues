@@ -168,14 +168,26 @@ done
 
 
 #####
+# find the tunit that runover the TSS of the other tunit of the pair
 for t in BN HT SK SP LG LV GI ST
     do
     for cross in MB6 PB6
         do 
-        echo ${t}_${cross}
-        python TSS_run_over.py ${t}_${cross}_paires_within_cluster${d}.txt ${t}_${cross}_paires_within_cluster${d}_overlapped_pairs.txt
+        echo ${t}_${cross} > TSS_run_over_${t}_${cross}_${d}.log 
+        python TSS_run_over.py ${t}_${cross}_paires_within_cluster${d}.txt ${t}_${cross}_paires_within_cluster${d}_pairsWithin1M.txt >> TSS_run_over_${t}_${cross}_${d}.log &
+    done
+  wait
+done
 
-
+maxD=3000
+#make histogram
+for t in BN HT SK SP LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        Rscript TSS_run_over.R  $(pwd) ${t}_${cross}_paires_within_cluster${d}_pairsWithin1M.txt ${maxD} ${t}_${cross}_paires_within_cluster${d}_pairsWithin1M_${maxD}.pdf ${t}_${cross}_paires_within_cluster${d}_pairsWithin1M_${maxD}RunOver.pdf 
+    done
+done
 
 
 
