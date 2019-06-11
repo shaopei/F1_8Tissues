@@ -191,23 +191,30 @@ done
 
 
 
+#####
+# see the fraction of Con and Dis of TSS within AS Tunits
+d=1M
+for t in BN HT SK SP LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        #echo ${t}_${cross} > TSS_within_Tunit_${t}_${cross}_${d}.log 
+        python TSS_within_Tunit.py ${t}_${cross}_paires_within_cluster${d}.txt TSS_within_Tunit_${t}_${cross}_${d} > TSS_within_Tunit_${t}_${cross}_${d}.log &
+    done 
+done
+wait
 
+for t in LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        #echo ${t}_${cross} > TSS_within_Tunit_${t}_${cross}_${d}.log 
+        python TSS_within_Tunit.py ${t}_${cross}_paires_within_cluster${d}.txt TSS_within_Tunit_${t}_${cross}_${d} > TSS_within_Tunit_${t}_${cross}_${d}.log &
+    done 
+done
+wait
 
-t=BN
-cross=MB6
-# keep line with tunit on different strand (+,-).
-# remove lines with TwoS
-# for OneS, Keep S on the left
-cat ${t}_${cross}_paires_within_cluster${d}.txt |awk 'BEGIN{OFS="\t"} ($6 != $13 && $15 != "TwoS"){print $0}' \
-| awk 'BEGIN{OFS="\t"} ($15 != "OneS") { print $0} ($15 == "OneS" && $12 =="S") {print $8,$9,10, $11,$12,$13, $14,$1,$2,$3,$4,$5,$6,$7,$15,$16} ($15 == "OneS" && $12 != "S") {print $0} ($15 != "OneS"){print $0}' \
-> ${t}_${cross}_paires_within_cluster${d}_filtered.txt  
-
-#| awk 'BEGIN{OFS="\t"} {print $0, $2-$9, $3-$10}' # calculate chromStart1 - chromStart2. ChromEnd1 - ChromEnd2
-
-
-
-
-
+cat TSS_within_Tunit*log > TSS_within_Tunit_counts_report.txt
 
 
 

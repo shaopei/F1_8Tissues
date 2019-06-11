@@ -127,7 +127,7 @@ bed_d=[]
 
 for l in data:
     if bed_distance(l[1:3], l[8:10]) <= 1000000:
-        if l[4]=="S": # for OneS, Keep S as Sbed1 
+        if l[4]=="S": # for OneS, Keep S as Sbed2
             Sbed1=(l[8], l[9], l[12])
             Sbed2=(l[1], l[2], l[5])
         else:
