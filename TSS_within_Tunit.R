@@ -1,21 +1,22 @@
 #setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Tunit_pair_analysis/TSS_within_Tunit")
 df=read.table("TSS_within_Tunit_counts_report.txt", header = F)
-colnames(df)=c( "Tissue_cross", "CDS", "Q_name","fraction" )
+colnames(df)=c( "Tissue_cross", "CDS", "TSS_location","fraction" )
 
 df=df[grep("HT",df$Tissue_cross, invert = T),]
-df$Q_name=factor(df$Q_name, levels = c("DivergentFromTSS","Q0", "Q1", "Q2", "Q3", "Q4", "Q5", "PostPAS"))
-df$Q_name[df$Q_name=="Q0"] = "DivergentFromTSS"
-df$Q_name[df$Q_name=="Q5"] = "PostPAS"
+df$TSS_location=factor(df$TSS_location, levels = c("DivergentFromTSS","Q0", "Q1", "Q2", "Q3", "Q4", "Q5", "PostPAS"))
+df$TSS_location[df$TSS_location=="Q0"] = "DivergentFromTSS"
+df$TSS_location[df$TSS_location=="Q5"] = "PostPAS"
 
 
 library(ggplot2)
 
 # grouped boxplot
 pdf("TSS_within_Tunit_counts_report.pdf")
-p=ggplot(df, aes(x=Q_name, y=fraction, fill=CDS)) + 
-  scale_fill_manual(values=c("#56B4E9", "#E69F00","#999999" )) +geom_boxplot()
+p=ggplot(df, aes(x=TSS_location, y=fraction, fill=CDS)) + 
+  scale_fill_manual(values=c("#56B4E9", "#E69F00","#999999", "red" )) +
+  geom_boxplot() + 
+  geom_jitter(shape=21, position=position_dodge(1))
 p
-p+ geom_jitter(shape=21, position=position_dodge(1))
 dev.off()
 
 

@@ -204,18 +204,8 @@ for t in BN HT SK SP LG LV GI ST
 done
 wait
 
-for t in LG LV GI ST
-    do
-    for cross in MB6 PB6
-        do 
-        #echo ${t}_${cross} > TSS_within_Tunit_${t}_${cross}_${d}.log 
-        python TSS_within_Tunit.py ${t}_${cross}_paires_within_cluster${d}.txt TSS_within_Tunit_${t}_${cross}_${d} > TSS_within_Tunit_${t}_${cross}_${d}.log &
-    done 
-done
-wait
-
 cat TSS_within_Tunit*log > TSS_within_Tunit_counts_report.txt
-
+Rscript TSS_within_Tunit.R
 
 
 
