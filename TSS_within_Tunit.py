@@ -23,6 +23,53 @@ def TSS_distance(Sbed1, Sbed2):
         return "ERROR in TSS_distance"
 
 
+def bed_overlap(bed1, bed2):
+    s1, e1 = bed1
+    s2, e2 = bed2
+    s1 = int(s1)
+    s2 = int(s2)
+    e1 = int(e1)
+    e2 = int(e2)
+    if (s2 < e1 and e1 <= e2) or (s2 <= s1 and s1 < e2):
+        return True
+    else: 
+        s1, e1 = bed2
+        s2, e2 = bed1
+        s1 = int(s1)
+        s2 = int(s2)
+        e1 = int(e1)
+        e2 = int(e2)
+        return (s2 < e1 and e1 <= e2) or (s2 <= s1 and s1 < e2)
+
+
+
+def bed_distance(bed1, bed2):
+    s1, e1 = bed1
+    s2, e2 = bed2
+    if bed_overlap(bed1, bed2):
+        return 0
+    else:
+        return min(abs(int(s1)-int(e2)), abs(int(s2)-int(e1))) +1
+
+
+def Sbed1_TSS_run_over_by_Sbed2(Sbed1, Sbed2): #Strand Bed1, Strand Bed2
+    s1, e1, strand1 = Sbed1
+    s2, e2, strand2 = Sbed2
+    s1 = int(s1)
+    s2 = int(s2)
+    e1 = int(e1)
+    e2 = int(e2)
+    if bed_overlap((s1,e1), (s2,e2)):
+        if strand1 == "+" and strand2 == "-":
+            return s2 <= s1
+        elif strand1 == "-" and strand2 == "+":
+            return e1<= e2
+        else:
+            return False
+    else:
+        return False
+
+
 infp=argv[1] #"BN_MB6_paires_within_cluster1M.txt"
 pdfName=argv[2]
 #outfp=argv[2] #"BN_MB6_paires_within_cluster1M_overlapped_pairs.txt"
@@ -71,7 +118,7 @@ newData=[]
 bed_d=[]
 #Tunit1_size=[]
 Q=[] # seperate the right Tunit into six regions. Q0: upstream of left TSS, Q1,Q2,Q3,Q4 of the left Tunit, Q5: downstream of PAS of left Tunit
-
+TSS_run_over=[]
 
 for l in data3:
     l=list(l)
@@ -92,6 +139,7 @@ for l in data3:
             newData.append(l)
             CDS_group.append(l[14]) #Con,Dis,OneS
             TSS_d.append(TSS_distance(Sbed1, Sbed2))
+            TSS_run_over.append(Sbed1_TSS_run_over_by_Sbed2(Sbed1, Sbed2))
             #Tunit1_size.append(abs(e1-s1))
             if l[5]=="+":
                 Q.append(round(float(e2 - s1)/t1_size, 3))
@@ -101,6 +149,7 @@ for l in data3:
 
 Q=np.array(Q)
 CDS_group=np.array(CDS_group)
+TSS_run_over=np.array(TSS_run_over)
 result={}
 
 prefix='_'.join(infp.split("_")[0:2])
@@ -109,6 +158,7 @@ q_cut=[-1.1, 0,0.25,0.5,0.75,1, 2.1]
 q_name=["DivergentFromTSS", "Q1", "Q2", "Q3","Q4","PostPAS" ]
 for g in ["Con","Dis", "OneS"]:
     q=Q[CDS_group==g]
+    r=TSS_run_over[CDS_group==g]
     total=sum(CDS_group==g)*1.0
     for i in xrange(6):
     #if sum(CDS_group==g)>0 :
@@ -195,9 +245,8 @@ def barPlot3(Con, Dis, OneS, pdfName, ylab="counts"):
     plt.show()
 
 #pdfName="foo1.pdf"
-barPlot(result["Con"][1:], result["Dis"][1:], pdfName+"_counts.pdf")
-#barPlot(result["Con"][1:]/result["Con"][0], result["Dis"][1:]/result["Dis"][0], pdfName+"_fraction.pdf", ylab="fraction")
+#barPlot(result["Con"][1:], result["Dis"][1:], pdfName+"_counts.pdf")
 
-barPlot3(np.array(result["Con"][1:])/max(result["Con"][0],1), np.array(result["Dis"][1:])/max(1,result["Dis"][0]),np.array(result["OneS"][1:])/max(1,result["OneS"][0]), pdfName+"_fraction.pdf", ylab="fraction")
+#barPlot3(np.array(result["Con"][1:])/max(result["Con"][0],1), np.array(result["Dis"][1:])/max(1,result["Dis"][0]),np.array(result["OneS"][1:])/max(1,result["OneS"][0]), pdfName+"_fraction.pdf", ylab="fraction")
 
 
