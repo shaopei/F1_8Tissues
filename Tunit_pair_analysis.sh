@@ -204,12 +204,22 @@ for t in BN HT SK SP LG LV GI ST
 done
 wait
 
+#rm TSS_within_Tunit_andRunOver_*.log
 cat TSS_within_Tunit*log > TSS_within_Tunit_counts_report.txt
 Rscript TSS_within_Tunit.R
 
+d=1M
+for t in BN HT SK SP LG LV GI ST
+    do
+    for cross in MB6 PB6
+        do 
+        #echo ${t}_${cross} > TSS_within_Tunit_${t}_${cross}_${d}.log 
+        python TSS_within_Tunit_andRunOver.py ${t}_${cross}_paires_within_cluster${d}.txt TSS_within_Tunit_${t}_${cross}_${d} > TSS_within_Tunit_andRunOver_${t}_${cross}_${d}.log &
+    done 
+done
 
-
-
+cat TSS_within_Tunit_andRunOver_*.log  > TSS_within_Tunit_andRunOver_report.txt
+R --vanilla --slave --args $(pwd) TSS_within_Tunit_andRunOver_report.txt TSS_within_Tunit_andRunOver_report.pdf <TSS_within_Tunit_andRunOver.R
 
 
 
