@@ -1,11 +1,37 @@
 ### Organize the raw sequences files
 # Run proseqHT_multiple_adapters_sequencial.bsh to get QC reads
 
-for f in /local/storage/projects/RawSequenceFiles/2019-01-04-F1-mouse/raw_data/*_1.fq.gz
+for f in /local/storage/projects/RawSequenceFiles/2018-07-24-novogene/C202SC18051056/raw_data/F_NASA_F1*/*_1.fq.gz
+do j=`echo $f |rev |cut -d _ -f 2- |rev`
+jj=`echo $j |rev | cut -d '/' -f 1 |rev|cut -d _ -f 3`
+ln -s ${j}_1.fq.gz ${jj}_R1.fastq.gz
+ln -s ${j}_2.fq.gz ${jj}_R2.fastq.gz
+done
+
+while read p; do
+  echo "mv F1${p}*.gz ../. "
+done <mouse_sample.txt
+
+
+for f in /local/storage/projects/RawSequenceFiles/2018-12-05-F1-mouse-and-GBM/raw_data/*Kidney*_1.fq.gz
 do j=`echo $f |rev |cut -d _ -f 2- |rev`
 jj=`echo $j |rev | cut -d '/' -f 1 |rev`
 ln -s ${j}_1.fq.gz ${jj}_R1.fastq.gz
 ln -s ${j}_2.fq.gz ${jj}_R2.fastq.gz
+done
+
+for f in /local/storage/projects/RawSequenceFiles/2018-07-24-novogene/C202SC18051056/raw_data/F_NASA_F1*/*_1.fq.gz
+do j=`echo $f |rev |cut -d _ -f 2- |rev`
+jj=`echo $j |rev | cut -d '/' -f 1 |rev|cut -d _ -f 3`
+ln -s ${j}_1.fq.gz ${jj}_R1.fastq.gz
+ln -s ${j}_2.fq.gz ${jj}_R2.fastq.gz
+done
+
+for tail in _R1.fastq.gz _R2.fastq.gz
+do
+while read p1 p2 p3 p4; do
+  echo mv F1${p1}${tail} ${p2}_${p3}_F${p4}${tail}
+done <mouse_sample_name.txt
 done
 
 export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
@@ -17,6 +43,14 @@ CHINFO=/local/storage/data/mm10/mm10.chromInfo
 output=proseqHT_0
 mkdir ${output}
 bash proseqHT_multiple_adapters_sequencial.bsh -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T  ${output} -O  ${output} 
+
+#F1_NASA 
+output=Myproseq2.0Output-3
+while read p1 p2 p3 p4; do
+  echo "bash proseq2.0.bsh -I ${p2}_${p3}_F${p4} -PE -3 --RNA3=R1_5prime --UMI1=6 --ADAPT1=GATCGTCGGACTGTAGAACTCTGAAC --ADAPT2=TGGAATTCTCGGGTGCCAAGG -i $mouse_genome -c $mouse_chinfo -T ${output} -O ${output} --thread=10 &"  >> proseq_run.bsh
+done <mouse_sample_name.txt
+
+cat proseq2.0_read_report_*.log |paste -d , - - - - - - - - - - - - - - - - - - - - | cut -d , -f 3,4,6,9,11,13,18,20
 
 
 mkdir In_sample_list
