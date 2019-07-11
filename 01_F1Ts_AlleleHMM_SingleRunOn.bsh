@@ -1,0 +1,412 @@
+### Run AlleleDB
+# because the insert size is small (<100bp, most(>90%) <60bp) compare to the read length(150bp)
+# only use R1 for the folowing analysis
+
+
+for tissue in GI HT LG LV SK SP ST
+  do
+for cross in MB6 PB6
+ do echo "zcat ${tissue}_${cross}_*_R1.fastq.gz |gzip  > ../${tissue}_${cross}_all_R1.fastq.gz &"
+done
+done
+
+
+
+dir_in_sc2457=/workdir/sc2457/F1_Tissues/3rd_batch
+cd ${dir_in_sc2457}
+ln -s ../alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh .
+
+fastq_dir=/workdir/sc2457/F1_Tissues/sep_fastq
+for file in ${fastq_dir}/*_R1.fastq.gz  #*/
+do 
+  name=`echo ${file} | rev | cut -d / -f 1 |cut -d . -f 3 | rev`
+  echo $name
+  cd ${dir_in_sc2457}
+echo "bash alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh \
+${name} \
+PersonalGenome_P.CAST_M.B6 \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed \
+${fastq_dir} \
+${name} \
+/workdir/sc2457/alleleDB/alleledb_pipeline_mouse \
+/workdir/sc2457/mouse_AlleleSpecific/PIPELINE_StrandSpecific_P.CAST_M.B6.mk \
+0.1 \
+ase \
+0 > allelicbias-PersonalGenome_P.CAST_M.B6-${name}.log 2>&1  & " >${name}.bsh
+done
+
+num=10
+for tissue in GI HT LG LV SK SP ST
+  do
+for f in ${tissue}*_R1.bsh
+  do
+echo "at now +$num minutes -f ${f}"
+num=$((num + 10)) 
+#echo $num
+done
+done
+
+
+at now +1 minutes -f HT_MB6_all_R1.bsh  #job 5 at Sat Feb 16 09:36:00 2019
+at now +2 hours -f GI_MB6_all_R1.bsh   #job3       Sat Feb 16 11:30:00 2019 a sc2457
+
+#remove job
+#at -r [job number]
+
+wd=/workdir/sc2457/F1_Tissues/3rd_batch
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo "gzip ${wd}/${folder}/1-alignment-${PREFIX}/*.bowtie & " #*/  
+  echo "gzip ${wd}/${folder}/2-*/*.bed & " #*/ 
+done
+
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do 
+  echo ${folder}
+  diff ${folder}/originalmatpatreads.toremove.ids ${folder}/toremove/originalmatpatreads.toremove.ids
+done
+
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 20 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  name=$PREFIX
+echo "bash alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh \
+${name} \
+PersonalGenome_P.CAST_M.B6 \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam \
+/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed \
+${fastq_dir} \
+${name} \
+/workdir/sc2457/alleleDB/alleledb_pipeline_mouse \
+/workdir/sc2457/mouse_AlleleSpecific/PIPELINE_StrandSpecific_P.CAST_M.B6.mk \
+0.1 \
+ase \
+9  > ${name}_9.log 2>&1  " >${name}_9.bsh
+done
+
+
+for f in *_9.bsh
+  do bash $f &
+wait_a_second
+done
+
+
+
+# make_AlleleHMM_output_from_AlleleDB_output_mouse
+#wd=/workdir/sc2457/F1_Tissues/
+wd=/workdir/sc2457/F1_Tissues/second_batch
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do 
+  #echo ${folder}
+  #cd ${wd}/${folder}
+  #pwd
+  #rm counts_minus_hmm.txt counts_plus_hmm.txt
+  #rm toremove -r
+  #mkdir toremove
+  #mv toremove/AlleleHMM .
+  #ln -s ../make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh .
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo $PREFIX
+  echo "bash make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/make_AlleleHMM_output_from_AlleleDB_output_mouse_${PREFIX}.log 2>&1 & "
+done
+
+#wd=/workdir/sc2457/F1_Tissues/
+#for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S*_all_R1
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S[KP]*_R1
+  do 
+  cd ${wd}/${folder}/AlleleHMM
+  pwd
+  rm toremove -r
+  mkdir toremove
+  mv *bed toremove/.
+  mv *_FDR.txt toremove/.
+  mv parameters/* .  #*/ 
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo $PREFIX
+  python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} --predict=T &
+  #tail *.bed -n 3
+  cd ${wd}
+done
+
+
+### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
+#wd=/workdir/sc2457/F1_Tissues/
+#for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
+wd=/workdir/sc2457/F1_Tissues/3rd_batch
+for folder in towork/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo ${PREFIX}
+  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
+  wait_a_second
+done
+
+wait_a_second() {
+  core=$1
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= ${core} ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+wd=/workdir/sc2457/F1_Tissues/3rd_batch
+while read s; do
+  PREFIX=${s}_R1
+  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
+  wait_a_second 5
+done < rerun.txt
+
+### Perform Binomial test in the AlleleHMM blocks
+#wd=/workdir/sc2457/F1_Tissues/
+#for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash BinoTest_multiTao_F1Tissues.bsh ${PREFIX} ${wd} > BinoTest_multiTao_${PREFIX}.log  2>&1 &"
+done
+
+
+### examine sensitivity and specificity with Tao
+cd /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity
+for folder in ../allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d "/" -f 1|cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 "
+done
+
+for f in LG*_SNP_Allele_Specificity_matrix_t1E-09.bed
+do PREFIX=`echo ${f}|cut -d _ -f 1-4 `
+#echo $PREFIX
+echo "R --vanilla --slave --args $(pwd) $PREFIX < sen_spec_matrix.R &" 
+done
+
+## change the M and P to B6 and Cast 
+wd=/workdir/sc2457/F1_Tissues/
+cd ${wd}
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_*_R1
+  do #echo ${folder}
+  cd ${wd}/${folder}/AlleleHMM
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo ${PREFIX}
+  for f in ${PREFIX}_minus*_SigBlocks.bed
+    do 
+  f_head=`echo $f | rev |cut -d . -f 2- |rev `
+  echo ${f_head}
+  cat $f | awk 'BEGIN {OFS="\t"; t=","} {print $1, $2, $3, $4t$6t$7,"." ,"-"}' > ${f_head}_IGV.bed
+  done
+
+ for f in ${PREFIX}_plus*_SigBlocks.bed
+    do 
+  f_head=`echo $f | rev |cut -d . -f 2- |rev `
+  echo ${f_head}
+  cat $f | awk 'BEGIN {OFS="\t"; t=","} {print $1, $2, $3, $4t$6t$7,".", "+"}' > ${f_head}_IGV.bed
+  done
+done
+
+wd=/workdir/sc2457/F1_Tissues/
+cd ${wd}
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_PB6_*_R1
+  do echo ${folder}
+  cd ${wd}/${folder}/AlleleHMM
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo ${PREFIX}
+  for f in ${PREFIX}_minus*_SigBlocks.bed
+    do 
+  f_head=`echo $f | rev |cut -d . -f 2- |rev `
+  echo ${f_head}
+  cat $f | awk 'BEGIN {OFS="\t"; t=","; M="P,"; P="M,"} ($4=="M") {print $1, $2, $3, M$7t$6,"." ,"-"} ($4=="P") {print $1, $2, $3, P$7t$6,"." ,"-"}' > ${f_head}_IGV.bed
+  done
+
+for f in ${PREFIX}_plus*_SigBlocks.bed
+    do 
+  f_head=`echo $f | rev |cut -d . -f 2- |rev `
+  echo ${f_head}
+  cat $f | awk 'BEGIN {OFS="\t"; t=","; M="P,"; P="M,"} ($4=="M") {print $1, $2, $3, M$7t$6,"." ,"+"} ($4=="P") {print $1, $2, $3, P$7t$6,"." ,"+"}' > ${f_head}_IGV.bed
+  done
+done
+
+
+
+
+### calcalate the mapped reads in each sample
+wd=/workdir/sc2457/F1_Tissues/
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
+  do echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo ${PREFIX}.mat.bowtie.gz > ${PREFIX}.mat.bowtie_readCount.txt
+  zcat ${folder}/${PREFIX}.mat.bowtie.gz |wc -l >> ${PREFIX}.mat.bowtie_readCount.txt &
+  echo ${PREFIX}.pat.bowtie.gz > ${PREFIX}.pat.bowtie_readCount.txt
+  zcat ${folder}/${PREFIX}.pat.bowtie.gz |wc -l >> ${PREFIX}.pat.bowtie_readCount.txt &
+done
+
+for f in *mat.bowtie_readCount.txt
+  do cat $f |paste - - 
+done
+
+
+
+
+
+
+# dREG of merged bigwig
+# make merged bigwig
+while read c1 c2 c3 c4 
+  do
+  mv ${c1}_plus.bw ${c2}_${c3}_${c4}_plus.bw 
+  mv ${c1}_minus.bw ${c2}_${c3}_${c4}_minus.bw 
+done < ../sample_list.txt
+
+
+
+#for t in `cat ../sample_list.txt |cut -f 2 |uniq`
+for t in BN HT  SK  SP  LG  LV  GI  ST
+  do echo $t
+  for s in plus minus
+    do
+    bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ${t}_all_${s}.bw sep/${t}_*_${s}.bw &
+done
+done
+
+
+
+for s in plus minus
+  do
+t=LG
+echo  "bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ../${t}_CDEFG_${s}.bw ${t}_*_${s}.bw & "
+done
+
+
+
+for s in plus minus
+    do
+  for 
+    echo bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo Kurpios_heart_10_${s}.bw s_2177_MUT_dedup_QC_end_${s}.bw  s_2182_MUT_dedup_QC_end_${s}.bw  s_4581_WT_dedup_QC_end_${s}.bw  s_4594_WT_dedup_QC_end_${s}.bw  s_7114_PHDHET_Cont_dedup_QC_end_${s}.bw s_2181_MUT_dedup_QC_end_${s}.bw  s_2183_MUT_dedup_QC_end_${s}.bw  s_4590_WT_dedup_QC_end_${s}.bw  s_4595_WT_dedup_QC_end_${s}.bw  s_7119_PHDHET_Cont_dedup_QC_end_${s}.bw &
+done
+
+# submit to dREG gateway
+
+
+for f in `find -name *.map2ref.sorted.bed`
+do
+echo "gzip $f &"
+done
+
+T=5
+for OR in BN LV SK SP
+  do
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
+done
+done
+
+T=4
+for OR in GI ST
+  do
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
+done
+done
+
+OR=HT
+for s in plus minus 
+  do
+T=4
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+T=5
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
+done
+
+
+T=5
+for s in plus minus 
+  do
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+done
+
+
+# use bed in WashU browser
+for f in *_HMM_minus.bed
+  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+sort-bed $f | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), NR, $6}' | bgzip > ${PREFIX}_HMM_sorted_minus.bed.gz
+tabix -p bed ${PREFIX}_HMM_sorted_minus.bed.gz -f 
+done
+
+for f in *_HMM_plus.bed
+  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+sort-bed $f |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, substr($4,1,1), NR, $6}'  | bgzip > ${PREFIX}_HMM_sorted_plus.bed.gz
+tabix -p bed ${PREFIX}_HMM_sorted_plus.bed.gz -f 
+done
+
+# bash Find_consistent_blocks.bsh
+
+
+# use bigbed
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/*0.05* . #*/
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+for f in *_HMM_minus.bed
+  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_minus_agreeCount_strict_P0.05.bed | \
+sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}' > ${PREFIX}_HMM_sorted_minus.bed
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_minus_agreeCount_strict_P0.05.bed | \
+sort-bed - | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}' > IGV/${PREFIX}_HMM_sorted_minus.bed
+bedToBigBed ${PREFIX}_HMM_sorted_minus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_minus.bb
+rm ${PREFIX}_HMM_sorted_minus.bed
+done
+
+for f in *_HMM_plus.bed
+  do PREFIX=`echo $f|rev|cut -d _ -f 3- |rev`
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
+sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > ${PREFIX}_HMM_sorted_plus.bed
+bedtools intersect -a $f -b ${PREFIX}_all_R1_HMM_plus_agreeCount_strict_P0.05.bed | \
+sort-bed - |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, 111, $6}'  > IGV/${PREFIX}_HMM_sorted_plus.bed
+bedToBigBed  ${PREFIX}_HMM_sorted_plus.bed ${mouse_chinfo} ${PREFIX}_HMM_sorted_plus.bb
+rm ${PREFIX}_HMM_sorted_plus.bed
+done
+
+
+# find a place where all tissues has AlleleHMM blocks
+cp LG_PB6_HMM_sorted_minus.bed tmp.bed
+for f in *_HMM_sorted_minus.bed
+do 
+echo $f
+bedtools intersect -a tmp.bed -b $f > tmp2.bed
+mv tmp2.bed tmp.bed
+done
+
+cp LG_PB6_HMM_sorted_plus.bed tmp_p.bed
+for f in *_HMM_sorted_plus.bed
+do 
+echo $f
+bedtools intersect -a tmp_p.bed -b $f > tmp2.bed
+mv tmp2.bed tmp_p.bed
+done
+
+
+for f in allelicbias-PersonalGenome_P.CAST_M.B6-*
+  do echo $f
+  ls ${f}/toremove/
+done
+
+
