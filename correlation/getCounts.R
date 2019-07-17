@@ -3,7 +3,7 @@
 require(bigWig)
 
 tus <- read.table("gencode.vM20.annotation_transcript.bed", header=F)
-tus <- tus[(tus$V3-tus$V2)>500,]
+tus <- tus[(tus$V3-tus$V2)>500,]  
 
 
 geneID_name <- read.table("gencode.vM20_geneID_name_pair.txt", header=F)
@@ -13,6 +13,7 @@ library("sqldf")
 new_tus <- sqldf ("select V1,V2,V3,GENEID,GENENAME,V6 from tus left join geneID_name on tus.V4=geneID_name.GENEID" )
 bodies <- new_tus
 bodies <- bodies[(bodies$V1 != "chrM"), ]
+
 
 countBigWig <- function(prefix, bed, rpkm=FALSE, path="./") {
  pl <- load.bigWig(paste(path, prefix, "_plus.bw", sep=""))
@@ -85,6 +86,8 @@ indx_trxSize<- (bodies[,3]-bodies[,2])>10000  # to get a robost signal
 indx <- indx_counts & indx_trxSize
 rpkm <- rpkm[indx,]
 
-write.table(rpkm , file = "rpkm_5reads_trx10K.txt", quote =FALSE, sep="\t")
+write.table(rpkm , file = "rpkm_5reads_trx10K.txt", quote =FALSE, sep="\t") #full length
+
+
 
 
