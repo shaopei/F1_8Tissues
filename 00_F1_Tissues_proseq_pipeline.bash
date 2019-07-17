@@ -44,20 +44,30 @@ output=proseqHT_0
 mkdir ${output}
 bash proseqHT_multiple_adapters_sequencial.bsh -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T  ${output} -O  ${output} 
 
-#F1_NASA 
+####F1_NASA 
 output=Myproseq2.0Output-3
 while read p1 p2 p3 p4; do
   echo "bash proseq2.0.bsh -I ${p2}_${p3}_F${p4} -PE -3 --RNA3=R1_5prime --UMI1=6 --ADAPT1=GATCGTCGGACTGTAGAACTCTGAAC --ADAPT2=TGGAATTCTCGGGTGCCAAGG -i $mouse_genome -c $mouse_chinfo -T ${output} -O ${output} --thread=10 &"  >> proseq_run.bsh
 done <mouse_sample_name.txt
 
 cat proseq2.0_read_report_*.log |paste -d , - - - - - - - - - - - - - - - - - - - - | cut -d , -f 3,4,6,9,11,13,18,20
-
+####F1_NASA 
 
 mkdir In_sample_list
 while read p; do
   echo "$p"
   mv ${p}* In_sample_list/.
 done <sample_list.txt
+
+cd In_sample_list
+while read p1 p2 p3; do
+  for tail in _R1.fastq.gz _R2.fastq.gz .sort.bam .align.log _minus.bw _plus.bw
+  do
+  echo "mv ../${p1}${tail} KD_${p2}_${p3}${tail}"
+done
+done <sample_list.txt
+
+
 
 cd In_sample_list
 for f in *.sort.bam
@@ -161,5 +171,9 @@ while read field1 field2 ; do
   echo cp ${field1}_plus.bw tmp/${field2}_${head}_plus.bw
   echo cp ${field1}.sort.bam tmp/${field2}_${head}.bam
 done <sample_group.txt
+
+for f in /workdir/sc2457/F1_Tissues/proseqHT_output/F1_NASA/Myproseq2.0Output/*_dedup_QC_end_plus.bw
+do j=`echo $f |rev |cut -d / -f 1|rev|cut -d _ -f 1-3`
+echo "ln -s $f ${j}_plus.bw"
 
 

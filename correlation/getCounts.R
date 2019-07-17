@@ -26,7 +26,7 @@ countBigWig <- function(prefix, bed, rpkm=FALSE, path="./") {
  return(counts)
 }
 
-stage     <- c("BN", "GI", "HT", "LG", "LV", "SK", "SP", "ST")
+stage     <- c("BN", "GI", "HT", "LV", "SK", "SP", "ST", "KD")
 replicate <- c("MB6_A", "MB6_F", "MB6_G", "PB6_B", "PB6_C", "PB6_D", "PB6_E")
 
 filenames=c()
@@ -34,6 +34,26 @@ for (s in stage){
 	filenames <- c(filenames, paste(s, replicate, sep="_"))
 }
 
+stage     <- c("LG")
+replicate <- c("MB6_F", "MB6_G", "PB6_C", "PB6_D", "PB6_E")
+
+for (s in stage){
+	filenames <- c(filenames, paste(s, replicate, sep="_"))
+}
+
+stage     <- c("TH")
+replicate <- c("MB6_A", "PB6_B")
+
+for (s in stage){
+	filenames <- c(filenames, paste(s, replicate, sep="_"))
+}
+
+stage     <- c("HT", "LG", "SK", "KD")
+replicate <- c("PB6_F5","PB6_F6")
+
+for (s in stage){
+	filenames <- c(filenames, paste(s, replicate, sep="_"))
+}
 
 ## Gets counts
 counts <- NULL
@@ -42,7 +62,7 @@ for(f in filenames) {
 }
 colnames(counts) <- filenames
 save.image("data-counts.RData")
-remove(counts)
+#remove(counts)
 
 
 ## Gets RPKMs
@@ -53,7 +73,18 @@ for(f in filenames) {
 colnames(rpkm) <- filenames
 
 save.image("data-rpkms.RData")
-remove(rpkm)
+#remove(rpkm)
 
+
+## make cluster
+load("data-counts.RData")
+load("data-rpkms.RData")
+min_count = 5
+indx_counts <- rowSums(counts>=min_count) >= dim(counts)[2]  #every sample has at least min_count reads
+indx_trxSize<- (bodies[,3]-bodies[,2])>10000  # to get a robost signal
+indx <- indx_counts & indx_trxSize
+rpkm <- rpkm[indx,]
+
+write.table(rpkm , file = "rpkm_5reads_trx10K.txt", quote =FALSE, sep="\t")
 
 
