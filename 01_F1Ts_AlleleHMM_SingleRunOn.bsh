@@ -52,19 +52,16 @@ at now +2 hours -f GI_MB6_all_R1.bsh   #job3       Sat Feb 16 11:30:00 2019 a sc
 #remove job
 #at -r [job number]
 
-wd=/workdir/sc2457/F1_Tissues/3rd_batch
+# toreduce size
+wd=/workdir/sc2457/F1_Tissues/SingleBaseRunOn
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  echo "gzip ${wd}/${folder}/1-alignment-${PREFIX}/*.bowtie & " #*/  
+  echo "gzip ${wd}/${folder}/1-alignment-${PREFIX}/*.mat.bowtie & " #*/  
+  echo "gzip ${wd}/${folder}/1-alignment-${PREFIX}/*.pat.bowtie & " #*/ 
   echo "gzip ${wd}/${folder}/2-*/*.bed & " #*/ 
 done
 
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
-  do 
-  echo ${folder}
-  diff ${folder}/originalmatpatreads.toremove.ids ${folder}/toremove/originalmatpatreads.toremove.ids
-done
 
 wait_a_second() {
   joblist=($(jobs -p))
@@ -75,81 +72,18 @@ wait_a_second() {
   done
 }
 
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
-  do #echo ${folder}
-  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  name=$PREFIX
-echo "bash alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh \
-${name} \
-PersonalGenome_P.CAST_M.B6 \
-/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam \
-/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed \
-${fastq_dir} \
-${name} \
-/workdir/sc2457/alleleDB/alleledb_pipeline_mouse \
-/workdir/sc2457/mouse_AlleleSpecific/PIPELINE_StrandSpecific_P.CAST_M.B6.mk \
-0.1 \
-ase \
-9  > ${name}_9.log 2>&1  " >${name}_9.bsh
-done
-
-
-for f in *_9.bsh
-  do bash $f &
-wait_a_second
-done
-
-
-
-# make_AlleleHMM_output_from_AlleleDB_output_mouse
-#wd=/workdir/sc2457/F1_Tissues/
-wd=/workdir/sc2457/F1_Tissues/second_batch
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
-  do 
-  #echo ${folder}
-  #cd ${wd}/${folder}
-  #pwd
-  #rm counts_minus_hmm.txt counts_plus_hmm.txt
-  #rm toremove -r
-  #mkdir toremove
-  #mv toremove/AlleleHMM .
-  #ln -s ../make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh .
-  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  #echo $PREFIX
-  echo "bash make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/make_AlleleHMM_output_from_AlleleDB_output_mouse_${PREFIX}.log 2>&1 & "
-done
-
-#wd=/workdir/sc2457/F1_Tissues/
-#for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S*_all_R1
-wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S[KP]*_R1
-  do 
-  cd ${wd}/${folder}/AlleleHMM
-  pwd
-  rm toremove -r
-  mkdir toremove
-  mv *bed toremove/.
-  mv *_FDR.txt toremove/.
-  mv parameters/* .  #*/ 
-  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  echo $PREFIX
-  python AlleleHMM.py -p ${PREFIX}_counts_plus_hmm.txt -m ${PREFIX}_counts_minus_hmm.txt -o ${PREFIX} --predict=T &
-  #tail *.bed -n 3
-  cd ${wd}
-done
-
 
 ### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
-#wd=/workdir/sc2457/F1_Tissues/
-#for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
-wd=/workdir/sc2457/F1_Tissues/3rd_batch
-for folder in towork/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+wd=/workdir/sc2457/F1_Tissues/SingleBaseRunOn
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  echo ${PREFIX}
-  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
-  wait_a_second
+  #echo ${PREFIX}
+  echo "bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &"
+  #wait_a_second
 done
+
+#HERE
 
 wait_a_second() {
   core=$1
