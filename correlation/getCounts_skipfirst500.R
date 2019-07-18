@@ -39,21 +39,21 @@ for (s in stage){
 	filenames <- c(filenames, paste(s, replicate, sep="_"))
 }
 
-stage     <- c("LG")
-replicate <- c("MB6_F", "MB6_G", "PB6_C", "PB6_D", "PB6_E")
+#stage     <- c("LG")
+#replicate <- c("MB6_F", "MB6_G", "PB6_C", "PB6_D", "PB6_E")
+
+#for (s in stage){
+#	filenames <- c(filenames, paste(s, replicate, sep="_"))
+#}
+
+#stage     <- c("TH")
+#replicate <- c("MB6_A", "PB6_B")
 
 for (s in stage){
 	filenames <- c(filenames, paste(s, replicate, sep="_"))
 }
 
-stage     <- c("TH")
-replicate <- c("MB6_A", "PB6_B")
-
-for (s in stage){
-	filenames <- c(filenames, paste(s, replicate, sep="_"))
-}
-
-stage     <- c("HT", "LG", "SK", "KD")
+stage     <- c("HT", "SK", "KD")
 replicate <- c("PB6_F5","PB6_F6")
 
 for (s in stage){
