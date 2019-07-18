@@ -3,7 +3,7 @@
 # only use R1 for the folowing analysis
 
 
-for tissue in GI HT LG LV SK SP ST
+for tissue in KD #GI HT LG LV SK SP ST
   do
 for cross in MB6 PB6
  do echo "zcat ${tissue}_${cross}_*_R1.fastq.gz |gzip  > ../${tissue}_${cross}_all_R1.fastq.gz &"
@@ -12,11 +12,12 @@ done
 
 
 
-dir_in_sc2457=/workdir/sc2457/F1_Tissues/3rd_batch
+dir_in_sc2457=/workdir/sc2457/F1_Tissues/F1_Kidney
 cd ${dir_in_sc2457}
 ln -s ../alleledb_strandSpecific_9_specifyFASTQ_mouse_SingleEndBowtie.sh .
 
 fastq_dir=/workdir/sc2457/F1_Tissues/sep_fastq
+fastq_dir=/workdir/sc2457/F1_Tissues/proseqHT_output/F1_Kidney/proseqHT_0/fNXNwuFkHYNxeU4BkpBRl4RbmimMGmLp/sep
 for file in ${fastq_dir}/*_R1.fastq.gz  #*/
 do 
   name=`echo ${file} | rev | cut -d / -f 1 |cut -d . -f 3 | rev`
@@ -36,8 +37,8 @@ ase \
 0 > allelicbias-PersonalGenome_P.CAST_M.B6-${name}.log 2>&1  & " >${name}.bsh
 done
 
-num=10
-for tissue in GI HT LG LV SK SP ST
+num=0
+for tissue in KD #GI HT LG LV SK SP ST
   do
 for f in ${tissue}*_R1.bsh
   do
