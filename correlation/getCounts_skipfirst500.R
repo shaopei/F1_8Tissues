@@ -85,13 +85,32 @@ save.image("data-rpkms.RData")
 load("data-counts.RData")
 load("data-rpkms.RData")
 min_count = 5
+colnames_keep = colnames(counts)[grep("LG", colnames(counts),invert = T)]
+colnames_keep = colnames_keep[grep("TH", colnames_keep,invert = T)]
+counts <- counts[,colnames_keep ]
 indx_counts <- rowSums(counts>=min_count) >= dim(counts)[2]  #every sample has at least min_count reads
 indx_trxSize<- (bodies[,3]-bodies[,2])>10000  # to get a robost signal
 indx <- indx_counts & indx_trxSize
-rpkm <- rpkm[indx,]
+sub_rpkm <- rpkm[indx,colnames_keep]
 
-write.table(rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp.txt", quote =FALSE, sep="\t") #full length
+write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_noLG.txt", quote =FALSE, sep="\t") #full length
 
+## make cluster WITHOUT single base run-on 
+load("data-counts.RData")
+load("data-rpkms.RData")
+min_count = 5
+colnames_keep = colnames(counts)[grep("LG", colnames(counts),invert = T)]
+colnames_keep = colnames_keep[grep("TH", colnames_keep,invert = T)]
+colnames_keep = colnames_keep[grep("F5", colnames_keep,invert = T)]
+colnames_keep = colnames_keep[grep("F6", colnames_keep,invert = T)]
+
+counts <- counts[,colnames_keep ]
+indx_counts <- rowSums(counts>=min_count) >= dim(counts)[2]  #every sample has at least min_count reads
+indx_trxSize<- (bodies[,3]-bodies[,2])>10000  # to get a robost signal
+indx <- indx_counts & indx_trxSize
+sub_rpkm <- rpkm[indx,colnames_keep]
+
+write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.txt", quote =FALSE, sep="\t") #full length
 
 
 

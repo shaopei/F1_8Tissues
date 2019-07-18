@@ -162,8 +162,11 @@ gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
 #transcript
 cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="transcript"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > gencode.vM20.annotation_transcript.bed
 
-R --vanilla --slave  < getCounts.R
-
+#use to getCounts_skipfirst500.R get rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.txt
+R --vanilla --slave  < getCounts_skipfirst500.R
+# open rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.txt as text and add tab to the first row
+# copy the file to clipboard (commend + C in Mac)
+# run GeneE in /Users/shaopei/Box Sync/Danko_lab_work/F1_8Tissues/correlation
 
 while read field1 field2 ; do
   head=`echo ${field1} |rev |cut -d _ -f 3`
