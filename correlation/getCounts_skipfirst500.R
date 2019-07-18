@@ -49,9 +49,9 @@ for (s in stage){
 #stage     <- c("TH")
 #replicate <- c("MB6_A", "PB6_B")
 
-for (s in stage){
-	filenames <- c(filenames, paste(s, replicate, sep="_"))
-}
+#for (s in stage){
+#	filenames <- c(filenames, paste(s, replicate, sep="_"))
+#}
 
 stage     <- c("HT", "SK", "KD")
 replicate <- c("PB6_F5","PB6_F6")

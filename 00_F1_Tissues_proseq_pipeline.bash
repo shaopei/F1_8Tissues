@@ -179,4 +179,9 @@ for f in /workdir/sc2457/F1_Tissues/proseqHT_output/F1_NASA/Myproseq2.0Output/*_
 do j=`echo $f |rev |cut -d / -f 1|rev|cut -d _ -f 1-3`
 echo "ln -s $f ${j}_plus.bw"
 
+# for dREG
 
+export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} KD_all_minus.bw sep/KD*_minus.bw"
+echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} KD_all_plus.bw sep/KD*_plus.bw"
