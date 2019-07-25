@@ -83,7 +83,134 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   #wait_a_second
 done
 
-#HERE
+
+
+
+### calcalate the mapped reads in each sample
+wd=/workdir/sc2457/F1_Tissues/SingleBaseRunOn
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  echo ${PREFIX}.mat.bowtie.gz > ${PREFIX}.mat.bowtie_readCount.txt
+  zcat ${folder}/${PREFIX}.mat.bowtie.gz |wc -l >> ${PREFIX}.mat.bowtie_readCount.txt &
+  echo ${PREFIX}.pat.bowtie.gz > ${PREFIX}.pat.bowtie_readCount.txt
+  zcat ${folder}/${PREFIX}.pat.bowtie.gz |wc -l >> ${PREFIX}.pat.bowtie_readCount.txt &
+done
+
+for f in *at.bowtie_readCount.txt
+  do cat $f |paste - - 
+done
+
+
+for f in *_dedup_R1.fastq.gz
+  do
+  echo $f > ${f}_readCount.txt
+  zcat $f | wc -l >> ${f}_readCount.txt &
+  done
+
+for f in *_readCount.txt
+  do cat $f |paste - - 
+done
+
+export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+j=KD_PB6_F5_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted
+
+bedtools genomecov -bg -i $j.bed.gz -g ${mouse_chinfo} -strand + > $j\_plus.bedGraph
+bedtools genomecov -bg -i $j.bed.gz -g ${mouse_chinfo} -strand - > $j\_minus.noinv.bedGraph
+
+# look at the wrong file. not liftovered
+for p in pat mat
+do
+zcat KD_PB6_F5_dedup_R1.${p}.bowtie.gz |grep 19_${p}ernal|sed 's/19_${p}ernal/chr19/' >KD_PB6_F5_dedup_R1.${p}.chr19.bowtie
+/programs/bin/samtools/bowtie2sam.pl KD_PB6_F5_dedup_R1.${p}.chr19.bowtie > KD_PB6_F5_dedup_R1.${p}.chr19.sam &
+
+cat sam_header.txt KD_PB6_F5_dedup_R1.${p}.chr19.sam > tmp.sam
+samtools view -b tmp.sam >  KD_PB6_F5_dedup_R1.${p}.chr19.bam
+samtools sort KD_PB6_F5_dedup_R1.${p}.chr19.bam > KD_PB6_F5_dedup_R1.${p}.chr19.Csort.bam
+samtools index KD_PB6_F5_dedup_R1.${p}.chr19.Csort.bam
+done
+# look at the wrong file. not liftovered
+
+
+# check if liftOver works fine 
+PREFIX=KD_PB6_F5_dedup_R1
+WD=$2
+${WD:=/workdir/sc2457/F1_Tissues/SingleBaseRunOn/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}}
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+MATBOWTIE=${PREFIX}.mat.bowtie.gz
+PATBOWTIE=${PREFIX}.pat.bowtie.gz
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
+
+
+
+echo ${WD}
+cd ${WD}
+
+# remove AMB reads and sort by index
+ln -s 1-alignment-${PREFIX}/${MATBOWTIE} .
+ln -s 1-alignment-${PREFIX}/${PATBOWTIE} .
+
+mkdir toremove
+echo "python ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids "
+python ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${PATBOWTIE}_AMBremoved_sorted &
+python ${PL}/filter_reads_out.py ${MATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${MATBOWTIE}_AMBremoved_sorted &
+wait
+
+# seperate mat and pat reads from bowtie output
+# order matters! ${PATBOWTIE}_AMBremoved_sorted need to be in front of ${MATBOWTIE}_AMBremoved_sorted !!!
+echo "seperate mat and pat reads from bowtie output"
+python ${PL}/seperate_mat_pat_reads_withSNPs.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS}
+python ${PL}/seperate_mat_pat_reads_withSNPs_returnMatIdentical.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS}
+
+# make bed file from bowtie 
+for j in ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+  do
+cat ${j}.bowtie| awk 'BEGIN{OFS="\t"; t=","} {split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, $2}' > ${j}.bed &
+done
+
+wait
+# make 1bp bed file, use 5-prime end of R1 read
+for j in ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+do 
+cat ${j}.bed | awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $2, $2+1, $4, $5, $6}; ($6=="-") {print $1, $3-1, $3, $4, $5, $6}' > ${j}.1bp.bed &
+done
+wait 
+
+# liftOver to reference genome
+echo "liftOver to reference genome"
+# usage: liftOver oldFile map.chain newFile unMapped
+# rm pat2ref.chain mat2ref.chain
+ln -s 2-map.back.ref-${PREFIX}/pat2ref.chain .  #pat2ref.chain is from output of AlleleDB
+ln -s 2-map.back.ref-${PREFIX}/mat2ref.chain .
+#Use 1bp at the 5 prime end of the reads and see if there is less lost in pat(Cast) liftOver
+echo "liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log"
+liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log
+echo "liftOver ${PATBOWTIE}_AMBremoved_sorted_specific.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log"
+liftOver ${PATBOWTIE}_AMBremoved_sorted_specific.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log &
+echo "liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log"
+liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log &
+echo "liftOver ${PATBOWTIE}_AMBremoved_sorted_identical.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log"
+liftOver ${PATBOWTIE}_AMBremoved_sorted_identical.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log &
+
+
+
+wait
+# Did NOT remove reads that DONOT overlape with a SNP in ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed and  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed 
+for f in *.map2ref.1bp.bed
+  do
+  j=`echo $f|rev |cut -d . -f 2-|rev`
+  echo $j
+  cat ${j}.bed | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |awk 'BEGIN {OFS="\t"} {print "chr"$1, $2, $3, $4,$5,$6}' |gzip  > ${j}.sorted.bed.gz &
+  done
+
+mv  *.map2ref.1bp.bed toremove/.
+
 
 wait_a_second() {
   core=$1
@@ -95,12 +222,32 @@ wait_a_second() {
   done
 }
 
-wd=/workdir/sc2457/F1_Tissues/3rd_batch
-while read s; do
-  PREFIX=${s}_R1
-  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
-  wait_a_second 5
-done < rerun.txt
+
+### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
+wd=/workdir/sc2457/F1_Tissues/SingleBaseRunOn
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash make_map2ref_1bpbed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_1bpbed_B6_Cast_F1_${PREFIX}.log 2>&1 &"
+done
+
+
+#HERE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Perform Binomial test in the AlleleHMM blocks
 #wd=/workdir/sc2457/F1_Tissues/
@@ -177,68 +324,8 @@ done
 
 
 
-### calcalate the mapped reads in each sample
-wd=/workdir/sc2457/F1_Tissues/
-for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
-  do echo ${folder}
-  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  echo ${PREFIX}.mat.bowtie.gz > ${PREFIX}.mat.bowtie_readCount.txt
-  zcat ${folder}/${PREFIX}.mat.bowtie.gz |wc -l >> ${PREFIX}.mat.bowtie_readCount.txt &
-  echo ${PREFIX}.pat.bowtie.gz > ${PREFIX}.pat.bowtie_readCount.txt
-  zcat ${folder}/${PREFIX}.pat.bowtie.gz |wc -l >> ${PREFIX}.pat.bowtie_readCount.txt &
-done
-
-for f in *mat.bowtie_readCount.txt
-  do cat $f |paste - - 
-done
 
 
-
-
-
-
-# dREG of merged bigwig
-# make merged bigwig
-while read c1 c2 c3 c4 
-  do
-  mv ${c1}_plus.bw ${c2}_${c3}_${c4}_plus.bw 
-  mv ${c1}_minus.bw ${c2}_${c3}_${c4}_minus.bw 
-done < ../sample_list.txt
-
-
-
-#for t in `cat ../sample_list.txt |cut -f 2 |uniq`
-for t in BN HT  SK  SP  LG  LV  GI  ST
-  do echo $t
-  for s in plus minus
-    do
-    bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ${t}_all_${s}.bw sep/${t}_*_${s}.bw &
-done
-done
-
-
-
-for s in plus minus
-  do
-t=LG
-echo  "bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo ../${t}_CDEFG_${s}.bw ${t}_*_${s}.bw & "
-done
-
-
-
-for s in plus minus
-    do
-  for 
-    echo bash mergeBigWigs.bsh --chrom-info=/local/storage/data/mm10/mm10.chromInfo Kurpios_heart_10_${s}.bw s_2177_MUT_dedup_QC_end_${s}.bw  s_2182_MUT_dedup_QC_end_${s}.bw  s_4581_WT_dedup_QC_end_${s}.bw  s_4594_WT_dedup_QC_end_${s}.bw  s_7114_PHDHET_Cont_dedup_QC_end_${s}.bw s_2181_MUT_dedup_QC_end_${s}.bw  s_2183_MUT_dedup_QC_end_${s}.bw  s_4590_WT_dedup_QC_end_${s}.bw  s_4595_WT_dedup_QC_end_${s}.bw  s_7119_PHDHET_Cont_dedup_QC_end_${s}.bw &
-done
-
-# submit to dREG gateway
-
-
-for f in `find -name *.map2ref.sorted.bed`
-do
-echo "gzip $f &"
-done
 
 T=5
 for OR in BN LV SK SP
