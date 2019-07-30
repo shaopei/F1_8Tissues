@@ -32,6 +32,10 @@ name <- read.table(paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_1
 for (i in 1:dim(mat)[1]){
 name$p.value[i] = ks.test(as.numeric(mat[i,]),as.numeric(pat[i,])) $ p.value
 }
+name$p.value.fdr = p.adjust(name$p.value, method = "fdr")
 
-write.bed(name, paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed", sep = "_"))
+name=name[order(name$p.value, decreasing = FALSE),]
+
+write.table(name, file=paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed", sep = "_"), quote=F, row.names=F, col.names=F, sep="\t")
+#write.bed(name, paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed", sep = "_"))
 

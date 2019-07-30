@@ -54,6 +54,13 @@ intersectBed -sorted -u -a ${Head}_gencode.vM20.annotation_transcript_30bp.bed -
 #|awk 'BEGIN{OFS="\t"} {print $7,$8,$9,$10,$11,$12,$13,$14}' 
 done
 
+for Head in HT  SK  KD
+do 
+intersectBed -sorted -u -b ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }') >> SNP_in_gencode.vM20.annotation_transcript_30bp.bed
+done
+sort-bed SNP_in_gencode.vM20.annotation_transcript_30bp.bed|uniq |gzip >  SNP_in_gencode.vM20.annotation_transcript_30bp.bed.gz
+
+
 # Keep TRX with more than 10 reads (sum mat/pat F5/F6) (strand specific)
 for Head in HT KD SK
 do
@@ -72,10 +79,17 @@ done
 done
 
 # get p-value for KS test in R
-for Tissue in HT KD SK
+for Tissue in KD SK HT 
 do
 R --vanilla --slave --args $(pwd) ${Tissue} < KStest.R &
 done
+
+for Tissue in HT KD SK
+do
+  echo ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed 
+  cat ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }'
+done
+
 
 # how many of them are significant? (p<0.05)
 for Tissue in HT KD SK
@@ -83,6 +97,18 @@ do
   cat ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed |awk 'BEGIN {OFS="\t"} ($7<=0.05) {print $0}' >  ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue0.05.bed &
 done
 
-
-
-
+# see the allele-specific polII distribution at genome browser
+CHINFO=/local/storage/data/mm10/mm10.chromInfo
+for f in *at.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz
+do j=`echo $f|rev | cut -d . -f 3-|rev`
+   echo $j
+   ## Convert to bedGraph ...
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand + | sort-bed - > $j\_plus.noinv.bedGraph &
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand - | sort-bed - > $j\_minus.noinv.bedGraph &
+   wait
+  ## Invert minus strand.
+   cat $j\_plus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > $j\_plus.bedGraph ## Invert read counts on the minus strand.
+   ## Then to bigWig (nomalized and non-nomrmalized ones)
+   bedGraphToBigWig $j\_minus.noinv.bedGraph ${CHINFO} $j\_plus.bw  &
+   bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_minus.bw  &
+done
