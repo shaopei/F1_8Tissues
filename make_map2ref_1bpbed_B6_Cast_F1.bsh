@@ -1,3 +1,4 @@
+# this is for R1 sequence from 3 prime end of nascent RNA
 PREFIX=$1 #PREFIX=HT_MB6_all_R1
 WD=$2
 ${WD:=/workdir/sc2457/F1_Tissues/SingleBaseRunOn/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}}
@@ -29,9 +30,10 @@ python ${PL}/seperate_mat_pat_reads_withSNPs.py ${PATBOWTIE}_AMBremoved_sorted $
 python ${PL}/seperate_mat_pat_reads_withSNPs_returnMatIdentical.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS}
 
 # make bed file from bowtie 
+# this is for R1 sequence from 3 prime end of nascent RNA
 for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
   do
-cat ${j}.bowtie| awk 'BEGIN{OFS="\t"; t=","} {split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, $2}' |gzip > ${j}.bed.gz &
+cat ${j}.bowtie| awk 'BEGIN{OFS="\t"; t=","} ($2=="+"){split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, "-"} ;($2=="-"){split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, "+"}' |gzip > ${j}.bed.gz &
 done
 wait
 
