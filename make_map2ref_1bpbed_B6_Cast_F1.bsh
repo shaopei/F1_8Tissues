@@ -31,6 +31,7 @@ python ${PL}/seperate_mat_pat_reads_withSNPs_returnMatIdentical.py ${PATBOWTIE}_
 
 # make bed file from bowtie 
 # this is for R1 sequence from 3 prime end of nascent RNA
+# switch strand here
 for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
   do
 cat ${j}.bowtie| awk 'BEGIN{OFS="\t"; t=","} ($2=="+"){split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, "-"} ;($2=="-"){split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, "+"}' |gzip > ${j}.bed.gz &
@@ -43,11 +44,11 @@ for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_
 done
 
 
-
+# map3
 # make 1bp bed file, use 3-prime of nascent RNA
 for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
 do 
-zcat ${j}.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $3, $3-1, $4, $5, $6}; ($6=="-") {print $1, $2, $2+1, $4, $5, $6}' > ${j}.1bp.bed &
+zcat ${j}.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $3-1, $3, $4, $5, $6}; ($6=="-") {print $1, $2, $2+1, $4, $5, $6}' > ${j}.1bp.bed &
 done
 wait 
 

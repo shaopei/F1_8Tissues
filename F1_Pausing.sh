@@ -54,27 +54,31 @@ intersectBed -sorted -u -a ${Head}_gencode.vM20.annotation_transcript_30bp.bed -
 #|awk 'BEGIN{OFS="\t"} {print $7,$8,$9,$10,$11,$12,$13,$14}' 
 done
 
+# generate a smaller SNP file for IGV
 for Head in HT  SK  KD
 do 
 intersectBed -sorted -u -b ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }') >> SNP_in_gencode.vM20.annotation_transcript_30bp.bed
 done
 sort-bed SNP_in_gencode.vM20.annotation_transcript_30bp.bed|uniq |gzip >  SNP_in_gencode.vM20.annotation_transcript_30bp.bed.gz
 
+intersectBed -sorted -u -b <(sort-bed toremove/gencode.vM20.annotation_transcript_100bp.bed |awk '{OFS="\t"}{print $1, $2, $3}') -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed -) | gzip > SNP_in_gencode.vM20.annotation_transcript_100bp.bed.gz
+
 
 # Keep TRX with more than 10 reads (sum mat/pat F5/F6) (strand specific)
 for Head in HT KD SK
 do
   #rm ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads.bed
-  bedtools coverage -s -a <(cat ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.*at.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz | awk 'BEGIN{OFS="\t"} ($6=="+"){print $1, $2, $3, $4, $5, "-"} ($6=="-"){print $1, $2, $3, $4, $5, "+"}') | awk 'BEGIN{OFS="\t"} ($7 >=10){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed &
+  bedtools coverage -s -a <(cat ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.*at.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=10){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed &
 done
 
 
 # the abundance of PolII at each position within the bed file
+# sterand specific
 for Head in HT KD SK
 do
   for allele in mat pat
   do
-  bedtools coverage -d -s -a ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz | awk 'BEGIN{OFS="\t"} ($6=="+"){print $1, $2, $3, $4, $5, "-"} ($6=="-"){print $1, $2, $3, $4, $5, "+"}') |cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_${allele}.perBase.bed &
+  bedtools coverage -d -s -a ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) |cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_${allele}.perBase.bed &
 done
 done
 
@@ -87,7 +91,7 @@ done
 for Tissue in HT KD SK
 do
   echo ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed 
-  cat ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }'
+  cat ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' 
 done
 
 
@@ -103,12 +107,12 @@ for f in *at.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz
 do j=`echo $f|rev | cut -d . -f 3-|rev`
    echo $j
    ## Convert to bedGraph ...
-   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand + | sort-bed - > $j\_plus.noinv.bedGraph &
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand + | sort-bed - > $j\_plus.bedGraph &
    bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand - | sort-bed - > $j\_minus.noinv.bedGraph &
    wait
   ## Invert minus strand.
-   cat $j\_plus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > $j\_plus.bedGraph ## Invert read counts on the minus strand.
+   cat $j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > $j\_minus.bedGraph ## Invert read counts on the minus strand.
    ## Then to bigWig (nomalized and non-nomrmalized ones)
-   bedGraphToBigWig $j\_minus.noinv.bedGraph ${CHINFO} $j\_plus.bw  &
-   bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_minus.bw  &
+   bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_plus.bw  &
+   bedGraphToBigWig $j\_minus.bedGraph ${CHINFO} $j\_minus.bw  &
 done
