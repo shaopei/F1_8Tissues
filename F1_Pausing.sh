@@ -31,54 +31,52 @@ bed_dir=map2ref_bed
 cat gencode.vM20.annotation_transcript.bed | awk 'BEGIN{OFS="\t"}  ($6=="-") {print $1, $3-100, $3, $4, $5, $6, $0}; 
 ($6=="+") {print $1, $2, $2+100, $4, $5, $6, $0}' > gencode.vM20.annotation_transcript_100bp.bed
 
+studyBed=gencode.vM20.annotation_transcript_100bp
+
 for Head in BN HT  SK  SP  LV  GI  ST KD
 do 
-intersectBed -a gencode.vM20.annotation_transcript_100bp.bed -b <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz) > ${Head}_gencode.vM20.annotation_transcript_100bp.bed
+intersectBed -wa -a gencode.vM20.annotation_transcript_100bp.bed -b <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz) | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${Head}_${studyBed}.bed
 #|awk 'BEGIN{OFS="\t"} {print $7,$8,$9,$10,$11,$12,$13,$14}' 
 done
 
-# keep the first 30bp
-for Head in BN HT  SK  SP  LV  GI  ST KD
-do 
-cat ${Head}_gencode.vM20.annotation_transcript_100bp.bed | awk 'BEGIN{OFS="\t"}  ($6=="-") {print $1, $3-30, $3, $4, $5, $6, $0}; 
-($6=="+") {print $1, $2, $2+30, $4, $5, $6, $0}'| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${Head}_gencode.vM20.annotation_transcript_30bp.bed 
-done
+
+# keep the first 100bp instead of 30bp
+#for Head in BN HT  SK  SP  LV  GI  ST KD
+#do 
+#cat ${Head}_gencode.vM20.annotation_transcript_100bp.bed | awk 'BEGIN{OFS="\t"}  ($6=="-") {print $1, $3-30, $3, $4, $5, $6, $0}; 
+#($6=="+") {print $1, $2, $2+30, $4, $5, $6, $0}'| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${Head}_gencode.vM20.annotation_transcript_30bp.bed 
+#done
 
 
-# Keep TRX with SNPs in the first 30bp
+# remove this limit # Keep TRX with SNPs in the first 30bp 
 unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
 
-for Head in BN HT  SK  SP  LV  GI  ST KD
-do 
-intersectBed -sorted -u -a ${Head}_gencode.vM20.annotation_transcript_30bp.bed -b <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }') > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed &
-#|awk 'BEGIN{OFS="\t"} {print $7,$8,$9,$10,$11,$12,$13,$14}' 
-done
+#for Head in BN HT  SK  SP  LV  GI  ST KD
+#do 
+#intersectBed -sorted -u -a ${Head}_${studyBed}.bed -b <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }') > ${Head}_${studyBed}_wSNP.bed &
+#done
 
 # generate a smaller SNP file for IGV
-for Head in HT  SK  KD
-do 
-intersectBed -sorted -u -b ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }') >> SNP_in_gencode.vM20.annotation_transcript_30bp.bed
-done
-sort-bed SNP_in_gencode.vM20.annotation_transcript_30bp.bed|uniq |gzip >  SNP_in_gencode.vM20.annotation_transcript_30bp.bed.gz
-
-intersectBed -sorted -u -b <(sort-bed toremove/gencode.vM20.annotation_transcript_100bp.bed |awk '{OFS="\t"}{print $1, $2, $3}') -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed -) | gzip > SNP_in_gencode.vM20.annotation_transcript_100bp.bed.gz
+intersectBed -sorted -u -b <(cat gencode.vM20.annotation_transcript.bed | awk 'BEGIN{OFS="\t"}  ($1 != "chrM"){print $1, $2-1000, $3+1000}' |sort-bed -) -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed -) | gzip > SNP_in_gencode.vM20.annotation_transcript.bed.gz &
 
 
-# Keep TRX with more than 10 reads (sum mat/pat F5/F6) (strand specific)
+# remove this limit # Keep TRX with more than 10 reads (sum mat/pat F5/F6) (strand specific)
+# new requiements: have mat reads >=5 AND pat reads >=5
 for Head in HT KD SK
 do
-  #rm ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads.bed
-  bedtools coverage -s -a <(cat ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.*at.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=10){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed &
+  bedtools coverage -s -a <(cat ${Head}_${studyBed}.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${Head}_${studyBed}_5+matreads.bed 
+  bedtools coverage -s -a ${Head}_${studyBed}_5+matreads.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5+mat_5+patreads_uniq.bed &
 done
 
 
 # the abundance of PolII at each position within the bed file
 # sterand specific
+# HERE!!!
 for Head in HT KD SK
 do
   for allele in mat pat
   do
-  bedtools coverage -d -s -a ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) |cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  > ${Head}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_${allele}.perBase.bed &
+  bedtools coverage -d -s -a ${Head}_${studyBed}_5+mat_5+patreads_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed  & #|cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_wSNP_5mat5pat+reads_uniq_${allele}.perBase.bed &
 done
 done
 

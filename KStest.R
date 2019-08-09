@@ -25,9 +25,9 @@ write.bed<-function ( df.bed, file.bed, compress=FALSE ) {
 }
 
 
-mat<-read.table(paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_mat.perBase.bed", sep = "_"))
-pat<-read.table(paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_pat.perBase.bed", sep = "_"))
-name <- read.table(paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq.bed", sep = "_"))
+mat<-read.table(paste(Tissue, "gencode.vM20.annotation_transcript_100bp_wSNP_5mat5pat+reads_uniq_mat.perBase.bed", sep = "_"))
+pat<-read.table(paste(Tissue, "gencode.vM20.annotation_transcript_100bp_wSNP_5mat5pat+reads_uniq_pat.perBase.bed", sep = "_"))
+name <- read.table(paste(Tissue, "gencode.vM20.annotation_transcript_100bp_5+mat_5+patreads_uniq.bed", sep = "_"))
 
 for (i in 1:dim(mat)[1]){
 name$p.value[i] = ks.test(as.numeric(mat[i,]),as.numeric(pat[i,])) $ p.value
