@@ -1,71 +1,37 @@
-
-PREFIX=map2ref_bed/BN_MB6_all_R1
-MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-
-bedtools intersect -a <(zcat BN_all.dREG.peak.score.bed.gz) -b <(zcat ${MAT_READ_BED})
-
-map2ref_bed/BN_MB6_all_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-
-for Head in BN HT  SK  SP  LG  LV  GI  ST
-do 
-echo $Head
-bed_dir=map2ref_bed
-  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
-    do PREFIX=`echo $f|cut -d . -f 1`
-    echo $PREFIX
-    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
-    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
-
-    P=`echo $PREFIX| cut -d / -f 2`
-    ln -s HMM_bed/combined_cross/T8_HMM_plus.bed ${P}_HMM_plus.bed
-    ln -s HMM_bed/combined_cross/T8_HMM_minus.bed ${P}_HMM_minus.bed
-    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    wait
-  done
-
-### Ignore above , start from here!!! ####
-# identify trasncript annotation that have a dREG sites near the 5' 100bp regions
-cat gencode.vM20.annotation_transcript.bed | awk 'BEGIN{OFS="\t"}  ($6=="-") {print $1, $3-100, $3, $4, $5, $6, $0}; 
-($6=="+") {print $1, $2, $2+100, $4, $5, $6, $0}' > gencode.vM20.annotation_transcript_100bp.bed
-
+### identify trasncript annotation that have a dREG sites near the 5' 100bp regions
 studyBed=gencode.vM20.annotation_transcript_100bp
 
+# use first 100bp
+cat gencode.vM20.annotation_transcript.bed | awk 'BEGIN{OFS="\t"}  ($6=="-") {print $1, $3-100, $3, $4, $5, $6, $0}; 
+($6=="+") {print $1, $2, $2+100, $4, $5, $6, $0}' > ${studyBed}.bed
+
+
+# that intersect with dREG sites
 for Head in BN HT  SK  SP  LV  GI  ST KD
 do 
 intersectBed -wa -a gencode.vM20.annotation_transcript_100bp.bed -b <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz) | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${Head}_${studyBed}.bed
-#|awk 'BEGIN{OFS="\t"} {print $7,$8,$9,$10,$11,$12,$13,$14}' 
 done
 
 
-# keep the first 100bp instead of 30bp
-#for Head in BN HT  SK  SP  LV  GI  ST KD
-#do 
-#cat ${Head}_gencode.vM20.annotation_transcript_100bp.bed | awk 'BEGIN{OFS="\t"}  ($6=="-") {print $1, $3-30, $3, $4, $5, $6, $0}; 
-#($6=="+") {print $1, $2, $2+30, $4, $5, $6, $0}'| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${Head}_gencode.vM20.annotation_transcript_30bp.bed 
-#done
 
-
-# remove this limit # Keep TRX with SNPs in the first 30bp 
 unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
-
+# remove this limit # Keep TRX with SNPs in the first 30bp 
 #for Head in BN HT  SK  SP  LV  GI  ST KD
 #do 
 #intersectBed -sorted -u -a ${Head}_${studyBed}.bed -b <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }') > ${Head}_${studyBed}_wSNP.bed &
 #done
 
-# generate a smaller SNP file for IGV
+# generate a smaller SNP file for IGV, SNPs within 1000bp of the transcript annotation
 intersectBed -sorted -u -b <(cat gencode.vM20.annotation_transcript.bed | awk 'BEGIN{OFS="\t"}  ($1 != "chrM"){print $1, $2-1000, $3+1000}' |sort-bed -) -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed -) | gzip > SNP_in_gencode.vM20.annotation_transcript.bed.gz &
 
 
-# remove this limit # Keep TRX with more than 10 reads (sum mat/pat F5/F6) (strand specific)
-# new requiements: have mat reads >=5 AND pat reads >=5
+# Instead of Keeping TRX with more than 10 reads (sum mat/pat F5/F6) (strand specific)
+# do this: new requiements: have mat reads >=5 AND pat reads >=5
 for Head in HT KD SK
 do
-  bedtools coverage -s -a <(cat ${Head}_${studyBed}.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${Head}_${studyBed}_5+matreads.bed 
-  bedtools coverage -s -a ${Head}_${studyBed}_5+matreads.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5+mat_5+patreads_uniq.bed &
+  #intermediate_file=${Head}_${studyBed}_5mat.bed
+  #bedtools coverage -s -a <(cat ${Head}_${studyBed}.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
+  bedtools coverage -s -a <(bedtools coverage -s -a <(cat ${Head}_${studyBed}.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_uniq.bed &
 done
 
 
@@ -76,7 +42,8 @@ for Head in HT KD SK
 do
   for allele in mat pat
   do
-  bedtools coverage -d -s -a ${Head}_${studyBed}_5+mat_5+patreads_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed  & #|cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_wSNP_5mat5pat+reads_uniq_${allele}.perBase.bed &
+  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed  #|cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_wSNP_5mat5pat+reads_uniq_${allele}.perBase.bed &
+  cat ${Head}_${allele}_temp.bed  |cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_5mat5pat_uniq_${allele}.perBase.bed &
 done
 done
 
