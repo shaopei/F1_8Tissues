@@ -1,9 +1,10 @@
-#R --vanilla --slave --args $(pwd) Tissue < KStest.R
+#R --vanilla --slave --args $(pwd) Tissue gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq < KStest.R
 
 #arguments here
 args=(commandArgs(TRUE))
 setwd(args[1])
 Tissue=args[2]
+name_body=args[3]
 # if (length(args) <3){
 #   pvlaue_cutoff=0.05
 # }else{
@@ -25,17 +26,17 @@ write.bed<-function ( df.bed, file.bed, compress=FALSE ) {
 }
 
 
-mat<-read.table(paste(Tissue, "gencode.vM20.annotation_transcript_100bp_wSNP_5mat5pat+reads_uniq_mat.perBase.bed", sep = "_"))
-pat<-read.table(paste(Tissue, "gencode.vM20.annotation_transcript_100bp_wSNP_5mat5pat+reads_uniq_pat.perBase.bed", sep = "_"))
-name <- read.table(paste(Tissue, "gencode.vM20.annotation_transcript_100bp_5+mat_5+patreads_uniq.bed", sep = "_"))
+mat<-read.table(paste(Tissue, name_body, "mat.perBase.bed", sep = "_"))
+pat<-read.table(paste(Tissue, name_body, "pat.perBase.bed", sep = "_"))
+name <- read.table(paste(paste(Tissue, name_body, sep = "_"), "bed", sep ="."))
 
 for (i in 1:dim(mat)[1]){
-name$p.value[i] = ks.test(as.numeric(mat[i,]),as.numeric(pat[i,])) $ p.value
+name$p.value[i] = ks.test(as.numeric(mat[i,]/sum(mat[i,])),as.numeric(pat[i,]/sum(pat[i,]))) $ p.value
 }
 name$p.value.fdr = p.adjust(name$p.value, method = "fdr")
 
 name=name[order(name$p.value, decreasing = FALSE),]
 
-write.table(name, file=paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed", sep = "_"), quote=F, row.names=F, col.names=F, sep="\t")
+write.table(name, file=paste(Tissue, name_body,"pValue.bed", sep = "_"), quote=F, row.names=F, col.names=F, sep="\t")
 #write.bed(name, paste(Tissue, "gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed", sep = "_"))
 
