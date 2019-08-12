@@ -33,11 +33,10 @@ do
   #bedtools coverage -s -a <(cat ${Head}_${studyBed}.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
   bedtools coverage -s -a <(bedtools coverage -s -a <(cat ${Head}_${studyBed}.bed | cut -f 1-6) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_uniq.bed &
 done
-
+wait
 
 # the abundance of PolII at each position within the bed file
 # sterand specific
-# HERE!!!
 for Head in HT KD SK
 do
   for allele in mat pat
@@ -46,17 +45,18 @@ do
   cat ${Head}_${allele}_temp.bed  |cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_5mat5pat_uniq_${allele}.perBase.bed &
 done
 done
-
+wait
 # get p-value for KS test in R
 for Tissue in KD SK HT 
 do
-R --vanilla --slave --args $(pwd) ${Tissue} < KStest.R &
+R --vanilla --slave --args $(pwd) ${Tissue} gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq < KStest.R &
 done
-
+wait
+# HERE!!!
 for Tissue in HT KD SK
 do
-  echo ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed 
-  cat ${Tissue}_gencode.vM20.annotation_transcript_30bp_wSNP_10+reads_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' 
+  wc -l ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed 
+  cat ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' 
 done
 
 
