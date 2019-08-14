@@ -14,11 +14,12 @@ wait
 # generate bed files with plus = mid points + 100, minus = mid points -100 bp 
 for Head in HT KD SK
 do
-  for allele in mat pat
-  do
-  bedtools coverage -d -s -a <(cat ${Head}_${studyBed}_5mat5pat_uniq.bed |awk 'BEGIN{OFS="\t"} {print $0}{print $1, $2, $3, $4, ".", "-"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed
-  python Find_span_between_max_read_spots.py ${Head}_${allele}_temp.bed ${Head}_${studyBed}_200bp.bed & #${Head}_${studyBed}_200bp_5mat5pat_uniq.bed &
-  done
+  bedtools coverage -d -s -a <(cat ${Head}_${studyBed}_5mat5pat_uniq.bed |awk 'BEGIN{OFS="\t"} {print $0}{print $1, $2, $3, $4, ".", "-"}' ) -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.*at.bowtie.gz_AMBremoved_sorted_*.map2ref.1bp.sorted.bed.gz ) > ${Head}_temp.bed &
+done
+wait
+for Head in HT KD SK
+do
+  python Find_span_between_max_read_spots.py ${Head}_temp.bed ${Head}_${studyBed}_200bp.bed & 
 done
 wait
 
@@ -49,13 +50,41 @@ for Tissue in KD SK HT
 do
 R --vanilla --slave --args $(pwd) ${Tissue} ${studyBed}_200bp_5mat5pat_uniq < KStest.R &
 done
-wait
+
 # HERE!!!
+for Head in HT KD SK
+do
+  echo ${Head}_all.dREG.peak.score.bed.gz
+zcat Browser/${Head}_all.dREG.peak.score.bed.gz |wc -l
+done
+wait
 for Tissue in HT KD SK
 do
-  echo ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed 
-  cat ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.15){print $0, $1c$2d$3 }'
+  cat ${Tissue}_${studyBed}_200bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' |wc -l
 done
+for Tissue in HT KD SK
+do
+  cat ${Tissue}_${studyBed}_200bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.15){print $0, $1c$2d$3 }' |wc -l
+done
+
+for Tissue in HT KD SK
+do
+  echo ${Tissue}_${studyBed}_200bp_5mat5pat_uniq_pValue.bed 
+  cat ${Tissue}_${studyBed}_200bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.15){print $0, $1c$2d$3 }' 
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # how many of them are significant? (p<0.05)
