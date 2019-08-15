@@ -46,7 +46,8 @@ pool.close() # no more tasks
 pool.join()
 
 
-for line in pool_output:
-    with open(outfp, "a") as out:
+
+with open(outfp, "w") as out:
+    for line in pool_output:
         out.write("\n".join(line))
         out.write("\n")

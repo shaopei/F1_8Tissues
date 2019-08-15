@@ -35,28 +35,67 @@ do
 done
 wait
 
-# the abundance of PolII at each position within the bed file
-# sterand specific
+# identify the abundance of PolII at each position
+# strand specific
 for Head in HT KD SK
 do
   for allele in mat pat
   do
-  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed  #|cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_wSNP_5mat5pat+reads_uniq_${allele}.perBase.bed &
-  cat ${Head}_${allele}_temp.bed  |cut -f 8| paste - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > ${Head}_${studyBed}_5mat5pat_uniq_${allele}.perBase.bed &
+  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed &
 done
 done
 wait
+
+# use python script to generaye input for KS test
+for Head in HT KD SK
+do
+  for allele in mat pat
+  do
+python Generate_vector_input_for_KStest_NodupPlusMinus.py ${Head}_${allele}_temp.bed ${Head}_${studyBed}_5mat5pat_uniq_${allele}.perBase.bed &
+done
+done
+wait
+
 # get p-value for KS test in R
 for Tissue in KD SK HT 
 do
-R --vanilla --slave --args $(pwd) ${Tissue} gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq < KStest.R &
+R --vanilla --slave --args $(pwd) ${Tissue} ${studyBed}_5mat5pat_uniq < KStest_flexible_length.R &
 done
-wait
+
+# HERE!!!
+for Head in HT KD SK
+do
+  wc -l ${Head}_${studyBed}.bed
+done
+
+for Tissue in HT KD SK
+do
+  wc -l ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed
+done
+
+for Tissue in HT KD SK
+do
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' |wc -l
+done
+for Tissue in HT KD SK
+do
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }' |wc -l
+done
+
+for Tissue in HT KD SK
+do
+  echo ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed 
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.15){print $0, $1c$2d$3 }' 
+done
+
+
+
+
 # HERE!!!
 for Tissue in HT KD SK
 do
-  wc -l ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed 
-  cat ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' 
+  echo ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed 
+  cat ${Tissue}_gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.15){print $0, $1c$2d$3 }'
 done
 
 
