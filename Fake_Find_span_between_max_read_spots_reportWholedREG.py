@@ -30,11 +30,13 @@ def getSpan(data_key):
         outside = np.invert(inside)
         subdata = data[inside,:]
         data = data[outside,:]
-        sub_plus = subdata[subdata[:,5] == "+", :]
-        sub_minus = subdata[subdata[:,5] == "-", :]
-        m = (int(sub_plus[:,-2][np.argmax(sub_plus[:,-1].astype(int))]) + int(sub_minus[:,-2][np.argmax(sub_minus[:,-1].astype(int))]))/2
-        result.append("\t".join([chrom, str(int(chromStart)+m-span), str(int(chromStart)+m), name,".", "-"]))
-        result.append("\t".join([chrom, str(int(chromStart)+m), str(int(chromStart)+m+span), name, ".", "+"]))
+        #sub_plus = subdata[subdata[:,5] == "+", :]
+        #sub_minus = subdata[subdata[:,5] == "-", :]
+        #m = (int(sub_plus[:,-2][np.argmax(sub_plus[:,-1].astype(int))]) + int(sub_minus[:,-2][np.argmax(sub_minus[:,-1].astype(int))]))/2
+        #result.append("\t".join([chrom, str(int(chromStart)+m-span), str(int(chromStart)+m), name,".", "-"]))
+        #result.append("\t".join([chrom, str(int(chromStart)+m), str(int(chromStart)+m+span), name, ".", "+"]))
+        result.append("\t".join([chrom, chromStart, chromEnd, name,".", "-"]))
+        result.append("\t".join([chrom, chromStart, chromEnd, name,".", "+"]))
         count = count + 1
     return result
 

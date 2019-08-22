@@ -20,12 +20,12 @@ def getVector(data_key):
     result=[]
     data=data_dic[data_key]
     count=1
-    while data.shape[0] > 10:
-        chrom, chromStart, chromEnd = data[0][0:3]
+    while data.shape[0] > 0:
+        chrom, chromStart, chromEnd, name = data[0][0:4]
         #c0 = data[:,0]==chrom
         c1 = data[:,1]==chromStart
         c2 = data[:,2]==chromEnd
-        name = chrom+"_"+str(count)
+        #name = chrom+"_"+str(count)
         inside = np.logical_and(c1,c2)
         outside = np.invert(inside)
         subdata = data[inside,:]
@@ -56,14 +56,14 @@ def getVector_noPM_duplicate(data_key):
     result=[]
     data=data_dic[data_key]
     count=1
-    while data.shape[0] > 10:
-        chrom, chromStart, chromEnd = data[0][0:3]
+    while data.shape[0] > 0:
+        chrom, chromStart, chromEnd, name = data[0][0:4]
         strand=data[0][5]
         #c0 = data[:,0]==chrom
         c1 = data[:,1]==chromStart
         c2 = data[:,2]==chromEnd
         c5 = data[:,5]==strand
-        name = chrom+"_"+str(count)
+        #name = chrom+"_"+str(count)
         inside = np.logical_and(np.logical_and(c1,c2), c5)
         outside = np.invert(inside)
         subdata = data[inside,:]

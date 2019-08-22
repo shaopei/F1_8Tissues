@@ -79,7 +79,7 @@ done
 for Tissue in HT KD SK
 do
   echo ${Tissue}_${studyBed}_100bp_5mat5pat_uniq_pValue.bed 
-  cat ${Tissue}_${studyBed}_100bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.15){print $0, $1c$2d$3 }' 
+  cat ${Tissue}_${studyBed}_100bp_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }' > ${Tissue}_${studyBed}_100bp_5mat5pat_uniq_pValue_fdr0.1.bed
 done
 
 
