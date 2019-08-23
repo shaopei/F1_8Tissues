@@ -56,6 +56,7 @@ at now +2 hours -f GI_MB6_all_R1.bsh   #job3       Sat Feb 16 11:30:00 2019 a sc
 #at -r [job number]
 
 wd=/workdir/sc2457/F1_Tissues/3rd_batch
+wd=/workdir/sc2457/F1_Tissues/F1_Kidney
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
@@ -107,6 +108,7 @@ done
 # make_AlleleHMM_output_from_AlleleDB_output_mouse
 #wd=/workdir/sc2457/F1_Tissues/
 wd=/workdir/sc2457/F1_Tissues/second_batch
+wd=/workdir/sc2457/F1_Tissues/F1_Kidney
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do 
   #echo ${folder}
@@ -121,6 +123,7 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   #echo $PREFIX
   echo "bash make_AlleleHMM_output_from_AlleleDB_output_mouse.bsh ${PREFIX}  ${wd}/${folder} > ${wd}/make_AlleleHMM_output_from_AlleleDB_output_mouse_${PREFIX}.log 2>&1 & "
 done
+# HERE
 
 #wd=/workdir/sc2457/F1_Tissues/
 #for folder in allelicbias-PersonalGenome_P.CAST_M.B6-S*_all_R1
@@ -146,12 +149,13 @@ done
 #wd=/workdir/sc2457/F1_Tissues/
 #for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_MB6_all_R1
 wd=/workdir/sc2457/F1_Tissues/3rd_batch
-for folder in towork/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+wd=/workdir/sc2457/F1_Tissues/F1_Kidney
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
-  echo ${PREFIX}
-  bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 &
-  wait_a_second
+  #echo ${PREFIX}
+  echo "bash make_map2ref_bed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_bed_B6_Cast_F1_${PREFIX}.log 2>&1 & "
+  #wait_a_second
 done
 
 wait_a_second() {
@@ -175,6 +179,7 @@ done < rerun.txt
 #wd=/workdir/sc2457/F1_Tissues/
 #for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1
 wd=/workdir/sc2457/F1_Tissues/
+wd=/workdir/sc2457/F1_Tissues/F1_Kidney
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do
   PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
@@ -185,11 +190,12 @@ done
 
 ### examine sensitivity and specificity with Tao
 cd /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity
-for folder in ../allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+wd=/workdir/sc2457/F1_Tissues/F1_Kidney
+for folder in ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
   PREFIX=`echo ${folder}|rev |cut -d "/" -f 1|cut -d - -f 1 |rev`
   #echo ${PREFIX}
-  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 "
+  echo "bash Determine_genes_allele-specificity_mm10.bsh ${PREFIX} ${wd}  > Determine_genes_allele-specificity_mm10_${PREFIX}.log  2>&1 &"
 done
 
 for f in LG*_SNP_Allele_Specificity_matrix_t1E-09.bed
