@@ -1,3 +1,4 @@
+# use this one for final results!
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
 # combine the significant alleleHMM blocks from the same tissue but different cross
@@ -26,7 +27,7 @@ done
 done
 
 T=4
-for OR in GI ST
+for OR in GI ST 
   do
 for s in plus minus 
   do
@@ -44,12 +45,21 @@ T=5
 ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 
+# remove LG samples
+#T=5
+#for s in plus minus 
+#  do
+#ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
+#ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+#done
 
-T=5
+# add KD samples
+OR=KD
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+T=4
+ln -s /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 
 
@@ -101,9 +111,14 @@ BinomialTest(){
   #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
 }
 
+
+cd map2ref_bed
+ln -s  /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1/*.bowtie.gz_AMBremoved_sorted_*.map2ref.sorted.bed.gz .  #*/
+cd ..
+
 ## map reads from each individual sample from the same tissue and cross to the combined AlleleHMM blocks
 mkdir toremove
-for Head in BN HT  SK  SP  LG  LV  GI  ST
+for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
 bed_dir=map2ref_bed
@@ -119,9 +134,8 @@ bed_dir=map2ref_bed
     ln -s HMM_bed/combined_cross/T8_HMM_minus.bed ${P}_HMM_minus.bed
     BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    wait
   done
-
+  #wait
   for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
     do PREFIX=`echo $f|cut -d . -f 1`
     echo $PREFIX
@@ -136,26 +150,27 @@ bed_dir=map2ref_bed
 
     # switch -m and -p for PB6
     BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} & 
-    wait
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} &   
   done
+  wait
 done
 
 
 # identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
 ## use fishers method to combine p-value from multiple samples  
 ## combine p-value in one file
-for t in BN HT SK SP LG LV GI ST
+ln -s ../Find_consistent_blocks/Find_consistent_blocks_v2.R .
+for t in BN HT SK SP KD LV GI ST
   do 
-R --vanilla --slave --args $(pwd) $t 0.05 < Find_consistent_blocks_v2.R
+R --vanilla --slave --args $(pwd) $t 0.05 < Find_consistent_blocks_v2.R &
 done
 
-for t in BN HT SK SP LG LV GI ST
+for t in BN HT SK SP KD LV GI ST
   do 
-R --vanilla --slave --args $(pwd) $t 0.01 < Find_consistent_blocks_v2.R
+R --vanilla --slave --args $(pwd) $t 0.01 < Find_consistent_blocks_v2.R &
 done 
 
-wc -l *_ABconsistent* |paste - -
+wc -l *_ABconsistent* |paste - - - 
 sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
 
 
@@ -194,14 +209,15 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
   done
 done
 
-for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.1.bed
+p=0.05
+for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP${p}.bed
   do t=`echo $f|cut -d _ -f 1`
   for s in plus minus
     do 
-    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.1.bed 
-    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.1.bed 
-    join_out=${t}_combined_HMM_${s}_ABconsistent_FMp0.1.bed
-    h=${t}_${s}_p0.1_effect
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP${p}.bed 
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP${p}.bed 
+    join_out=${t}_combined_HMM_${s}_ABconsistent_FMp${p}.bed
+    h=${t}_${s}_p${p}_effect
 
     join_AB ${join_in1} ${join_in2} ${join_out}
     grep S ${join_out} > ${h}_NA.bed
@@ -213,6 +229,13 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.1.bed
   done
 done
 
+p=0.05
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  wc -l ${head}_${s}_p${p}_effect_* |paste - - - - 
+  done
+  done
 
 for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
   do t=`echo $f|cut -d _ -f 1`
@@ -233,6 +256,142 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
   done
 done
 
+
+
+
+# check overlap blocks of imprinting and see if there is inconsistency. eg: one MM, the other PP
+#f=LG_plus_p0.05_effect_imprinting.bed
+rm tmp.txt
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+  do
+  for head in BN SP HT SK KD ST GI LV
+    do f=${head}${body}
+    wc -l $f >>tmp.txt
+    bedtools intersect -f 0.3 -a $f -b $f -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} (substr($4,1,1) != substr($9,1,1)) {print $1m$2d$3,substr($4,1,1),substr($9,1,1),$0}' > ${f}_overlap_incosistent
+    wc -l ${f}_overlap_incosistent >>tmp.txt
+  done
+done
+
+cat tmp.txt |paste - - 
+
+#Summary
+#Some imprinting cluster are complicated. Therefore, using AlleleHMM blocks POOL from all tissues and cross sometimes yield conflict results at the following locations:
+#Chr11: Cob1 (BN only)
+#Chr11: Zrsr1 (BN only)
+#Chr15: Peg13 (BN only)
+#Chr7: Zim1 (BN and SK skeletal muscle) zim1 maternal expressed in Brain and Skeletal muscle. Within a paternal imprinting locus nearby in most tissues 
+
+
+### identify strain-effect culster and imprinting clusters
+# calculate the distances to the closest region, ignore overlap ones
+# -io Ignore features in B that overlap A. That is, we want close, yet not touching features only.
+# -d report distance
+
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+  do
+  rm tmp${body}
+  for head in BN SP HT SK KD ST GI LV
+    do f=${head}${body}
+    cat $f |awk -v h=$head 'BEGIN {OFS="\t"}{print $1,$2,$3, h}'>> tmp${body}
+  done
+  sort-bed tmp${body} > T8${body}_sort
+  #bedtools closest -io -d -a T8${body}_sort -b T8${body}_sort > T8_closest_io${body}
+done
+
+## a distribution of distances
+# Indentify_cluster.R
+## Set cut off distance to ???
+
+### use bedtools merge then the blocks that are overlap (d=0). 
+## One with plus and minus seperate. The other combine blocks from plus and minus strand
+# plus and minus seperate. (not use)
+#for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+#for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
+  do
+  echo T8${body}_sort
+  bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8${body}_cluster
+  #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
+  #bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
+done
+
+#combine blocks from plus and minus strand (use this)
+for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
+  do
+  rm T8_2Strand${coreBody}.bed 
+  for body in _plus${coreBody}.bed _minus${coreBody}.bed
+    do
+    cat T8${body}_sort >> T8_2Strand${coreBody}.bed 
+  done
+bedtools merge -i <(sort-bed  T8_2Strand${coreBody}.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand${coreBody}.bed_cluster
+done
+
+# make a table to compare among different p-value cut off
+rm tmp.join
+for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
+    do 
+      cat $f |cut -f 2 >> tmp.join  # a list of bed regions
+done
+sort tmp.join |uniq > tmp.sort  # remove duplicates
+for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
+    do 
+      join -a 1 -t $'\t' -e EMPTY -1 1 -2 2 -o 1.1,2.6 tmp.sort  <(sort -k 2 $f) > ${f}_join_tmp
+  done
+# paste the tables from tissues into a big table
+echo *_join_tmp
+paste *_join_tmp 
+
+
+
+# put the combined consistent blocks on WashU browser
+cd /local/ftp/pub/hub/F1_Tissues/mm10
+ln -f -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks_across_8tissue/*_ABconsistent_* .   #*/
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+#for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.1.bed
+do 
+h=`echo $f|cut -d _ -f 1-5`
+t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
+cat ${h}_minus_${t}.bed |grep -v "#"| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "-"}' > ${h}.tmp
+cat ${h}_plus_${t}.bed |grep -v "#" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "+"}' >> ${h}.tmp
+sort-bed ${h}.tmp > ${h}.tmp.sort.bed
+bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
+rm ${h}.tmp ${h}.tmp.sort.bed
+done
+
+
+# check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
+f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
+rm tmp.txt
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+do wc -l $f >>tmp.txt
+bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
+wc -l ${f}_overlap_incosistent >>tmp.txt
+
+
+## consistent across tissue
+# how common is imprting across tissues?  (This script use blocks, not clusters. Blocks can be overlapped)
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+  do
+  # make a list with all blocks from 8 tissues
+  rm tmp.txt
+  for head in BN HT SK SP LG LV GI ST
+    do cat ${head}${body}  >> tmp.txt  
+  done
+  grep -v "#" tmp.txt | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > bed3.txt
+  
+  # make a table with the same first column
+  for head in BN HT SK SP LG LV GI ST
+    do 
+      echo -e "#chrm_chrStart_chrEnd\t${head}_MB6\t${head}PB6" > join_${head}${body}
+      join -a 1 -t $'\t' -e EMPTY -j 1 -o 1.1,2.5,2.6 bed3.txt  <(< ${head}${body}  awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) >> join_${head}${body}
+  done
+  # paste the tables from tissues into a big table
+  paste join_*${body} | awk 'BEGIN {OFS="\t";m=":";d="-"}{split($1,a,"_"); print a[1],a[2],a[3],$2,$3,$5,$6,$8,$9,$11,$12,$14,$15,$17,$18,$20,$21,$23,$24}'  > T8_Merge${body}
+done
+
+
+##### Not used ###
 
 join1(){
   file1=$1
@@ -282,158 +441,3 @@ for head in BN HT SK SP LG LV GI ST
   do wc -l ${head}*_1FMp0.05_effect* |paste - - - - - - - -
 done
 
-
-
-# check overlap blocks of imprinting and see if there is inconsistency. eg: one MM, the other PP
-#f=LG_plus_p0.05_effect_imprinting.bed
-rm tmp.txt
-for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-  do
-  for head in BN HT  SK  SP  LG  LV  GI  ST
-    do f=${head}${body}
-    wc -l $f >>tmp.txt
-    bedtools intersect -f 0.3 -a $f -b $f -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} (substr($4,1,1) != substr($9,1,1)) {print $1m$2d$3,substr($4,1,1),substr($9,1,1),$0}' > ${f}_overlap_incosistent
-    wc -l ${f}_overlap_incosistent >>tmp.txt
-  done
-done
-
-cat tmp.txt |paste - - 
-
-#Summary
-#Some importing cluster are complicated. Therefore, using AlleleHMM blocks POOL from all tissues and cross sometimes yield conflict results at the following locations:
-#Chr11: Cob1 (BN only)
-#Chr11: Zrsr1 (BN only)
-#Chr15: Peg13 (BN only)
-#Chr7: Zim1 (BN and SK skeletal muscle) zim1 maternal expressed in Brain and Skeletal muscle. Within a paternal imprinting locus nearby in most tissues 
-
-
-### identify strain-effect culster and imprinting clusters
-# calculate the distances to the closest region, ignore overlap ones
-# -io Ignore features in B that overlap A. That is, we want close, yet not touching features only.
-# -d report distance
-
-#for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-#for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
-#for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
-for body in _plus_p0.1_effect_imprinting.bed _minus_p0.1_effect_imprinting.bed
-  do
-  rm tmp${body}
-  for head in BN HT  SK  SP  LG  LV  GI  ST
-    do f=${head}${body}
-    cat $f |awk -v h=$head 'BEGIN {OFS="\t"}{print $1,$2,$3, h}'>> tmp${body}
-  done
-  sort-bed tmp${body} > T8${body}_sort
-  bedtools closest -io -d -a T8${body}_sort -b T8${body}_sort > T8_closest_io${body}
-done
-
-## a distribution of distances
-# Indentify_cluster.R
-## Set cut off distance to ???
-
-### use bedtools merge then the blocks that are overlap (d=0). 
-## One with plus and minus seperate. The other combine blocks from plus and minus strand
-# plus and minus seperate.
-#for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
-#for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
-  do
-  echo T8${body}_sort
-  bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8${body}_cluster
-  #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
-  #bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
-done
-
-#combine blocks from plus and minus strand
-rm T8_2Strand_1FMp0.05_effect_imprinting.bed 
-for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
-  do
-  cat T8${body}_sort >> T8_2Strand_1FMp0.05_effect_imprinting.bed 
-done
-bedtools merge -i <(sort-bed  T8_2Strand_1FMp0.05_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster
-
-rm T8_2Strand_p0.05_effect_imprinting.bed 
-for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-  do
-  cat T8${body}_sort >> T8_2Strand_p0.05_effect_imprinting.bed 
-done
-bedtools merge -i <(sort-bed  T8_2Strand_p0.05_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.05_effect_imprinting.bed_cluster
-
-rm T8_2Strand_p0.1_effect_imprinting.bed 
-for body in _plus_p0.1_effect_imprinting.bed _minus_p0.1_effect_imprinting.bed
-  do
-  cat T8${body}_sort >> T8_2Strand_p0.1_effect_imprinting.bed 
-done
-bedtools merge -i <(sort-bed  T8_2Strand_p0.1_effect_imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.1_effect_imprinting.bed_cluster
-
-coreBody=_p0.05_effect_strain
-rm T8_2Strand${coreBody}.bed 
-for body in _plus${coreBody}.bed _minus${coreBody}.bed
-  do
-  cat T8${body}_sort >> T8_2Strand${coreBody}.bed 
-done
-bedtools merge -i <(sort-bed  T8_2Strand${coreBody}.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand${coreBody}.bed_cluster
-
-
-# make a table to compare among different p-value cut off
-rm tmp.join
-for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
-    do 
-      cat $f |cut -f 2 >> tmp.join  # a list of bed regions
-done
-sort tmp.join |uniq > tmp.sort  # remove duplicates
-for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
-    do 
-      join -a 1 -t $'\t' -e EMPTY -1 1 -2 2 -o 1.1,2.6 tmp.sort  <(sort -k 2 $f) > ${f}_join_tmp
-  done
-# paste the tables from tissues into a big table
-echo *_join_tmp
-paste *_join_tmp 
-
-
-
-# put the combined consistent blocks on WashU browser
-cd /local/ftp/pub/hub/F1_Tissues/mm10
-ln -f -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks_across_8tissue/*_ABconsistent_* .   #*/
-export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.1.bed
-do 
-h=`echo $f|cut -d _ -f 1-5`
-t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
-cat ${h}_minus_${t}.bed |grep -v "#"| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "-"}' > ${h}.tmp
-cat ${h}_plus_${t}.bed |grep -v "#" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "+"}' >> ${h}.tmp
-sort-bed ${h}.tmp > ${h}.tmp.sort.bed
-bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
-rm ${h}.tmp ${h}.tmp.sort.bed
-done
-
-
-# check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
-f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
-rm tmp.txt
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-do wc -l $f >>tmp.txt
-bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
-wc -l ${f}_overlap_incosistent >>tmp.txt
-
-
-## consistent across tissue
-# how common is imprting across tissues?  (This script use blocks, not clusters. Blocks can be overlapped)
-for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-  do
-  # make a list with all blocks from 8 tissues
-  rm tmp.txt
-  for head in BN HT SK SP LG LV GI ST
-    do cat ${head}${body}  >> tmp.txt  
-  done
-  grep -v "#" tmp.txt | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > bed3.txt
-  
-  # make a table with the same first column
-  for head in BN HT SK SP LG LV GI ST
-    do 
-      echo -e "#chrm_chrStart_chrEnd\t${head}_MB6\t${head}PB6" > join_${head}${body}
-      join -a 1 -t $'\t' -e EMPTY -j 1 -o 1.1,2.5,2.6 bed3.txt  <(< ${head}${body}  awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) >> join_${head}${body}
-  done
-  # paste the tables from tissues into a big table
-  paste join_*${body} | awk 'BEGIN {OFS="\t";m=":";d="-"}{split($1,a,"_"); print a[1],a[2],a[3],$2,$3,$5,$6,$8,$9,$11,$12,$14,$15,$17,$18,$20,$21,$23,$24}'  > T8_Merge${body}
-done
