@@ -354,6 +354,17 @@ bedtools merge -i <(sort-bed T8_2Strand_p0.05_effect_strain+imprinting.bed)  -c 
 # cluster combined strain effect and imprinting regardless of strandness
 
 
+## characterize the clusters
+# the size of the cluster
+# Histo_of_TSS_countsPerCluster.R
+
+# how many genecode annotation?
+# Histo_of_TSS_countsPerCluster.R
+mkdir /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6_T8/GeneAnnotationInCluster
+cd GeneAnnotationInCluster
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+
 # How many TSS per cluster?
 mkdir TSSinCluster
 ln -s ../T8*_cluster .
@@ -361,6 +372,7 @@ ln -s ../T8*_cluster .
 
 for head in BN SP HT SK KD ST GI LV
   do 
+bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
 bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(grep ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with
 bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(grep ${head} -v T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without
 
@@ -379,13 +391,25 @@ wc -l *T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
  22248 total
 
 
-
 # How many AlleleHMM blocks (from individual tissue, "native ones")? How frequently do they swtiches?
-# how many genecode annotation? How many tunit? How do the allele specificity switches within the cluster?
 
+for head in BN SP HT SK KD ST GI LV
+  do 
+bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(grep ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with
+bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(grep -v ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without
+done
 
-
-
+for head in BN SP HT SK KD ST GI LV
+  do 
+for cross in MB6 PB6
+  do 
+for s in plus minus
+  do
+bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_${cross}_HMM_${s}_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster &
+done
+done
+done
 // # make a table to compare among different p-value cut off
 // rm tmp.join
 // for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster

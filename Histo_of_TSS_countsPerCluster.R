@@ -1,4 +1,4 @@
-setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/TSSinCluster/")
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster/TSSinCluster/")
 
 ###color transparant
 t_col <- function(color, percent = 50, name = NULL) {
@@ -18,19 +18,20 @@ t_col <- function(color, percent = 50, name = NULL) {
 
 mycol1 <- t_col("blue", perc = 50, name = "lt.blue")
 mycol2 <- t_col("green", perc = 50, name = "lt.green")
+binSize=1
 
 for (OR in c("BN", "SP", "HT", "SK", "KD", "ST", "GI", "LV")){
-  pdf(paste(OR, "TSSinCluster.pdf", sep = "_"))
+  pdf(paste(OR, "TSSinCluster_seperate.pdf", sep = "_"))
   par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   par(mgp=c(3,1,0))
   par(cex.lab=2.2, cex.axis=2.2)
 #OR="LV"
-#f1=read.table("LV_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster",header=F)
+f1=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster", sep = "_"),header=F)
 f2=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with", sep = "_"),header=F)
 f3=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without", sep = "_"),header=F)
 
 hist(f3$V1,col="red", density=25
-     , breaks = seq(0,200,5)
+     , breaks = seq(0,200,binSize)
      , freq = F
      ,ylab="Proportion of clusters"
      , xlim=c(0,50)
@@ -42,7 +43,7 @@ hist(f3$V1,col="red", density=25
 
 
 hist(f2$V1,col="blue"
-     , breaks = seq(0,200,5)
+     , breaks = seq(0,200,binSize)
      , freq = F
      #, xlab="HMM blocks in the cluster"
      #, add=T
@@ -52,7 +53,7 @@ hist(f2$V1,col="blue"
      ,add=T
 )
 hist(f3$V1,col="red", density=25
-     , breaks = seq(0,200,5)
+     , breaks = seq(0,200,binSize)
      , freq = F
      ,add=T
 )
@@ -72,7 +73,86 @@ legend("topright",
        , bty = "n"
 )
 dev.off()
+pdf(paste(OR, "TSSinCluster.pdf", sep = "_"))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+hist(f1$V1,col="dark green", density=25
+     , breaks = seq(0,200,binSize)
+     , freq = F
+     ,ylab="Proportion of clusters"
+     , xlim=c(0,50)
+     ,xlab=paste("Number of", OR,"TSSs in each cluster",sep=" ")
+     ,main= ""
+     ,add=F
+     ,las=1
+)
+dev.off()
 }
+
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster/AlleleHMMInCluster/")
+
+for (OR in c("BN", "SP", "HT", "SK", "KD", "ST", "GI", "LV")){
+  for (cross in c("MB6", "PB6")){
+    for (s in c("plus", "minus")){
+      pdf(paste("pdf/",paste(OR,cross,"HMM",s, "HMMInCluster.pdf", sep = "_"), sep=""))
+      par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+      par(mgp=c(3,1,0))
+      par(cex.lab=2.2, cex.axis=2.2)
+      f1=read.table(paste(OR,cross,"HMM",s,"count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster", sep = "_"),header=F)
+      
+      hist(f1$V1,col="dark green", density=25
+           , breaks = seq(0.5,max(10.1,max(f1$V1)+0.5),1)
+           #, freq = F
+           ,ylab="Number of clusters"
+           #, xlim=c(0,50)
+           ,xlab=paste("Number of", OR,s,"AlleleHMM blocks in each cluster",sep=" ")
+           ,main= ""
+           ,add=F
+           ,las=1
+      )
+      dev.off()
+    }
+  }
+}
+
+  
+  
+  
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster/GeneAnnotationInCluster/")
+pdf("gencode.vM20.annotation_geneMergedinCluster.pdf")
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+f=read.table("gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster",header=F)
+a=hist(f$V1,col="dark green", density=25
+     , breaks = seq(0,200,binSize)
+     , freq = F
+     ,ylab="Proportion of clusters"
+     , xlim=c(0,50)
+     ,xlab=paste("Number of","gencode gene annotations in each cluster",sep=" ")
+     ,main= ""
+     ,add=F
+     ,las=1
+)
+dev.off()
+plot(a$mids,log10(a$counts))
+
+
+
+f=read.table("T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_length",header=F)
+hist(log10(f$V1),col="dark green", density=25
+     #, breaks = seq(0,10000000,100000)
+     #, freq = F
+     ,ylab="Number of clusters"
+     #, xlim=c(0,50)
+     ,xlab="Cluster length (log10)"
+     ,main= ""
+     ,add=F
+     ,las=1
+)
+
+
 
 ##END
 
