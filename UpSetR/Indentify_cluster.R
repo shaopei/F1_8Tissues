@@ -1,3 +1,7 @@
+# script to examine the distribution of distances between blocks.
+# Would liek to use the script to find a cut off distance to custer blocks.
+# didn't use in the end
+
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/UpSetR")
 fp="T8_closest_io_minus_p0.05_effect_imprinting.bed"
 mdf=read.table(fp)

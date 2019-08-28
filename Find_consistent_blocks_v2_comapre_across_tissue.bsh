@@ -7,6 +7,8 @@
 # identify blocks that have the same allele bias in all samples from the same tissue and cross
 # use fishers method to combine p-value from multiple samples
 
+# see summary in proseq_HT_F1_samples_CombinedBlockFrom8T_KD.xlsx
+
 cd /workdir/sc2457/F1_Tissues/Find_consistent_blocks_across_8tissue
 
 
@@ -298,22 +300,22 @@ for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
   #bedtools closest -io -d -a T8${body}_sort -b T8${body}_sort > T8_closest_io${body}
 done
 
-## a distribution of distances
-# Indentify_cluster.R
-## Set cut off distance to ???
+// ## a distribution of distances
+// # Indentify_cluster.R
+// ## Set cut off distance to ???
 
-### use bedtools merge then the blocks that are overlap (d=0). 
-## One with plus and minus seperate. The other combine blocks from plus and minus strand
-# plus and minus seperate. (not use)
-#for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
-#for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
-  do
-  echo T8${body}_sort
-  bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8${body}_cluster
-  #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
-  #bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
-done
+// ### use bedtools merge then the blocks that are overlap (d=0). 
+// ## One with plus and minus seperate. The other combine blocks from plus and minus strand
+// # plus and minus seperate. (not use)
+// #for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+// for body in _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+// #for body in _plus_1FMp0.05_effect_imprinting.bed _minus_1FMp0.05_effect_imprinting.bed
+//   do
+//   echo T8${body}_sort
+//   bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8${body}_cluster
+//   #bedtools merge -i T8${body}_sort -c 4 -o distinct -d 0 > T8${body}_cluster
+//   #bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
+// done
 
 #combine blocks from plus and minus strand (use this)
 for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
@@ -326,20 +328,49 @@ for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
 bedtools merge -i <(sort-bed  T8_2Strand${coreBody}.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand${coreBody}.bed_cluster
 done
 
-# make a table to compare among different p-value cut off
-rm tmp.join
-for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
-    do 
-      cat $f |cut -f 2 >> tmp.join  # a list of bed regions
-done
-sort tmp.join |uniq > tmp.sort  # remove duplicates
-for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
-    do 
-      join -a 1 -t $'\t' -e EMPTY -1 1 -2 2 -o 1.1,2.6 tmp.sort  <(sort -k 2 $f) > ${f}_join_tmp
+// head T8_2Strand${coreBody}.bed_cluster
+// 0.167295        chr1:53980358-54147653  chr1    53980358        54147653        ST
+// 0.621409        chr1:63133206-63754615  chr1    63133206        63754615        BN
+// 0.216268        chr10:12976223-13192491 chr10   12976223        13192491        BN,GI,KD,ST
+// 0.489721        chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST
+
+
+# the cluster that combine imprinting and strain effect (from both plus and minus strand )
+rm T8_2Strand_p0.05_effect_strain+imprinting.bed 
+for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
+  do
+  for body in _plus${coreBody}.bed _minus${coreBody}.bed
+    do
+    cat T8${body}_sort >> T8_2Strand_p0.05_effect_strain+imprinting.bed
   done
-# paste the tables from tissues into a big table
-echo *_join_tmp
-paste *_join_tmp 
+done
+bedtools merge -i <(sort-bed T8_2Strand_p0.05_effect_strain+imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+
+
+## consistent across tissue
+# run scripts in UpSetR.R
+# strain effect cluster regardless of strandness
+# imprinting cluster regardless of strandness
+# cluster combined strain effect and imprinting regardless of strandness
+
+
+
+
+
+// # make a table to compare among different p-value cut off
+// rm tmp.join
+// for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
+//     do 
+//       cat $f |cut -f 2 >> tmp.join  # a list of bed regions
+// done
+// sort tmp.join |uniq > tmp.sort  # remove duplicates
+// for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
+//     do 
+//       join -a 1 -t $'\t' -e EMPTY -1 1 -2 2 -o 1.1,2.6 tmp.sort  <(sort -k 2 $f) > ${f}_join_tmp
+//   done
+// # paste the tables from tissues into a big table
+// echo *_join_tmp
+// paste *_join_tmp 
 
 
 
@@ -360,35 +391,38 @@ rm ${h}.tmp ${h}.tmp.sort.bed
 done
 
 
-# check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
-f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
-rm tmp.txt
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-do wc -l $f >>tmp.txt
-bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
-wc -l ${f}_overlap_incosistent >>tmp.txt
+// # check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
+// f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
+// rm tmp.txt
+// for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+// do wc -l $f >>tmp.txt
+// bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
+// wc -l ${f}_overlap_incosistent >>tmp.txt
 
 
-## consistent across tissue
-# how common is imprting across tissues?  (This script use blocks, not clusters. Blocks can be overlapped)
-for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
-  do
-  # make a list with all blocks from 8 tissues
-  rm tmp.txt
-  for head in BN HT SK SP LG LV GI ST
-    do cat ${head}${body}  >> tmp.txt  
-  done
-  grep -v "#" tmp.txt | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > bed3.txt
+// ## consistent across tissue
+// # how common is imprting across tissues?  (This script use blocks, not clusters. Blocks can be overlapped)
+// for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+//   do
+//   # make a list with all blocks from 8 tissues
+//   rm tmp.txt
+//   for head in BN HT SK SP LG LV GI ST
+//     do cat ${head}${body}  >> tmp.txt  
+//   done
+//   grep -v "#" tmp.txt | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > bed3.txt
   
-  # make a table with the same first column
-  for head in BN HT SK SP LG LV GI ST
-    do 
-      echo -e "#chrm_chrStart_chrEnd\t${head}_MB6\t${head}PB6" > join_${head}${body}
-      join -a 1 -t $'\t' -e EMPTY -j 1 -o 1.1,2.5,2.6 bed3.txt  <(< ${head}${body}  awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) >> join_${head}${body}
-  done
-  # paste the tables from tissues into a big table
-  paste join_*${body} | awk 'BEGIN {OFS="\t";m=":";d="-"}{split($1,a,"_"); print a[1],a[2],a[3],$2,$3,$5,$6,$8,$9,$11,$12,$14,$15,$17,$18,$20,$21,$23,$24}'  > T8_Merge${body}
-done
+//   # make a table with the same first column
+//   for head in BN HT SK SP LG LV GI ST
+//     do 
+//       echo -e "#chrm_chrStart_chrEnd\t${head}_MB6\t${head}PB6" > join_${head}${body}
+//       join -a 1 -t $'\t' -e EMPTY -j 1 -o 1.1,2.5,2.6 bed3.txt  <(< ${head}${body}  awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) >> join_${head}${body}
+//   done
+//   # paste the tables from tissues into a big table
+//   paste join_*${body} | awk 'BEGIN {OFS="\t";m=":";d="-"}{split($1,a,"_"); print a[1],a[2],a[3],$2,$3,$5,$6,$8,$9,$11,$12,$14,$15,$17,$18,$20,$21,$23,$24}'  > T8_Merge${body}
+// done
+
+
+
 
 
 ##### Not used ###
