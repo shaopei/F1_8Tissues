@@ -258,7 +258,13 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
   done
 done
 
-
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+do
+cat ${head}_${s}_p0.05_effect_imprinting.bed ${head}_${s}_p0.05_effect_strain.bed |sort-bed -|awk 'BEGIN{OFS="\t"; c=","} {split($4,a,","); split($5,b,","); print $1,$2,$3, a[1],b[1]}' \
+|awk 'BEGIN{OFS="\t"; c=","} {print $1,$2,$3, $4c$5}'  > ${head}_${s}_p0.05_effect_strain+imprinting.bed &
+done
+done
 
 
 # check overlap blocks of imprinting and see if there is inconsistency. eg: one MM, the other PP
@@ -356,6 +362,11 @@ bedtools merge -i <(sort-bed T8_2Strand_p0.05_effect_strain+imprinting.bed)  -c 
 
 ## characterize the clusters
 # the size of the cluster
+for f in T8_2Strand_p0.05_effect_*.bed_cluster
+  do
+cat $f | awk 'BEGIN {OFS="\t"} {print $5-$4}' > ${f}_length
+done
+
 # Histo_of_TSS_countsPerCluster.R
 
 # how many genecode annotation?
@@ -364,6 +375,9 @@ mkdir /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6_T8/Gene
 cd GeneAnnotationInCluster
 ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
 bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+
 
 # How many TSS per cluster?
 mkdir TSSinCluster
@@ -410,6 +424,53 @@ bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |cut -f 1-
 done
 done
 done
+
+# How many AlleleHMM block swtiches per cluster?
+for head in BN SP HT SK KD ST GI LV
+  do 
+for cross in MB6 PB6
+  do 
+for s in plus minus
+  do
+bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c | awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_${cross}_HMM_${s}_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_Allele-Bias-StateCounts &
+done
+done
+done
+
+cat *_Allele-Bias-StateCounts |paste - -
+   //  477 1            44 2
+   //  530 1            47 2
+   //  402 1            40 2
+   //  433 1            41 2
+   //  321 1            32 2
+   //  338 1            34 2
+   //  498 1            53 2
+   //  492 1            65 2
+   //  127 1            10 2
+   //  101 1             8 2
+   //  365 1            23 2
+   //  358 1            34 2
+   //  456 1            60 2
+   //  512 1            66 2
+   //  365 1            41 2
+   //  417 1            47 2
+   //  747 1            81 2
+   //  746 1            80 2
+   //  961 1           129 2
+   // 1011 1           148 2
+   //  242 1            15 2
+   //  249 1            11 2
+   //  522 1            92 2
+   //  583 1            90 2
+   //  434 1            34 2
+   //  458 1            42 2
+   //  700 1            55 2
+   //  688 1            82 2
+   //  222 1            14 2
+   //  218 1            12 2
+   //  443 1            58 2
+   //  457 1            49 2
+
 // # make a table to compare among different p-value cut off
 // rm tmp.join
 // for f in T8_2Strand_p0.05_effect_imprinting.bed_cluster T8_2Strand_1FMp0.05_effect_imprinting.bed_cluster T8_2Strand_p0.1_effect_imprinting.bed_cluster
