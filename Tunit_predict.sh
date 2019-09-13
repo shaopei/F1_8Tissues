@@ -6,6 +6,8 @@ Rscript run.hmm.h5_F1bedgraph.R ${t}_all ${t}_all.dREG.peak.score.bed.gz ${t}_al
 #Rscript run.hmm.h3_F1bedgraph.R ${t}_all ${t}_all.dREG.peak.score.bed.gz ${t}_all_plus.bw ${t}_all_minus.bw &
 done
 
+t=KD
+Rscript run.hmm.h5_F1bedgraph.R ${t}_all ${t}_all.dREG.peak.score.bed.gz ${t}_all_plus.bw ${t}_all_minus.bw &
 
 
 t=BN
