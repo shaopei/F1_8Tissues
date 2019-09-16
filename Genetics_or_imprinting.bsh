@@ -16,8 +16,15 @@ echo $Head
 intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
 # avoid multiple count of transcript share similarl location, need to merge bed of overlaping transcript as follows:
 # -s	Force strandedness
-bedtools merge -i <(zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz) -s -o distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V |gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed.gz
+bedtools merge -i <(zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz) -s -o distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V > ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed
+cat ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'> ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed
+cat ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'> ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed
+
 done
+
+
+
+
 
 
 ### calculate the numbe of ncRNA in imprinting
@@ -27,10 +34,13 @@ do
 echo $Head
 #ln -s /workdir/sc2457/F1_Tissues/bigWig/${Head}_all_h5.preds.full.bed .
 # -v	Only report those entries in A that have no overlap in B. Restricted by -f and -r.
-intersectBed -s -v -a ${Head}_all_h5.preds.full.bed -b <(zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed.gz) |cut -f 1-6 | gzip > ${Head}_all_h5.preds.full_outProtein_coding.bed.gz
+intersectBed -s -v -a ${Head}_all_h5.preds.full.bed -b ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed |cut -f 1-6| LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > ${Head}_all_h5.preds.full_outProtein_coding.bed
+cat ${Head}_all_h5.preds.full_outProtein_coding.bed | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}' > ${Head}_all_h5.preds.full_outProtein_coding_plus.bed 
+cat ${Head}_all_h5.preds.full_outProtein_coding.bed | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}' > ${Head}_all_h5.preds.full_outProtein_coding_minus.bed 
+
 done
 
-#HERE
+
 ### Do the calculation here
 
 PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
@@ -65,13 +75,123 @@ BinomialTest(){
 }
 
 
-
-
+## map reads from each individual sample from the same tissue and cross to the combined region of interest (protein-coding or ncRNA)
 #
-ln -s ../3rd_batch/map2ref/HMM_bed
+mkdir BinomialTest
+cd BinomialTest
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
+mkdir toremove
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+bed_dir=map2ref_bed
+  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s ../${Head}_all_h5.preds.full_outProtein_coding_plus.bed ${P}_ncRNA_plus.bed
+    ln -s ../${Head}_all_h5.preds.full_outProtein_coding_minus.bed ${P}_ncRNA_minus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed ${P}_ProteinCodingGene_plus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed ${P}_ProteinCodingGene_minus.bed
+
+    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+  done
+  wait
+  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    # switch -m and -p for PB6
+    PAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    MAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s ../${Head}_all_h5.preds.full_outProtein_coding_plus.bed ${P}_ncRNA_plus.bed
+    ln -s ../${Head}_all_h5.preds.full_outProtein_coding_minus.bed ${P}_ncRNA_minus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed ${P}_ProteinCodingGene_plus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed ${P}_ProteinCodingGene_minus.bed
+
+    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+  done
+  wait
+done
 
 
+# work on consistency
+# identify genes or ncRNA share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
+## use fishers method to combine p-value from multiple samples  
+## combine p-value in one file
+for t in BN HT SK SP KD LV GI ST
+  do 
+R --vanilla --slave --args $(pwd) $t 0.05 R1_ncRNA < Find_consistent_blocks_v2_body.R &
+R --vanilla --slave --args $(pwd) $t 0.05 R1_ProteinCodingGene < Find_consistent_blocks_v2_body.R &
+done
 
+wc -l *_ABconsistent* |paste - - > ABconsistent_line_counts.txt 
+sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
+
+mkdir AllelicBiaseConsistent
+cd AllelicBiaseConsistent
+ln -s ../*_ABconsistent_FisherMethodP0.05.bed .   #*/
+
+
+join_AB(){
+  file1=$1
+  file2=$2
+  file3=$3
+  cat ${file1} ${file2} |grep -v "#" | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="_"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"_"); print a[1],a[2],a[3], $2, $3}' > ${file3}
+  rm ${file1}.tmp*
+}
+
+
+# make a table with Allelic Bias (AB) at MB6 and PB6 and use that to identify strain-effect, imprting, and others (one S, one M|P)
+
+p=0.05
+body=R1_ncRNA
+for body in R1_ncRNA R1_ProteinCodingGene
+	do
+#KD_PB6_R1_ncRNA_minus_ABconsistent_FisherMethodP0.05.bed
+for f in *_${body}_plus_ABconsistent_FisherMethodP${p}.bed
+  do t=`echo $f|cut -d _ -f 1`
+  for s in plus minus
+    do 
+    join_in1=${t}_MB6_${body}_${s}_ABconsistent_FisherMethodP${p}.bed 
+    join_in2=${t}_PB6_${body}_${s}_ABconsistent_FisherMethodP${p}.bed 
+    join_out=${t}_${body}_${s}_ABconsistent_FMp${p}.bed
+    h=${t}_${body}_${s}_p${p}_effect
+
+    join_AB ${join_in1} ${join_in2} ${join_out}
+    grep S ${join_out} > ${h}_NA.bed
+    im=${h}_imprinting.bed
+    st=${h}_strain.bed
+    rm ${im} ${st}
+    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
+    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
+  done
+done
+
+p=0.05
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  wc -l ${head}_${body}_${s}_p${p}_effect_* |paste - - - - 
+  done
+  done
+done
+
+#HERE
 
 
 ##### NOT used below #####
