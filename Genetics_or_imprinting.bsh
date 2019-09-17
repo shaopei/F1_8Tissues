@@ -16,10 +16,9 @@ echo $Head
 intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
 # avoid multiple count of transcript share similarl location, need to merge bed of overlaping transcript as follows:
 # -s	Force strandedness
-bedtools merge -i <(zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz) -s -o distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V > ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed
+bedtools merge -i <(zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz) -s -o distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V | grep -v chrX | grep -v chrY > ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed
 cat ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'> ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed
 cat ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'> ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed
-
 done
 
 
@@ -34,11 +33,25 @@ do
 echo $Head
 #ln -s /workdir/sc2457/F1_Tissues/bigWig/${Head}_all_h5.preds.full.bed .
 # -v	Only report those entries in A that have no overlap in B. Restricted by -f and -r.
-intersectBed -s -v -a ${Head}_all_h5.preds.full.bed -b ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed |cut -f 1-6| LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > ${Head}_all_h5.preds.full_outProtein_coding.bed
+intersectBed -s -v -a ${Head}_all_h5.preds.full.bed -b ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed |cut -f 1-6| LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  |grep -v chrX |grep -v chrY  > ${Head}_all_h5.preds.full_outProtein_coding.bed
 cat ${Head}_all_h5.preds.full_outProtein_coding.bed | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}' > ${Head}_all_h5.preds.full_outProtein_coding_plus.bed 
 cat ${Head}_all_h5.preds.full_outProtein_coding.bed | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}' > ${Head}_all_h5.preds.full_outProtein_coding_minus.bed 
 
 done
+
+
+# use dREG sites to represent ncRNA not in tunits? (did not work. very few allelic biase)
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# keep dREG sites that are NOT overlap with tanscript and tunits above
+intersectBed -v -a <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz)  -b <(cat ${Head}_all_h5.preds.full.bed ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed |cut -f 1-6) | LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > ${Head}_dREG_outProtein_outTunit.bed
+
+cat ${Head}_dREG_outProtein_outTunit.bed | awk 'BEGIN {OFS="\t"} {print $0, "111", "+"}'> ${Head}_dREG_outProtein_outTunit_plus.bed
+cat ${Head}_dREG_outProtein_outTunit.bed | awk 'BEGIN {OFS="\t"} {print $0, "111", "-"}'> ${Head}_dREG_outProtein_outTunit_minus.bed
+done
+
+
 
 
 ### Do the calculation here
@@ -97,11 +110,15 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_all_h5.preds.full_outProtein_coding_minus.bed ${P}_ncRNA_minus.bed
     ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed ${P}_ProteinCodingGene_plus.bed
     ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed ${P}_ProteinCodingGene_minus.bed
+    #ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
+    #ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
     BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
   done
   wait
   for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
@@ -117,11 +134,15 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_all_h5.preds.full_outProtein_coding_minus.bed ${P}_ncRNA_minus.bed
     ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed ${P}_ProteinCodingGene_plus.bed
     ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed ${P}_ProteinCodingGene_minus.bed
+    #ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
+    #ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
     BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
   done
   wait
 done
@@ -135,6 +156,7 @@ for t in BN HT SK SP KD LV GI ST
   do 
 R --vanilla --slave --args $(pwd) $t 0.05 R1_ncRNA < Find_consistent_blocks_v2_body.R &
 R --vanilla --slave --args $(pwd) $t 0.05 R1_ProteinCodingGene < Find_consistent_blocks_v2_body.R &
+#R --vanilla --slave --args $(pwd) $t 0.05 R1_dREG_outProtein_outTunit < Find_consistent_blocks_v2_body.R 
 done
 
 wc -l *_ABconsistent* |paste - - > ABconsistent_line_counts.txt 
@@ -190,6 +212,31 @@ for head in BN SP HT SK KD ST GI LV
   done
   done
 done
+
+# how many imprinted genes/ncRNA combining all organs?
+
+effect=imprinting
+effect=strain
+for body in ProteinCodingGene ncRNA
+do echo $body 
+rm T8_${body}_p0.05_effect_${effect}.bed
+for f in  *_${body}_*_p0.05_effect_${effect}.bed
+do t=`echo $f|cut -d "_" -f 1`
+s=`echo $f|rev| cut -d "_" -f 4|rev`
+cat $f |awk -v t=${t} -v s=${s} 'BEGIN{OFS="\t"} (s=="plus"){print $1,$2,$3 , t, "111", "+" } (s=="minus"){print $1,$2,$3 , t, "111", "-" }' >> T8_${body}_p0.05_effect_${effect}.bed
+done
+cat  T8_${body}_p0.05_effect_${effect}.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$6}' |sort |uniq -c |wc -l
+done
+
+for body in ProteinCodingGene ncRNA
+do echo $body 
+bedtools merge -i <(sort-bed T8_${body}_p0.05_effect_${effect}.bed)  -c 4 -o distinct -d 0  > T8_${body}_p0.05_effect_${effect}_merged.bed
+done
+## most are brain only
+
+# do they express in the organ that shows no impriting?
+
+
 
 #HERE
 

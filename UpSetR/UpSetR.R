@@ -100,6 +100,87 @@ sum(df$TissueCounts==1)
 
 
 
+# imprinting genes/ncRNA merged regardless of strandness
+Tissue_list=c( "BN","SP","HT","SK","KD","ST","GI","LV")
+df=read.table("T8_ncRNA_p0.05_effect_strain_merged.bed", header = F)
+for (kkk in Tissue_list){
+  df$tmp=0
+  df$tmp[grepl(kkk, df$V4)]=1
+  colnames(df)[grep("tmp", colnames(df))]=kkk
+}
+upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree")
+df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
+
+a=hist(df$TissueCounts[df$TissueCounts >=1], breaks = seq(0.5,9,1),
+       xlab="Number of organs", ylab="Number of clusters", main="",
+       las=1, freq = T)
+a$counts
+
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="pink",las=1, main="ncRNA, strain")
+
+df=read.table("T8_ProteinCodingGene_p0.05_effect_strain_merged.bed", header = F)
+for (kkk in Tissue_list){
+  df$tmp=0
+  df$tmp[grepl(kkk, df$V4)]=1
+  colnames(df)[grep("tmp", colnames(df))]=kkk
+}
+upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree")
+df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
+
+a=hist(df$TissueCounts[df$TissueCounts >=1], breaks = seq(0.5,9,1),
+       xlab="Number of organs", ylab="Number of clusters", main="",
+       las=1, freq = T)
+a$counts
+
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="red",las=1)
+
+
+
+
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="blue",las=1,add=T)
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="red", density=25,angle=45,add=T)
+hist(df$TissueCounts, breaks = seq(-0.5,9,1), col="red", density=25,angle=45)
+sum(df$TissueCounts==1)
+
+legend("topright", 
+       legend = c("100%", "25%"),
+       #pch=c(15,15),
+       cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25,10000),
+       angle=c(45,180),
+       #angle=45,
+       fill=c("blue", "yellow")
+       , bty = "n"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##### not use #####
@@ -142,3 +223,7 @@ for (kkk in c( "BN","HT","SK","SP","LG","LV","GI","ST")){
   colnames(df)[grep("tmp", colnames(df))]=kkk
 }
 upset(df, nsets = 8, sets =c( "BN","HT","SK","SP","LG","LV","GI","ST"), keep.order = T, order.by = "degree")
+
+
+
+# imprinting genes /ncRNA
