@@ -1,4 +1,4 @@
-#R --vanilla --slave --args $(pwd) Tissue pvlaue_cutoff < Find_consistent_blocks_v2.R
+#R --vanilla --slave --args $(pwd) Tissue pvlaue_cutoff body < Find_consistent_blocks_v2.R
 
 #arguments here
 args=(commandArgs(TRUE))
