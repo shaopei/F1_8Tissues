@@ -15,7 +15,7 @@ for (kkk in Tissue_list){
 }
 upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree")
 df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
-a=hist(df$TissueCounts[df$TissueCounts>1], breaks = seq(-0.5,9,1))
+#a=hist(df$TissueCounts[df$TissueCounts>1], breaks = seq(-0.5,9,1))
 a=hist(df$TissueCounts[df$TissueCounts >=1], breaks = seq(0.5,9,1),
        xlab="Number of organs", ylab="Number of clusters", main="",
        las=1, freq = T)

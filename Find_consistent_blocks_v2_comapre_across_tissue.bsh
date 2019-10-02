@@ -1,4 +1,3 @@
-# use this one for final results!
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
 # combine the significant alleleHMM blocks from the same tissue but different cross
@@ -323,7 +322,7 @@ done
 //   #bedtools closest -io -d -a T8${body}_cluster -b T8${body}_cluster|awk '{print $NF}'|sort
 // done
 
-#combine blocks from plus and minus strand (use this)
+#combine overlapped blocks from both plus and minus strand (use this)
 for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
   do
   rm T8_2Strand${coreBody}.bed 
@@ -381,29 +380,90 @@ bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1
 
 # How many TSS per cluster?
 mkdir TSSinCluster
+cd TSSinCluster
 ln -s ../T8*_cluster .
-#ln -s dREG
+ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ dREG
 
 for head in BN SP HT SK KD ST GI LV
   do 
 bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
 bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(grep ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with
 bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(grep ${head} -v T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without
-
 done
+# here
 
 wc -l *T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2489 BN_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2365 GI_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2224 HT_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2465 KD_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2562 LV_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2178 SK_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2297 SP_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  2270 ST_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-  3398 T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
- 22248 total
+  2397 BN_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2266 GI_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2073 HT_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2365 KD_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2492 LV_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2043 SK_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2189 SP_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  2135 ST_dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  3470 T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+ 21430 total
 
+for effect in strain+imprinting strain imprinting
+  do for head in BN SP HT SK KD ST GI LV
+  do 
+bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster
+bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(grep ${head} T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_with
+bedtools intersect -wo -a <(zcat dREG/${head}_all.dREG.peak.score.bed.gz |cut -f 1-3) -b  <(grep ${head} -v T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > ${head}_dREG_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_without
+done
+done
+
+   23 BN_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+   19 BN_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+    4 BN_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   20 GI_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+   10 GI_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+   10 GI_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   20 HT_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+    6 HT_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+   14 HT_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   20 KD_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+    9 KD_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+   11 KD_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   19 LV_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+   12 LV_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+    7 LV_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   22 SK_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+   11 SK_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+   11 SK_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   18 SP_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+    7 SP_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+   11 SP_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   22 ST_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+    9 ST_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_with
+   13 ST_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster_without
+   28 T8_2Strand_p0.05_effect_imprinting.bed_cluster
+
+      2394 BN_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+    597 BN_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1794 BN_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2261 GI_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+    423 GI_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1831 GI_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2067 HT_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+     83 HT_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1984 HT_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2361 KD_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+    603 KD_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1752 KD_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2491 LV_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+   1527 LV_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+    958 LV_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2035 SK_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+    240 SK_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1793 SK_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2184 SP_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+    907 SP_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1273 SP_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   2127 ST_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+    192 ST_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_with
+   1934 ST_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster_without
+   3466 T8_2Strand_p0.05_effect_strain.bed_cluster
 
 # How many AlleleHMM blocks (from individual tissue, "native ones")? How frequently do they swtiches?
 

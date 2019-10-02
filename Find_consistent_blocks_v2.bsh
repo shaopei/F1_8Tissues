@@ -1,3 +1,4 @@
+# use this one for final results!
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
 # combine the significant alleleHMM blocks from the same tissue but different cross
@@ -44,14 +45,22 @@ T=5
 ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 
+# remove LG samples
+#T=5
+#for s in plus minus 
+#  do
+#ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
+#ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+#done
 
-T=5
+# add KD samples
+OR=KD
 for s in plus minus 
   do
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_MB6_FG_R1/AlleleHMM/LG_MB6_FG_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_MB6_HMM_${s}.bed
-ln -s /workdir/sc2457/F1_Tissues/allelicbias-PersonalGenome_P.CAST_M.B6-LG_PB6_CDE_R1/AlleleHMM/LG_PB6_CDE_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed LG_PB6_HMM_${s}.bed
+T=4
+ln -s /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_MB6_all_R1/AlleleHMM/${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_MB6_HMM_${s}.bed
+ln -s /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
-
 
 # Combine AlleleHMM significantly biased blocks from MB6 and PB6(eg: comnined BN_MB6 and BN_PB6)
 # remove duplicate blocks
@@ -104,11 +113,10 @@ BinomialTest(){
   #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
 }
 
-## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks
+## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks comnined_corss from each tissue
 
-for bed in HMM_bed/combined_cross/*_HMM_minus.bed  #*/   #comnined_corss from each tissue
+for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
-Head=`echo ${bed} |rev| cut -d / -f 1 |rev |cut -d _ -f 1` #BN
 echo $Head
 bed_dir=map2ref_bed
   for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
@@ -121,8 +129,8 @@ bed_dir=map2ref_bed
     P=`echo $PREFIX| cut -d / -f 2`
     ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
     ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
-    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
-    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} & 
     wait_a_second
   done
 
@@ -138,26 +146,41 @@ bed_dir=map2ref_bed
     ln -s HMM_bed/combined_cross/${Head}_HMM_plus.bed ${P}_HMM_plus.bed
     ln -s HMM_bed/combined_cross/${Head}_HMM_minus.bed ${P}_HMM_minus.bed
 
-    # switch -m and -p for PB6
-    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} 
-    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} 
+    BinomialTest ${P}_HMM_plus.bed ${P}_HMM_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_HMM_minus.bed ${P}_HMM_minus ${MAT_READ_BED} ${PAT_READ_BED} & 
     wait_a_second
   done
 done
 
-#Here April 23
-
 # identify blocks share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
 ## use fishers method to combine p-value from multiple samples  
 ## combine p-value in one file
-for t in `ls *_HMM_plus.bed |cut -d _ -f 1 |uniq`
+for t in BN HT SK SP KD LV GI ST
   do 
-R --vanilla --slave --args $(pwd) $t < Find_consistent_blocks_v2.R
+R --vanilla --slave --args $(pwd) $t 0.05 < Find_consistent_blocks_v2.R &
 done
+
 
 wc -l *_ABconsistent* |paste - -
 sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
 # use sed to insert the first line
+
+# put the combined consistent blocks on WashU browser
+cd /local/ftp/pub/hub/F1_Tissues/mm10
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent_* .   #*/
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+do 
+h=`echo $f|cut -d _ -f 1-5`
+t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
+cat ${h}_minus_${t}.bed |grep -v "#"| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "-"}' > ${h}.tmp
+cat ${h}_plus_${t}.bed |grep -v "#" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "+"}' >> ${h}.tmp
+sort-bed ${h}.tmp > ${h}.tmp.sort.bed
+bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
+rm ${h}.tmp ${h}.tmp.sort.bed
+done
+
+
 
 cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
 ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent* .   #*/
@@ -173,17 +196,16 @@ join_AB(){
   rm ${file1}.tmp*
 }
 
-#Here April 22
-
 # make a table with AB at MB6 and PB6
-for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+p=0.05
+for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP${p}.bed
   do t=`echo $f|cut -d _ -f 1`
   for s in plus minus
     do 
-    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.05.bed 
-    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP0.05.bed 
-    join_out=${t}_combined_HMM_${s}_ABconsistent_FMp0.05.bed
-    h=${t}_${s}_p0.05_effect
+    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP${p}.bed 
+    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent_FisherMethodP${p}.bed 
+    join_out=${t}_combined_HMM_${s}_ABconsistent_FMp${p}.bed
+    h=${t}_${s}_p${p}_effect
 
     join_AB ${join_in1} ${join_in2} ${join_out}
     grep S ${join_out} > ${h}_NA.bed
@@ -194,6 +216,14 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
     sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
   done
 done
+
+p=0.05
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  wc -l ${head}_${s}_p${p}_effect_* |paste - - - - 
+  done
+  done
 
 
 for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
@@ -215,31 +245,218 @@ for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
   done
 done
 
-
-
-# put the combined consistent blocks on WashU browser
-cd /local/ftp/pub/hub/F1_Tissues/mm10
-ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent_* .   #*/
-export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-do 
-h=`echo $f|cut -d _ -f 1-5`
-t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
-cat ${h}_minus_${t}.bed |grep -v "#"| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "-"}' > ${h}.tmp
-cat ${h}_plus_${t}.bed |grep -v "#" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "+"}' >> ${h}.tmp
-sort-bed ${h}.tmp > ${h}.tmp.sort.bed
-bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
-rm ${h}.tmp ${h}.tmp.sort.bed
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+do
+cat ${head}_${s}_p0.05_effect_imprinting.bed ${head}_${s}_p0.05_effect_strain.bed |sort-bed -|awk 'BEGIN{OFS="\t"; c=","} {split($4,a,","); split($5,b,","); print $1,$2,$3, a[1],b[1]}' \
+|awk 'BEGIN{OFS="\t"; c=","} {print $1,$2,$3, $4c$5}'  > ${head}_${s}_p0.05_effect_strain+imprinting.bed &
+done
 done
 
-
-# check overlap blocks (one form MB6 and the other from PB6) to see if the ASE in the same cross have the AB to the same direction
-f=BN_MB6_combined_R1_HMM_minus_ABconsistent.bed
+# check overlap blocks of imprinting and see if there is inconsistency. eg: one MM, the other PP
+#f=LG_plus_p0.05_effect_imprinting.bed
 rm tmp.txt
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-do wc -l $f >>tmp.txt
-bedtools intersect -f 0.3 -a <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -b <(cat $f| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}') -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} ($6 != $13) {print $6, $13, $1m$2d$3,$0}' > ${f}_overlap_incosistent
-wc -l ${f}_overlap_incosistent >>tmp.txt
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
+  do
+  for head in BN SP HT SK KD ST GI LV
+    do f=${head}${body}
+    wc -l $f >>tmp.txt
+    bedtools intersect -f 0.3 -a $f -b $f -wo | awk 'BEGIN{OFS="\t"} ($3-$2 != $NF) {print $0}' |  awk 'BEGIN{OFS="\t";m=":";d="-"} (substr($4,1,1) != substr($9,1,1)) {print $1m$2d$3,substr($4,1,1),substr($9,1,1),$0}' > ${f}_overlap_incosistent
+    wc -l ${f}_overlap_incosistent >>tmp.txt
+  done
+done
+
+cat tmp.txt |paste - -   # all consistent
+28 BN_plus_p0.05_effect_imprinting.bed  0 BN_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+7 SP_plus_p0.05_effect_imprinting.bed   0 SP_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+4 HT_plus_p0.05_effect_imprinting.bed   0 HT_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+8 SK_plus_p0.05_effect_imprinting.bed   0 SK_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+8 KD_plus_p0.05_effect_imprinting.bed   0 KD_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+9 ST_plus_p0.05_effect_imprinting.bed   0 ST_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+5 GI_plus_p0.05_effect_imprinting.bed   0 GI_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+11 LV_plus_p0.05_effect_imprinting.bed  0 LV_plus_p0.05_effect_imprinting.bed_overlap_incosistent
+27 BN_minus_p0.05_effect_imprinting.bed 0 BN_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+10 SP_minus_p0.05_effect_imprinting.bed 0 SP_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+6 HT_minus_p0.05_effect_imprinting.bed  0 HT_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+14 SK_minus_p0.05_effect_imprinting.bed 0 SK_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+12 KD_minus_p0.05_effect_imprinting.bed 0 KD_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+11 ST_minus_p0.05_effect_imprinting.bed 0 ST_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+13 GI_minus_p0.05_effect_imprinting.bed 0 GI_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+15 LV_minus_p0.05_effect_imprinting.bed 0 LV_minus_p0.05_effect_imprinting.bed_overlap_incosistent
+
+
+### identify strain-effect culster and imprinting clusters
+#combine overlapped blocks from both plus and minus strand into cluster (Domains)
+
+# pool blocks together
+for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed _plus_p0.05_effect_strain.bed _minus_p0.05_effect_strain.bed
+  do
+  rm tmp${body}
+  for head in BN SP HT SK KD ST GI LV
+    do f=${head}${body}
+    cat $f |awk -v h=$head 'BEGIN {OFS="\t"}{print $1,$2,$3, h}'>> tmp${body}
+  done
+  sort-bed tmp${body} > T8${body}_sort
+done
+
+for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
+  do
+  rm T8_2Strand${coreBody}.bed 
+  for body in _plus${coreBody}.bed _minus${coreBody}.bed
+    do
+    cat T8${body}_sort >> T8_2Strand${coreBody}.bed 
+  done
+  # merge overlapped
+bedtools merge -i <(sort-bed  T8_2Strand${coreBody}.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand${coreBody}.bed_cluster
+done
+
+# the cluster that combine imprinting and strain effect (from both plus and minus strand )
+rm T8_2Strand_p0.05_effect_strain+imprinting.bed 
+for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
+  do
+  for body in _plus${coreBody}.bed _minus${coreBody}.bed
+    do
+    cat T8${body}_sort >> T8_2Strand_p0.05_effect_strain+imprinting.bed
+  done
+done
+bedtools merge -i <(sort-bed T8_2Strand_p0.05_effect_strain+imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+
+
+  28 T8_2Strand_p0.05_effect_imprinting.bed_cluster
+  3470 T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+  3466 T8_2Strand_p0.05_effect_strain.bed_cluster
 
 
 ## consistent across tissue
+# run scripts in UpSetR.R
+# strain effect cluster regardless of strandness
+# imprinting cluster regardless of strandness
+# cluster combined strain effect and imprinting regardless of strandness
+
+
+## characterize the clusters
+# the size of the cluster
+for f in T8_2Strand_p0.05_effect_*.bed_cluster
+  do
+cat $f | awk 'BEGIN {OFS="\t"} {print $5-$4}' > ${f}_length
+done
+
+# Histo_of_TSS_countsPerCluster.R
+
+
+# how many genecode annotation?
+# Histo_of_TSS_countsPerCluster.R
+mkdir /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/GeneAnnotationInCluster
+cd GeneAnnotationInCluster
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat ../T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat ../T8_2Strand_p0.05_effect_imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat ../T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+
+
+### How many AlleleHMM blocks (Consistent ones, mereged overlaps)? How frequently do they swtiches?
+
+# merege consistent AlleleHMM blocks with strain or imprinting effect that are overlaped within each organ
+for head in BN SP HT SK KD ST GI LV
+  do 
+for strand in plus minus
+  do
+for effect in strain imprinting
+do 
+bedtools merge -c 4,5 -o distinct -d 0 -i <(sort-bed ${head}_${strand}_p0.05_effect_${effect}.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3, substr($4,1,1), substr($5,1,1)}')> ${head}_${strand}_p0.05_effect_${effect}_merged.bed
+done
+done
+done
+
+# intersect domains and consistent AlleleHMM blocks with strain or imprinting effect
+# how many blocks (strain or imprinting) in each domains?
+for head in BN SP HT SK KD ST GI LV
+  do 
+for effect in strain imprinting
+do 
+bedtools intersect -wo -a <(cat ${head}_*_p0.05_effect_${effect}_merged.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster|cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7}' |sort | uniq -c \
+| awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_AlleleHMM_blockCounts &
+done
+done
+
+for effect in strain imprinting
+do 
+echo $effect
+for head in BN SP HT SK KD ST GI LV
+  do 
+cat ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_AlleleHMM_blockCounts |paste - - - -
+done
+done
+
+# how many allelic bias states in each Domain? (only 1:M or P, or 2:M and P)
+# each organ
+for head in BN SP HT SK KD ST GI LV
+  do 
+for effect in strain imprinting
+do 
+bedtools intersect -wo -a <(cat ${head}_*_p0.05_effect_${effect}_merged.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster|cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c \
+| awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_Allele-Bias-StateCounts &
+done
+done
+
+# comnined organ
+rm T8_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withSwitchs 
+for head in BN SP HT SK KD ST GI LV
+  do 
+for effect in strain imprinting
+do 
+bedtools intersect -wo -a <(cat ${head}_*_p0.05_effect_${effect}_merged.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster|cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c \
+| awk 'BEGIN{OFS="\t"} ($1==2){print $0}' >> T8_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withSwitchs 
+done
+done
+
+for effect in strain imprinting
+do 
+echo $effect
+cat T8_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withSwitchs | sort |uniq |wc -l
+done
+
+for effect in strain imprinting
+do 
+echo $effect
+for head in BN SP HT SK KD ST GI LV
+  do 
+cat ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_Allele-Bias-StateCounts  |paste - - 
+done
+done
+
+
+#HERE
+
+for head in BN SP HT SK KD ST GI LV
+  do 
+bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(grep ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with
+bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(grep -v ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without
+done
+
+for head in BN SP HT SK KD ST GI LV
+  do 
+for cross in MB6 PB6
+  do 
+for s in plus minus
+  do
+bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_${cross}_HMM_${s}_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster &
+done
+done
+done
+
+# How many AlleleHMM block swtiches per cluster?
+for head in BN SP HT SK KD ST GI LV
+  do 
+for cross in MB6 PB6
+  do 
+for s in plus minus
+  do
+#echo $head $cross $s 
+bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c | awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_${cross}_HMM_${s}_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_Allele-Bias-StateCounts &
+done
+done
+done
+
+

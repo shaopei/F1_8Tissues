@@ -20,22 +20,25 @@ mycol1 <- t_col("blue", perc = 50, name = "lt.blue")
 mycol2 <- t_col("green", perc = 50, name = "lt.green")
 binSize=1
 
+effect="strain+imprinting.bed"
+for (effect in c("strain+imprinting.bed","imprinting.bed","strain.bed")){
 for (OR in c("BN", "SP", "HT", "SK", "KD", "ST", "GI", "LV")){
-  pdf(paste(OR, "TSSinCluster_seperate.pdf", sep = "_"))
+  pdf(paste(OR, "TSSinCluster",effect,"seperate.pdf", sep = "_"))
   par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   par(mgp=c(3,1,0))
   par(cex.lab=2.2, cex.axis=2.2)
 #OR="LV"
-f1=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster", sep = "_"),header=F)
-f2=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with", sep = "_"),header=F)
-f3=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without", sep = "_"),header=F)
+f1=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect", effect, "cluster", sep = "_"),header=F)
+f2=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect", effect, "cluster_with", sep = "_"),header=F)
+f3=read.table(paste(OR,"dREG_count_in_T8_2Strand_p0.05_effect", effect, "cluster_without", sep = "_"),header=F)
+
 
 hist(f3$V1,col="red", density=25
      , breaks = seq(0,200,binSize)
      , freq = F
-     ,ylab="Proportion of clusters"
+     ,ylab="Proportion of domains"
      , xlim=c(0,50)
-     ,xlab=paste("Number of", OR,"TSSs in each cluster",sep=" ")
+     ,xlab=paste("Number of", OR,"TSSs in each domain",sep=" ")
      ,main= ""
      ,add=F
      ,las=1
@@ -45,10 +48,10 @@ hist(f3$V1,col="red", density=25
 hist(f2$V1,col="blue"
      , breaks = seq(0,200,binSize)
      , freq = F
-     #, xlab="HMM blocks in the cluster"
+     #, xlab="HMM blocks in the domain"
      #, add=T
      , xlim=c(0,50)
-     ,xlab="Number of TSSs in each cluster"
+     ,xlab="Number of TSSs in each domain"
      ,main=""
      ,add=T
 )
@@ -73,23 +76,70 @@ legend("topright",
        , bty = "n"
 )
 dev.off()
-pdf(paste(OR, "TSSinCluster.pdf", sep = "_"))
+pdf(paste(OR, "TSSinCluster", effect, ".pdf", sep = "_"))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 hist(f1$V1,col="dark green", density=25
      , breaks = seq(0,200,binSize)
      , freq = F
-     ,ylab="Proportion of clusters"
+     ,ylab="Proportion of domains"
      , xlim=c(0,50)
-     ,xlab=paste("Number of", OR,"TSSs in each cluster",sep=" ")
+     ,xlab=paste("Number of", OR,"TSSs in each domain",sep=" ")
      ,main= ""
      ,add=F
      ,las=1
 )
 dev.off()
 }
+}
 
+for (OR in c("BN", "SP", "HT", "SK", "KD", "ST", "GI", "LV")){
+  pdf(paste(OR, "TSSinCluster_seperate.pdf", sep = "_"))
+  par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+  par(mgp=c(3,1,0))
+  par(cex.lab=2.2, cex.axis=2.2)
+binSize=1
+
+f2=read.table(paste(OR,"_dREG_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster", sep = ""),header=F)
+a=hist(f2$V1,col="blue" 
+       #,density=25, 
+       ,breaks = seq(0,200,binSize)
+       , freq = F
+       ,ylab="Proportion of domains"
+       , xlim=c(0,50)
+       ,xlab=paste("Number of","TSSs in each domain",sep=" ")
+       ,main= ""
+       ,add=F
+       ,las=1
+)
+f1=read.table(paste(OR, "_dREG_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster", sep = ""),header=F)
+a=hist(f1$V1,col="red" 
+       ,density=25
+       , breaks = seq(0,200,binSize)
+       , freq = F
+       ,ylab="Proportion of domains"
+       , xlim=c(0,50)
+       ,xlab=paste("Number of","TSSs in each domain",sep=" ")
+       ,main= ""
+       ,add=T
+       ,las=1
+)
+legend("topright", 
+       legend = c( "Imprinting","Strain effect"), 
+       #pch=c(15,15),
+       cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25, 10000),
+       angle=c(45, 180),
+       #angle=45,
+       fill=c("red","blue")
+       , bty = "n"
+)
+dev.off()
+}
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster/AlleleHMMInCluster/")
 
 for (OR in c("BN", "SP", "HT", "SK", "KD", "ST", "GI", "LV")){
@@ -224,11 +274,12 @@ dev.off()
 plot(a$mids,log10(a$counts))
 
 
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster")
 
 f=read.table("T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_length",header=F)
 hist(log10(f$V1),col="dark green", density=25
      #, breaks = seq(0,10000000,100000)
-     #, freq = F
+     , freq = F
      ,ylab="Number of clusters"
      #, xlim=c(0,50)
      ,xlab="Cluster length"
