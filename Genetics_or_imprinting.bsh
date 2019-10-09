@@ -106,7 +106,7 @@ BinomialTest(){
   mv ${j}.merged_cov.bed toremove
 
   python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
-  #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
+  #  awk 'NR==1 { print $0 } NR>1 && ($9+0) <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
 }
 
 
@@ -120,7 +120,7 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
 bed_dir=map2ref_bed
-  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+  for f in ${bed_dir}/${Head}_MB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
     do PREFIX=`echo $f|cut -d . -f 1`
     echo $PREFIX
     MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
@@ -138,18 +138,18 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
     ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
-   # BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-   # BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-   # BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-   # BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+   BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+   BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
 wait
   done
 
-  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
+  for f in ${bed_dir}/${Head}_PB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
     do PREFIX=`echo $f|cut -d . -f 1`
     echo $PREFIX
     # switch -m and -p for PB6
@@ -168,20 +168,21 @@ wait
     ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
     ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
-    #BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
   wait
   done
 
 done
 
-
+# check if all the files were run sucessfully
+tail -n 1 *all_R1_*binomtest_FDR0.1.txt
 
 
 
