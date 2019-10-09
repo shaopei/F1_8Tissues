@@ -24,12 +24,12 @@ cat ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed | awk '
 done
 
 
-# Updated! Do NOT merge the transcript
+# Update: DO NOT merge the transcripts
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
 # keep transcript annotations that are overlap with dREG sites
-intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
+intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V| grep -v chrX | grep -v chrY | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
 zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'> ${Head}_gencode.vM20.annotation_transcript_protein_coding_plus.bed
 zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'> ${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed
 done
@@ -96,7 +96,7 @@ BinomialTest(){
   wait
 
   # filter the block and only keep block with at lease 1 allele-specific read
-  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($5+$6 >0) {print $0}' | \
+  LC_ALL=C join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($5+$6 >0) {print $0}' | \
   awk 'BEGIN{OFS="\t"; t=","} ($5>$6) {print $2, $3, $4, "M"t$5t$6, $5, $6, "-" }  ($5<$6) {print $2, $3, $4, "P"t$5t$6, $5, $6, "-"}  ($5==$6) {print $2, $3, $4, "S"t$5t$6, $5, $6, "-"} '  \
   | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
 
@@ -132,21 +132,23 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_all_h5.preds.full_outProtein_coding_minus.bed ${P}_ncRNA_minus.bed
     ln -s ../${Head}_all_h5.preds.full_inProtein_coding_plus.bed ${P}_tunitGene_plus.bed
     ln -s ../${Head}_all_h5.preds.full_inProtein_coding_minus.bed ${P}_tunitGene_minus.bed
-    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed ${P}_ProteinCodingGene_plus.bed
-    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed ${P}_ProteinCodingGene_minus.bed
-    #ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
-    #ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
+    rm ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_minus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_plus.bed ${P}_ProteinCodingGene_plus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed ${P}_ProteinCodingGene_minus.bed
+    ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
+    ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
-    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+   # BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+   # BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+   # BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+   # BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+wait
   done
-  wait
+
   for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
     do PREFIX=`echo $f|cut -d . -f 1`
     echo $PREFIX
@@ -160,25 +162,411 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_all_h5.preds.full_outProtein_coding_minus.bed ${P}_ncRNA_minus.bed
     ln -s ../${Head}_all_h5.preds.full_inProtein_coding_plus.bed ${P}_tunitGene_plus.bed
     ln -s ../${Head}_all_h5.preds.full_inProtein_coding_minus.bed ${P}_tunitGene_minus.bed
-    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_plus.bed ${P}_ProteinCodingGene_plus.bed
-    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged_minus.bed ${P}_ProteinCodingGene_minus.bed
-    #ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
-    #ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
+    rm ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_minus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_plus.bed ${P}_ProteinCodingGene_plus.bed
+    ln -s ../${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed ${P}_ProteinCodingGene_minus.bed
+    ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
+    ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
-    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-  done
   wait
+  done
+
 done
 
 
-### work on consistency
+
+
+
+
+### identify imprinting and strain effect WITHOUT the strict filter of consistency
+mkdir AllelicBiase_useAll_ignore_Consistency/
+cd AllelicBiase_useAll_ignore_Consistency/
+ln -s ../*all_R1_*_interestingHets.bed . #*/
+
+
+
+join_AB(){
+  file1=$1
+  file2=$2
+  file3=$3
+  cat ${file1} ${file2} |grep -v "#" | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="_"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"_"); print a[1],a[2],a[3], $2, $3}' > ${file3}
+  rm ${file1}.tmp*
+}
+
+
+# make a table with Allelic Bias (AB) at MB6 and PB6 and use that to identify strain-effect, imprinting, and others (one S, one M|P)
+
+
+
+for body in all_R1_dREG_outProtein_outTunit all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
+  do
+#KD_PB6_all_R1_ncRNA_plus_interestingHets.bed
+for f in *_${body}_plus_interestingHets.bed
+  do t=`echo $f|cut -d _ -f 1`
+  for s in plus minus
+    do 
+    join_in1=${t}_MB6_${body}_${s}_interestingHets.bed
+    join_in2=${t}_PB6_${body}_${s}_interestingHets.bed
+    join_out=${t}_${body}_${s}_interestingHets.bed
+    h=${t}_${body}_${s}_fdr0.1_effect
+
+    join_AB ${join_in1} ${join_in2} ${join_out}
+    grep S ${join_out} > ${h}_NA.bed
+    im=${h}_imprinting.bed
+    st=${h}_strain.bed
+    rm ${im} ${st}
+    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
+    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
+  done
+done
+done
+
+
+for body in all_R1_dREG_outProtein_outTunit all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
+  do
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  wc -l ${head}_${body}_${s}_fdr0.1_effect* |paste - - - - 
+  done
+  done
+done
+
+#CombineT8 (overlap blocks NOT combined)
+for effect in imprinting strain NA
+do
+echo ${effect}
+for body in ProteinCodingGene tunitGene ncRNA dREG_outProtein_outTunit
+do echo $body 
+rm T8_${body}_fdr0.1_effect_${effect}.bed
+for f in  *_${body}_*_fdr0.1_effect_${effect}.bed #BN_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed
+do t=`echo $f|cut -d "_" -f 1`
+s=`echo $f|rev| cut -d "_" -f 4|rev`
+cat $f |awk -v t=${t} -v s=${s} 'BEGIN{OFS="\t"} (s=="plus"){print $1,$2,$3 , t, "111", "+" } (s=="minus"){print $1,$2,$3 , t, "111", "-" }' >> T8_${body}_fdr0.1_effect_${effect}.bed
+done
+# report the number of blocks CombineT8 (overlap blocks NOT combined)
+cat  T8_${body}_fdr0.1_effect_${effect}.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$6}' |sort |uniq -c |wc -l
+done
+done
+
+// imprinting
+// ProteinCodingGene
+// 1778
+// tunitGene
+// 101
+// ncRNA
+// 103
+// dREG_outProtein_outTunit
+// rm: cannot remove 'T8_dREG_outProtein_outTunit_fdr0.1_effect_imprinting.bed': No such file or directory
+// cat: *_dREG_outProtein_outTunit_*_fdr0.1_effect_imprinting.bed: No such file or directory
+// 0
+// strain
+// ProteinCodingGene
+// 10873
+// tunitGene
+// 4675
+// ncRNA
+// 6749
+// dREG_outProtein_outTunit
+// rm: cannot remove 'T8_dREG_outProtein_outTunit_fdr0.1_effect_strain.bed': No such file or directory
+// 13
+// NA
+// ProteinCodingGene
+// rm: cannot remove 'T8_ProteinCodingGene_fdr0.1_effect_NA.bed': No such file or directory
+// 30295
+// tunitGene
+// rm: cannot remove 'T8_tunitGene_fdr0.1_effect_NA.bed': No such file or directory
+// 13390
+// ncRNA
+// rm: cannot remove 'T8_ncRNA_fdr0.1_effect_NA.bed': No such file or directory
+// 15155
+// dREG_outProtein_outTunit
+// rm: cannot remove 'T8_dREG_outProtein_outTunit_fdr0.1_effect_NA.bed': No such file or directory
+// 119
+
+#CombineT8 (overlap blocks DO combined)
+for effect in strain imprinting NA
+  do
+for body in ProteinCodingGene tunitGene ncRNA 
+do echo $body 
+bedtools merge -i <(sort-bed T8_${body}_fdr0.1_effect_${effect}.bed)  -c 4 -o distinct -d 0  > T8_${body}_fdr0.1_effect_${effect}_merged.bed
+bedtools merge -s -i <(sort-bed T8_${body}_fdr0.1_effect_${effect}.bed)  -c 4,5,6 -o distinct -d 0  > T8_${body}_fdr0.1_effect_${effect}_s_merged.bed
+done
+done
+
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_imprinting/BinomialTest/AllelicBiase_useAll_ignore_Consistency .
+# Are the imprinted genes/ncRNA within the imprinted clusters?
+#SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed
+# identify imprinted genes (using pooled reads) locate in the imprinted cluster 
+effect=imprinting
+for body in all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
+  do
+
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  intersectBed -wo -a AllelicBiase_useAll_ignore_Consistency/${head}_${body}_${s}_fdr0.1_effect_${effect}.bed -b <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) > ${head}_${body}_${s}_fdr0.1_effect_${effect}Incluster.bed
+  done
+  done
+done
+
+# imprinted genes (using pooled reads) show imprnting in the cluster (use Consistency methods) that are NOT imprnted in that organ
+for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
+  do
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  echo ${head}_${body}_${s}_fdr0.1_effect_${effect}Incluster.bed  
+  grep -v ${head} ${head}_${body}_${s}_fdr0.1_effect_${effect}Incluster.bed |sort-bed -  |uniq
+done
+done
+done
+
+BN_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+BN_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+SP_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+SP_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+HT_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+chr7  6727900   6729750 P,0,8   P,0,38  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       1850
+HT_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+SK_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+SK_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+chr2  174263300 174327400       P,1,10  P,7,29  chr2    174080042       174325458       BN,SP   62158
+KD_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+KD_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+ST_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+ST_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+chr2  152703600 152724100       P,11,28 P,11,36 chr2    152654404       152741111       BN,KD,LV        20500
+GI_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+GI_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+LV_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+LV_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+
+
+BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+SP_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15 72589619  72811050        P,180,295       P,285,498       chr15   71912099        72596066        BN      6447
+chr7  6703891   6730431 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26540
+HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+HT_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr6  4674349   4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
+SK_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr18 12955851  12992950        P,5,31  P,15,94 chr18   12721540        13014732        BN,LV,SP        37099
+chr6  30723546  30748465        P,0,15  P,0,27  chr6    30630739        30878103        BN      24919
+SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15 72589619  73060950        P,96,147 P,188,368      chr15   71912099        72596066        BN      6447
+chr15 72589619  73060950        P,96,147 P,188,368      chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
+KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr10 13090700  13131694        P,4,28  P,2,25  chr10   13011734        13167371        BN,ST   40994
+chr18 12974200  12992950        P,12,72 P,3,79  chr18   12721540        13014732        BN,LV,SP        18750
+KD_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15 72589619  72809250        P,171,266       P,162,248       chr15   71912099        72596066        BN      6447
+ST_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr18 12973250  12992950        P,4,20  P,12,31 chr18   12721540        13014732        BN,LV,SP        19700
+chr6  30737800  30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10665
+ST_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15 72589619  72809850        P,85,130 P,113,175      chr15   71912099        72596066        BN      6447
+chr7  59974148  60005150        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       31002
+GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr10 13090800  13131694        P,0,19  P,3,22  chr10   13011734        13167371        BN,ST   40894
+chr6  30737950  30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10515
+GI_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15 72589619  72811150        P,212,324       P,263,421       chr15   71912099        72596066        BN      6447
+
+#Overlap transcripts of ProteinCodingGene are NOT merged
+BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr6  4674349   4747176 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72827
+chr6  4674349   4747204 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72855
+chr6  4674353   4747157 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72804
+chr6  4674353   4747207 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72854
+chr6  4674383   4747116 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72733
+chr6  4674417   4747124 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72707
+chr6  4674417   4747188 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72771
+chr6  4677709   4747157 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       69448
+chr6  4688611   4747080 P,1,16  P,0,14  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       58469
+chr7  6703891   6730421 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26530
+chr7  6709394   6730419 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       21025
+chr7  59974148  60005064        P,1,10  P,1,10  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       30916
+HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr6  4674349   4747176 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72827
+chr6  4674349   4747204 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72855
+chr6  4674353   4747157 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72804
+chr6  4674353   4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72854
+chr6  4674383   4747116 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72733
+chr6  4674417   4747124 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72707
+chr6  4674417   4747188 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72771
+chr6  4677709   4747157 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       69448
+SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr2  152669460 152708670       P,36,62 P,88,163        chr2    152654404       152741111       BN,KD,LV        39210
+chr6  30723546  30742574        P,0,14  P,0,25  chr6    30630739        30878103        BN      19028
+chr6  30731967  30742578        P,0,14  P,0,25  chr6    30630739        30878103        BN      10611
+chr6  30733453  30742836        P,0,14  P,0,25  chr6    30630739        30878103        BN      9383
+chr6  30733505  30748462        P,0,15  P,0,27  chr6    30630739        30878103        BN      14957
+chr6  30738049  30748462        P,0,15  P,0,25  chr6    30630739        30878103        BN      10413
+chr6  30738052  30748465        P,0,15  P,0,25  chr6    30630739        30878103        BN      10413
+chr6  30738054  30738878        P,0,13  P,0,17  chr6    30630739        30878103        BN      824
+SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr6  30731967  30742578        P,0,10  P,0,14  chr6    30630739        30878103        BN      10611
+chr6  30733453  30742836        P,0,10  P,0,14  chr6    30630739        30878103        BN      9383
+chr6  30733505  30748462        P,0,11  P,0,16  chr6    30630739        30878103        BN      14957
+chr6  30738049  30748462        P,0,10  P,0,10  chr6    30630739        30878103        BN      10413
+chr6  30738052  30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10413
+ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr7  59974148  60005064        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       30916
+GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr2  152669460 152708670       P,82,122 P,146,196      chr2    152654404       152741111       BN,KD,LV        39210
+chr6  30723546  30742574        P,0,26  P,1,19  chr6    30630739        30878103        BN      19028
+chr6  30731967  30742578        P,0,26  P,0,17  chr6    30630739        30878103        BN      10611
+chr6  30733453  30742836        P,0,26  P,0,17  chr6    30630739        30878103        BN      9383
+chr6  30733505  30748462        P,1,32  P,0,23  chr6    30630739        30878103        BN      14957
+chr6  30738049  30748462        P,1,31  P,0,21  chr6    30630739        30878103        BN      10413
+chr6  30738052  30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10413
+chr6  30738054  30738878        P,0,19  P,0,8   chr6    30630739        30878103        BN      824
+GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+
+# count the line of imprinted genes in imprinted cluster. Some genes might overlap with two clusters
+for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
+  do
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  wc -l ${head}_${body}_${s}_fdr0.1_effect*Incluster.bed |paste - - - - 
+  done
+  done
+done
+
+
+
+p=fdr0.1
+effect=imprinting
+for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
+  do
+echo $body
+rm T8_${body}_${p}_effect_${effect}Incluster.bed
+for head in BN SP HT SK KD ST GI LV
+  do for s in plus minus
+  do
+  cat ${head}_${body}_${s}_${p}_effect_${effect}Incluster.bed |awk -v t=${head} -v s=${s} 'BEGIN{OFS="\t"} (s=="plus"){print $1,$2,$3 , t, "111", "+" } (s=="minus"){print $1,$2,$3 , t, "111", "-" }' >> T8_${body}_${p}_effect_${effect}Incluster.bed
+  done
+  done
+done
+
+
+
+effect=imprinting
+for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
+do echo $body 
+bedtools merge -i <(sort-bed T8_${body}_${p}_effect_${effect}Incluster.bed)  -c 4 -o distinct -d 0  > T8_${body}_${p}_effect_${effect}Incluster_merged.bed
+bedtools merge -s -i <(sort-bed T8_${body}_${p}_effect_${effect}Incluster.bed)  -c 4,5,6 -o distinct -d 0  > T8_${body}_${p}_effect_${effect}Incluster_s_merged.bed
+done
+
+#HERE
+how many imprinted genes/ncRNA in EACH imprinted cluster?
+# those with genes
+p=fdr0.1
+effect=imprinting
+for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
+do bedtools intersect -wo -a <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) -b <(cat T8_${body}_${p}_effect_${effect}Incluster_merged.bed) > T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_${body}_${p}_effect_${effect}Incluster_merged.bed &
+done
+
+#HERE
+
+join_AB_cluster(){
+  file1=$1
+  file2=$2
+  file3=$3
+  file4=$4
+  join -a 1 -t $'\t' -e NA -1 2 -2 1 -o 1.2,1.3,1.4,1.5,1.6,2.9 <(cat ${file1}| sort -k 2)  <(<${file2} awk 'BEGIN{OFS="\t"; m=":"; t="-"}  {print $1m$2t$3,$0}'| sort -k1,1) > ${file1}.tmp2
+  join -a 1 -t $'\t' -e NA -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,2.9 ${file1}.tmp2 <(<${file3} awk 'BEGIN{OFS="\t"; m=":"; t="-"}  {print $1m$2t$3,$0}'| sort -k1,1) > ${file1}.tmp3
+  join -a 1 -t $'\t' -e NA -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,2.9 ${file1}.tmp3 <(<${file4} awk 'BEGIN{OFS="\t"; m=":"; t="-"}  {print $1m$2t$3,$0}'| sort -k1,1) 
+
+  rm ${file1}.tmp*
+}
+
+join_AB_cluster T8_2Strand_p0.05_effect_${effect}.bed_cluster \
+T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_ProteinCodingGene_${p}_effect_${effect}Incluster_merged.bed \
+T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_tunitGene_${p}_effect_${effect}Incluster_merged.bed \
+T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_ncRNA_${p}_effect_${effect}Incluster_merged.bed \
+> T8_2Strand_p0.05_effect_${effect}.bed_cluster_ProteinCodingGene_tunitGene_ncRNA
+
+
+cat T8_2Strand_p0.05_effect_${effect}.bed_cluster_ProteinCodingGene_tunitGene_ncRNA |sort |uniq
+chr10:13011734-13167371 chr10   13011734        13167371        BN,ST   NA      BN,GI,KD,ST     NA
+chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST NA      BN,GI,HT,KD,LV,SK,SP,ST KD
+chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST NA      GI      KD
+chr11:22858106-23001124 chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST    NA      BN,GI,KD,LV,SK,SP,ST    NA
+chr11:22858106-23001124 chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST    NA      BN,LV   NA
+chr12:108836167-110507453       chr12   108836167       110507453       BN,GI,HT,LV,SK,ST       NA      BN      BN
+chr12:108836167-110507453       chr12   108836167       110507453       BN,GI,HT,LV,SK,ST       NA      BN      BN,GI,HT,LV,SK,ST
+chr15:71912099-72596066 chr15   71912099        72596066        BN      NA      BN      NA
+chr15:71912099-72596066 chr15   71912099        72596066        BN      NA      BN,GI,HT,KD,LV,SK,SP,ST NA
+chr15:72770375-73030238 chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    NA      BN,GI,HT,KD,LV,SK,SP,ST BN,GI,KD,LV,SP
+chr15:73121449-73135274 chr15   73121449        73135274        BN      NA      BN      NA
+chr15:73157061-73170560 chr15   73157061        73170560        BN      NA      BN      NA
+chr15:96991272-97163544 chr15   96991272        97163544        SK      NA      SK      NA
+chr17:12331162-12925535 chr17   12331162        12925535        BN,GI,HT,KD,LV,SK,SP,ST NA      BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,SP,ST
+chr18:12721540-13014732 chr18   12721540        13014732        BN,LV,SP        NA      BN,KD,LV,SK,ST  BN
+chr1:63187410-63447144  chr1    63187410        63447144        BN      BN      BN      NA
+chr2:152654404-152741111        chr2    152654404       152741111       BN,KD,LV        GI,SK   KD      BN,ST
+chr2:168921226-169026286        chr2    168921226       169026286       LV      NA      NA      NA
+chr2:174080042-174325458        chr2    174080042       174325458       BN,SP   NA      NA      BN,SK,SP
+chr4:118360945-118382784        chr4    118360945       118382784       LV      NA      NA      NA
+chr5:134418716-134423342        chr5    134418716       134423342       GI      NA      NA      NA
+chr6:30630739-30878103  chr6    30630739        30878103        BN      BN,GI,SK,ST     BN,GI,SK,ST     BN
+chr6:4492001-4902408    chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       BN      BN,GI,HT,KD,LV,SK,ST    NA
+chr6:4492001-4902408    chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,ST    NA
+chr6:58835481-58927743  chr6    58835481        58927743        BN      NA      NA      NA
+chr7:112281632-112286493        chr7    112281632       112286493       SK      NA      NA      NA
+chr7:128686429-128698080        chr7    128686429       128698080       BN      BN      BN      NA
+chr7:142574333-142578903        chr7    142574333       142578903       SK      NA      NA      SK
+chr7:143041189-143511031        chr7    143041189       143511031       BN,GI,HT,KD,LV,SK,SP,ST NA      SK      BN,GI,HT,KD,LV,SK,SP,ST
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN      BN
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN      GI
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN,GI,HT,KD,LV,ST       BN
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN,GI,HT,KD,LV,ST       GI
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN      BN
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN      GI
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,LV,ST       BN
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,LV,ST       GI
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN      BN      GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN      BN,GI,KD,LV,SK,SP,ST    GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN      BN,KD   GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,GI,KD,LV,SK,SP,ST    BN      GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,GI,KD,LV,SK,SP,ST    BN,GI,KD,LV,SK,SP,ST    GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,GI,KD,LV,SK,SP,ST    BN,KD   GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,KD,SK        BN      GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,KD,SK        BN,GI,KD,LV,SK,SP,ST    GI,HT,LV,SK,ST
+chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,KD,SK        BN,KD   GI,HT,LV,SK,ST
+chr9:89791204-90054507  chr9    89791204        90054507        BN      BN      BN      NA
+chr9:96431959-96530231  chr9    96431959        96530231        SK      NA      NA      SK
+
+
+
+### work on consistency ###
 # identify genes or ncRNA share the same allele-bias in MB6 group (A,F,G) or PB6 group (B,C,D,E)
 ## use fishers method to combine p-value from multiple samples  
 ## combine p-value in one file
@@ -213,7 +601,7 @@ join_AB(){
 p=0.05
 body=R1_ncRNA
 for body in R1_ncRNA R1_ProteinCodingGene
-	do
+  do
 #KD_PB6_R1_ncRNA_minus_ABconsistent_FisherMethodP0.05.bed
 for f in *_${body}_plus_ABconsistent_FisherMethodP${p}.bed
   do t=`echo $f|cut -d _ -f 1`
@@ -321,278 +709,6 @@ for head in BN SP HT SK KD ST GI LV
 done
 done
 ### every imprinted located in the cluster that are imprinted in that specific organ!
-
-
-
-
-### identify imprinting and strain effect WITHOUT the strict filter of consistency
-mkdir AllelicBiase_useAll_ignore_Consistency/
-cd AllelicBiase_useAll_ignore_Consistency/
-ln -s ../*all_R1_*_interestingHets.bed . #*/
-
-
-
-join_AB(){
-  file1=$1
-  file2=$2
-  file3=$3
-  cat ${file1} ${file2} |grep -v "#" | awk 'BEGIN{t="_"} {print $1t$2t$3}' |sort -k1,1|uniq > ${file1}.tmp1
-  join -a 1 -t $'\t' -e S -j 1 -o 1.1,2.5 ${file1}.tmp1  <(<${file1} awk 'BEGIN{OFS="\t"; t="_"}  {print $1t$2t$3,$0}' | sort -k1,1) > ${file1}.tmp2
-  join -a 1 -t $'\t' -e S -j 1 -o 1.1,1.2,2.5 ${file1}.tmp2 <(<${file2} awk 'BEGIN{OFS="\t"; t="_"} {print $1t$2t$3,$0}' | sort -k1,1) | awk 'BEGIN{OFS="\t"} {split($1,a,"_"); print a[1],a[2],a[3], $2, $3}' > ${file3}
-  rm ${file1}.tmp*
-}
-
-
-# make a table with Allelic Bias (AB) at MB6 and PB6 and use that to identify strain-effect, imprinting, and others (one S, one M|P)
-
-
-
-for body in all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
-  do
-#KD_PB6_all_R1_ncRNA_plus_interestingHets.bed
-for f in *_${body}_plus_interestingHets.bed
-  do t=`echo $f|cut -d _ -f 1`
-  for s in plus minus
-    do 
-    join_in1=${t}_MB6_${body}_${s}_interestingHets.bed
-    join_in2=${t}_PB6_${body}_${s}_interestingHets.bed
-    join_out=${t}_${body}_${s}_interestingHets.bed
-    h=${t}_${body}_${s}_fdr0.1_effect
-
-    join_AB ${join_in1} ${join_in2} ${join_out}
-    grep S ${join_out} > ${h}_NA.bed
-    im=${h}_imprinting.bed
-    st=${h}_strain.bed
-    rm ${im} ${st}
-    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
-    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
-  done
-done
-done
-
-
-for body in all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
-  do
-for head in BN SP HT SK KD ST GI LV
-  do for s in plus minus
-  do
-  wc -l ${head}_${body}_${s}_fdr0.1_effect* |paste - - - - 
-  done
-  done
-done
-
-#CombineT8 (overlap blocks NOT combined)
-for effect in imprinting strain
-do
-echo ${effect}
-for body in ProteinCodingGene tunitGene ncRNA 
-do echo $body 
-rm T8_${body}_fdr0.1_effect_${effect}.bed
-for f in  *_${body}_*_fdr0.1_effect_${effect}.bed #BN_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed
-do t=`echo $f|cut -d "_" -f 1`
-s=`echo $f|rev| cut -d "_" -f 4|rev`
-cat $f |awk -v t=${t} -v s=${s} 'BEGIN{OFS="\t"} (s=="plus"){print $1,$2,$3 , t, "111", "+" } (s=="minus"){print $1,$2,$3 , t, "111", "-" }' >> T8_${body}_fdr0.1_effect_${effect}.bed
-done
-# report the number of blocks CombineT8 (overlap blocks NOT combined)
-cat  T8_${body}_fdr0.1_effect_${effect}.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$6}' |sort |uniq -c |wc -l
-done
-done
-
-#CombineT8 (overlap blocks DO combined)
-for effect in strain imprinting 
-  do
-for body in ProteinCodingGene tunitGene ncRNA 
-do echo $body 
-bedtools merge -i <(sort-bed T8_${body}_fdr0.1_effect_${effect}.bed)  -c 4 -o distinct -d 0  > T8_${body}_fdr0.1_effect_${effect}_merged.bed
-bedtools merge -s -i <(sort-bed T8_${body}_fdr0.1_effect_${effect}.bed)  -c 4,5,6 -o distinct -d 0  > T8_${body}_fdr0.1_effect_${effect}_s_merged.bed
-done
-done
-
-cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
-ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_imprinting/BinomialTest/AllelicBiase_useAll_ignore_Consistency .
-# Are the imprinted genes/ncRNA within the imprinted clusters?
-#SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed
-# identify imprinted genes (using pooled reads) locate in the imprinted cluster 
-effect=imprinting
-for body in all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
-  do
-
-for head in BN SP HT SK KD ST GI LV
-  do for s in plus minus
-  do
-  intersectBed -wo -a AllelicBiase_useAll_ignore_Consistency/${head}_${body}_${s}_fdr0.1_effect_${effect}.bed -b <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) > ${head}_${body}_${s}_fdr0.1_effect_${effect}Incluster.bed
-  done
-  done
-done
-
-# imprinted genes (using pooled reads) show imprnting in the cluster (use Consistency methods) that are NOT imprnted in that organ
-for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
-  do
-for head in BN SP HT SK KD ST GI LV
-  do for s in plus minus
-  do
-  echo ${head}_${body}_${s}_fdr0.1_effect_${effect}Incluster.bed  
-  grep -v ${head} ${head}_${body}_${s}_fdr0.1_effect_${effect}Incluster.bed
-done
-done
-done
-
-BN_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-BN_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-SP_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-SP_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-HT_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-chr7  6727900   6729750 P,0,8   P,0,38  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       1850
-HT_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-SK_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-SK_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-chr2  174263300 174327400       P,1,10  P,7,29  chr2    174080042       174325458       BN,SP   62158
-KD_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-KD_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-ST_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-ST_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-chr2  152703600 152724100       P,11,28 P,11,36 chr2    152654404       152741111       BN,KD,LV        20500
-GI_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-GI_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-LV_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-LV_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-
-BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-SP_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72811050        P,180,295       P,285,498       chr15   71912099        72596066        BN      6447
-chr7  6703891   6730431 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26540
-HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-HT_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr6  4674349   4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
-SK_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18 12955851  12992950        P,5,31  P,15,94 chr18   12721540        13014732        BN,LV,SP        37099
-chr6  30723546  30748465        P,0,15  P,0,27  chr6    30630739        30878103        BN      24919
-SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73060950        P,96,147 P,188,368      chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
-chr15 72589619  73060950        P,96,147 P,188,368      chr15   71912099        72596066        BN      6447
-KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13090700  13131694        P,4,28  P,2,25  chr10   13011734        13167371        BN,ST   40994
-chr18 12974200  12992950        P,12,72 P,3,79  chr18   12721540        13014732        BN,LV,SP        18750
-KD_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72809250        P,171,266       P,162,248       chr15   71912099        72596066        BN      6447
-ST_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18 12973250  12992950        P,4,20  P,12,31 chr18   12721540        13014732        BN,LV,SP        19700
-chr6  30737800  30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10665
-ST_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72809850        P,85,130 P,113,175      chr15   71912099        72596066        BN      6447
-chr7  59974148  60005150        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       31002
-GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13090800  13131694        P,0,19  P,3,22  chr10   13011734        13167371        BN,ST   40894
-chr6  30737950  30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10515
-GI_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72811150        P,212,324       P,263,421       chr15   71912099        72596066        BN      6447
-
-BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73061204        P,407,487       P,583,788       chr15   71912099        72596066        BN      6447
-chr6  4674349   4747207 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
-chr7  6703891   6730431 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26540
-HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73061204        P,53,89 P,303,622       chr15   71912099        72596066        BN      6447
-chr6  4674349   4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
-SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18 12955851  12992950        P,5,31  P,15,94 chr18   12721540        13014732        BN,LV,SP        37099
-chr2  152669460 152708670       P,36,62 P,88,163        chr2    152654404       152741111       BN,KD,LV        39210
-chr6  30723546  30748465        P,0,15  P,0,27  chr6    30630739        30878103        BN      24919
-SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73061204        P,96,147 P,188,368      chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
-chr15 72589619  73061204        P,96,147 P,188,368      chr15   71912099        72596066        BN      6447
-KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13060503  13131694        P,4,30  P,5,26  chr10   13011734        13167371        BN,ST   71191
-chr18 12955851  12992950        P,41,121 P,17,122       chr18   12721540        13014732        BN,LV,SP        37099
-KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73061204        P,419,525       P,340,528       chr15   71912099        72596066        BN      6447
-ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr6  30723546  30748465        P,1,11  P,1,16  chr6    30630739        30878103        BN      24919
-ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73061204        P,171,262       P,229,371       chr15   71912099        72596066        BN      6447
-chr15 96994819  97055956        P,7,26  P,7,23  chr15   96991272        97163544        SK      61137
-GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13060503  13131694        P,1,21  P,5,27  chr10   13011734        13167371        BN,ST   71191
-chr2  152669460 152708670       P,82,122 P,146,196      chr2    152654404       152741111       BN,KD,LV        39210
-chr6  30723546  30748465        P,1,32  P,1,25  chr6    30630739        30878103        BN      24919
-GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73061204        P,308,391       P,442,635       chr15   71912099        72596066        BN      6447
-LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13060503  13131694        P,5,21  P,10,25 chr10   13011734        13167371        BN,ST   71191
-LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-
-# count the line of imprinted genes in imprinted cluster. Some genes might overlap with two clusters
-for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
-  do
-for head in BN SP HT SK KD ST GI LV
-  do for s in plus minus
-  do
-  wc -l ${head}_${body}_${s}_fdr0.1_effect*Incluster.bed |paste - - - - 
-  done
-  done
-done
-
-
-
-p=fdr0.1
-effect=imprinting
-for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
-  do
-echo $body
-rm T8_${body}_${p}_effect_${effect}Incluster.bed
-for head in BN SP HT SK KD ST GI LV
-  do for s in plus minus
-  do
-  cat ${head}_${body}_${s}_${p}_effect_${effect}Incluster.bed |awk -v t=${head} -v s=${s} 'BEGIN{OFS="\t"} (s=="plus"){print $1,$2,$3 , t, "111", "+" } (s=="minus"){print $1,$2,$3 , t, "111", "-" }' >> T8_${body}_${p}_effect_${effect}Incluster.bed
-  done
-  done
-done
-
-
-
-effect=imprinting
-for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
-do echo $body 
-bedtools merge -i <(sort-bed T8_${body}_${p}_effect_${effect}Incluster.bed)  -c 4 -o distinct -d 0  > T8_${body}_${p}_effect_${effect}Incluster_merged.bed
-bedtools merge -s -i <(sort-bed T8_${body}_${p}_effect_${effect}Incluster.bed)  -c 4,5,6 -o distinct -d 0  > T8_${body}_${p}_effect_${effect}Incluster_s_merged.bed
-done
-
-#HERE
-how many imprinted genes/ncRNA in EACH imprinted cluster?
-# those with genes
-p=fdr0.1
-effect=imprinting
-for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
-do bedtools intersect -wo -a <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-) -b <(cat T8_${body}_${p}_effect_${effect}Incluster_merged.bed) > T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_${body}_${p}_effect_${effect}Incluster_merged.bed &
-done
-
-#HERE
-
-join_AB_cluster(){
-  file1=$1
-  file2=$2
-  file3=$3
-  file4=$4
-  join -a 1 -t $'\t' -e NA -1 2 -2 1 -o 1.2,1.3,1.4,1.5,1.6,2.9 <(cat ${file1}| sort -k 2)  <(<${file2} awk 'BEGIN{OFS="\t"; m=":"; t="-"}  {print $1m$2t$3,$0}'| sort -k1,1) > ${file1}.tmp2
-  join -a 1 -t $'\t' -e NA -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,2.9 ${file1}.tmp2 <(<${file3} awk 'BEGIN{OFS="\t"; m=":"; t="-"}  {print $1m$2t$3,$0}'| sort -k1,1) > ${file1}.tmp3
-  join -a 1 -t $'\t' -e NA -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,1.7,2.9 ${file1}.tmp3 <(<${file4} awk 'BEGIN{OFS="\t"; m=":"; t="-"}  {print $1m$2t$3,$0}'| sort -k1,1) 
-
-  rm ${file1}.tmp*
-}
-
-join_AB_cluster T8_2Strand_p0.05_effect_${effect}.bed_cluster \
-T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_ProteinCodingGene_${p}_effect_${effect}Incluster_merged.bed \
-T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_tunitGene_${p}_effect_${effect}Incluster_merged.bed \
-T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_ncRNA_${p}_effect_${effect}Incluster_merged.bed \
-> T8_2Strand_p0.05_effect_${effect}.bed_cluster_ProteinCodingGene_tunitGene_ncRNA
 
 
 
