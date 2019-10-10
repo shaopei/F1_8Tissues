@@ -7,6 +7,7 @@
 # identify blocks that have the same allele bias in all samples from the same tissue and cross
 # use fishers method to combine p-value from multiple samples
 
+
 cd /workdir/sc2457/F1_Tissues/Find_consistent_blocks
 
 
@@ -110,7 +111,7 @@ BinomialTest(){
   mv ${j}.merged_cov.bed toremove
 
   python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
-  #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
+  #  awk 'NR==1 { print $0 } NR>1 && ($9+0) <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
 }
 
 ## map reads from each individual sample from the same tissue and cross to the AlleleHMM blocks comnined_corss from each tissue

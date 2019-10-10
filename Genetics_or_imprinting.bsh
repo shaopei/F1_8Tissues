@@ -77,6 +77,14 @@ done
 
 
 ### Do the calculation here
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 10 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
 
 PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
 MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
@@ -146,7 +154,7 @@ bed_dir=map2ref_bed
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-wait
+  wait_a_second
   done
 
   for f in ${bed_dir}/${Head}_PB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
@@ -176,14 +184,16 @@ wait
     BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-  wait
+  wait_a_second
   done
 
 done
 
 # check if all the files were run sucessfully
-tail -n 1 *all_R1_*binomtest_FDR0.1.txt
-
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+tail -n 1 ${Head}*all_R1_*binomtest_FDR0.1.txt
+done
 
 
 
@@ -232,6 +242,7 @@ for f in *_${body}_plus_interestingHets.bed
 done
 done
 
+#HERE
 
 for body in all_R1_dREG_outProtein_outTunit all_R1_tunitGene all_R1_ncRNA all_R1_ProteinCodingGene
   do
@@ -242,6 +253,77 @@ for head in BN SP HT SK KD ST GI LV
   done
   done
 done
+
+ 2 BN_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed
+8 BN_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed
+ 11 SP_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed          3 SP_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_strain.bed     14 total
+ 20 SP_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed         5 SP_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_strain.bed    25 total
+4 HT_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed
+8 HT_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed
+4 SK_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed
+  2 SK_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed         1 SK_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_strain.bed     3 total
+2 KD_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed
+ 11 KD_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed         1 KD_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_strain.bed    12 total
+4 ST_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed
+3 ST_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed
+0 GI_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed
+17 GI_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed
+ 13 LV_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_NA.bed          1 LV_all_R1_dREG_outProtein_outTunit_plus_fdr0.1_effect_strain.bed     14 total
+ 10 LV_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_NA.bed         2 LV_all_R1_dREG_outProtein_outTunit_minus_fdr0.1_effect_strain.bed    12 total
+  920 BN_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed        16 BN_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       255 BN_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed  1191 total
+  888 BN_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed       15 BN_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      243 BN_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed         1146 total
+ 1134 SP_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         1 SP_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       467 SP_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed  1602 total
+ 1048 SP_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed        6 SP_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      542 SP_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed         1596 total
+  856 HT_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         53 HT_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed   909 total
+  776 HT_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed        7 HT_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed       61 HT_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed          844 total
+  954 SK_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         7 SK_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       147 SK_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed  1108 total
+  951 SK_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed       14 SK_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      143 SK_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed         1108 total
+  742 KD_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         4 KD_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       314 KD_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed  1060 total
+  702 KD_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed       10 KD_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      260 KD_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed          972 total
+  553 ST_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         5 ST_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       124 ST_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed   682 total
+  583 ST_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed        9 ST_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      114 ST_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed          706 total
+  805 GI_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         4 GI_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       262 GI_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed  1071 total
+  798 GI_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed        9 GI_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      250 GI_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed         1057 total
+ 1406 LV_all_R1_tunitGene_plus_fdr0.1_effect_NA.bed         2 LV_all_R1_tunitGene_plus_fdr0.1_effect_imprinting.bed       910 LV_all_R1_tunitGene_plus_fdr0.1_effect_strain.bed  2318 total
+ 1341 LV_all_R1_tunitGene_minus_fdr0.1_effect_NA.bed        9 LV_all_R1_tunitGene_minus_fdr0.1_effect_imprinting.bed      874 LV_all_R1_tunitGene_minus_fdr0.1_effect_strain.bed         2224 total
+  868 BN_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed    14 BN_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed   353 BN_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed      1235 total
+  918 BN_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed           29 BN_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed          323 BN_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed     1270 total
+ 1174 SP_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed     3 SP_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed   694 SP_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed      1871 total
+ 1127 SP_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            3 SP_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed          628 SP_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed     1758 total
+  819 HT_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed     4 HT_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed    68 HT_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed       891 total
+  734 HT_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            4 HT_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed           68 HT_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed      806 total
+  914 SK_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed     9 SK_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed   198 SK_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed      1121 total
+  914 SK_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            8 SK_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed          199 SK_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed     1121 total
+  752 KD_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed     4 KD_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed   384 KD_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed      1140 total
+  751 KD_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            1 KD_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed          370 KD_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed     1122 total
+  706 ST_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed     7 ST_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed   221 ST_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed       934 total
+  742 ST_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            2 ST_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed          219 ST_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed      963 total
+  748 GI_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed     7 GI_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed   282 GI_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed      1037 total
+  740 GI_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            1 GI_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed          270 GI_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed     1011 total
+  1655 LV_all_R1_ncRNA_plus_fdr0.1_effect_NA.bed             8 LV_all_R1_ncRNA_plus_fdr0.1_effect_imprinting.bed          1257 LV_all_R1_ncRNA_plus_fdr0.1_effect_strain.bed      2920 total
+  1642 LV_all_R1_ncRNA_minus_fdr0.1_effect_NA.bed            1 LV_all_R1_ncRNA_minus_fdr0.1_effect_imprinting.bed         1262 LV_all_R1_ncRNA_minus_fdr0.1_effect_strain.bed     2905 total
+  3237 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed        77 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed      2892 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  6206 total
+  3135 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       53 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed     4214 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed
+          7402 total
+  3655 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed         7 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed      3624 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  7286 total
+  3264 SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       34 SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed     6643 SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed
+          9941 total
+  2812 HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed         1 HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed       568 HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  3381 total
+  2520 HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       37 HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed     2967 HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed
+          5524 total
+  3340 SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed        41 SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed       662 SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  4043 total
+  3493 SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       43 SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed     4045 SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed
+          7581 total
+  2327 KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed        23 KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed      1950 KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  4300 total
+  2111 KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       38 KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed     4476 KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed
+          6625 total
+  2005 ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed        27 ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed      1904 ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  3936 total
+ 2005 ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       42 ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed      497 ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed 2544 total
+  2644 GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed        38 GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed      1253 GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed  3935 total
+  2560 GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       47 GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed     1420 GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed
+          4027 total
+  3912 LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_NA.bed       298 LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprinting.bed      7055 LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_strain.bed 11265 total
+   3886 LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_NA.bed       43 LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprinting.bed    34015 LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_strain.bed         37944 total
 
 #CombineT8 (overlap blocks NOT combined)
 for effect in imprinting strain NA
@@ -262,37 +344,31 @@ done
 
 // imprinting
 // ProteinCodingGene
-// 1778
+// 209
 // tunitGene
 // 101
 // ncRNA
-// 103
+// 105
 // dREG_outProtein_outTunit
-// rm: cannot remove 'T8_dREG_outProtein_outTunit_fdr0.1_effect_imprinting.bed': No such file or directory
 // cat: *_dREG_outProtein_outTunit_*_fdr0.1_effect_imprinting.bed: No such file or directory
 // 0
 // strain
 // ProteinCodingGene
-// 10873
+// 10275
 // tunitGene
-// 4675
+// 4677
 // ncRNA
-// 6749
+// 6750
 // dREG_outProtein_outTunit
-// rm: cannot remove 'T8_dREG_outProtein_outTunit_fdr0.1_effect_strain.bed': No such file or directory
 // 13
 // NA
 // ProteinCodingGene
-// rm: cannot remove 'T8_ProteinCodingGene_fdr0.1_effect_NA.bed': No such file or directory
-// 30295
+// 27253
 // tunitGene
-// rm: cannot remove 'T8_tunitGene_fdr0.1_effect_NA.bed': No such file or directory
-// 13390
+// 13389
 // ncRNA
-// rm: cannot remove 'T8_ncRNA_fdr0.1_effect_NA.bed': No such file or directory
-// 15155
+// 15152
 // dREG_outProtein_outTunit
-// rm: cannot remove 'T8_dREG_outProtein_outTunit_fdr0.1_effect_NA.bed': No such file or directory
 // 119
 
 #CombineT8 (overlap blocks DO combined)
@@ -339,115 +415,183 @@ BN_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
 HT_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
-chr7  6727900   6729750 P,0,8   P,0,38  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       1850
+chr7    6727900 6729750 P,0,8   P,0,38  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       1850
 HT_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
 SK_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 SK_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-chr2  174263300 174327400       P,1,10  P,7,29  chr2    174080042       174325458       BN,SP   62158
+chr2    174263300       174327400       P,1,10  P,7,29  chr2    174080042       174325458       BN,SP   62158
 KD_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 KD_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
 ST_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 ST_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-chr2  152703600 152724100       P,11,28 P,11,36 chr2    152654404       152741111       BN,KD,LV        20500
+chr2    152703600       152724100       P,11,28 P,11,36 chr2    152654404       152741111       BN,KD,LV        20500
 GI_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 GI_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
 LV_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 LV_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-
-
 BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72811050        P,180,295       P,285,498       chr15   71912099        72596066        BN      6447
-chr7  6703891   6730431 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26540
+chr15   72589619        72811050        P,180,295       P,285,498       chr15   71912099        72596066        BN      6447
+chr7    6703891 6730431 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26540
 HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 HT_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr6  4674349   4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
+chr6    4674349 4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
 SK_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18 12955851  12992950        P,5,31  P,15,94 chr18   12721540        13014732        BN,LV,SP        37099
-chr6  30723546  30748465        P,0,15  P,0,27  chr6    30630739        30878103        BN      24919
+chr18   12955851        12992950        P,5,31  P,15,94 chr18   12721540        13014732        BN,LV,SP        37099
+chr6    30723546        30748465        P,0,15  P,0,27  chr6    30630739        30878103        BN      24919
 SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  73060950        P,96,147 P,188,368      chr15   71912099        72596066        BN      6447
-chr15 72589619  73060950        P,96,147 P,188,368      chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
+chr15   72589619        73060950        P,96,147        P,188,368       chr15   71912099        72596066        BN      6447
+chr15   72589619        73060950        P,96,147        P,188,368       chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
 KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13090700  13131694        P,4,28  P,2,25  chr10   13011734        13167371        BN,ST   40994
-chr18 12974200  12992950        P,12,72 P,3,79  chr18   12721540        13014732        BN,LV,SP        18750
+chr10   13090700        13131694        P,4,28  P,2,25  chr10   13011734        13167371        BN,ST   40994
+chr18   12974200        12992950        P,12,72 P,3,79  chr18   12721540        13014732        BN,LV,SP        18750
 KD_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72809250        P,171,266       P,162,248       chr15   71912099        72596066        BN      6447
+chr15   72589619        72809250        P,171,266       P,162,248       chr15   71912099        72596066        BN      6447
 ST_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18 12973250  12992950        P,4,20  P,12,31 chr18   12721540        13014732        BN,LV,SP        19700
-chr6  30737800  30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10665
+chr18   12973250        12992950        P,4,20  P,12,31 chr18   12721540        13014732        BN,LV,SP        19700
+chr6    30737800        30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10665
 ST_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72809850        P,85,130 P,113,175      chr15   71912099        72596066        BN      6447
-chr7  59974148  60005150        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       31002
+chr15   72589619        72809850        P,85,130        P,113,175       chr15   71912099        72596066        BN      6447
+chr7    59974148        60005150        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       31002
 GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10 13090800  13131694        P,0,19  P,3,22  chr10   13011734        13167371        BN,ST   40894
-chr6  30737950  30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10515
+chr10   13090800        13131694        P,0,19  P,3,22  chr10   13011734        13167371        BN,ST   40894
+chr6    30737950        30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10515
 GI_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15 72589619  72811150        P,212,324       P,263,421       chr15   71912099        72596066        BN      6447
-
-#Overlap transcripts of ProteinCodingGene are NOT merged
+chr15   72589619        72811150        P,212,324       P,263,421       chr15   71912099        72596066        BN      6447
 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr6  4674349   4747176 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72827
-chr6  4674349   4747204 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72855
-chr6  4674353   4747157 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72804
-chr6  4674353   4747207 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72854
-chr6  4674383   4747116 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72733
-chr6  4674417   4747124 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72707
-chr6  4674417   4747188 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72771
-chr6  4677709   4747157 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       69448
-chr6  4688611   4747080 P,1,16  P,0,14  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       58469
-chr7  6703891   6730421 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26530
-chr7  6709394   6730419 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       21025
-chr7  59974148  60005064        P,1,10  P,1,10  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       30916
+chr15   72589619        73055810        P,405,481       P,577,783       chr15   71912099        72596066        BN      6447
+chr15   72589619        73061204        P,407,487       P,583,788       chr15   71912099        72596066        BN      6447
+chr6    4674349 4747176 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72827
+chr6    4674349 4747204 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72855
+chr6    4674353 4747157 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72804
+chr6    4674353 4747207 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72854
+chr6    4674383 4747116 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72733
+chr6    4674417 4747124 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72707
+chr6    4674417 4747188 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72771
+chr6    4677709 4747157 P,2,17  P,0,16  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       69448
+chr6    4688611 4747080 P,1,16  P,0,14  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       58469
+chr7    6703891 6730421 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26530
+chr7    6709394 6730419 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       21025
+chr7    59974148        60005064        P,1,10  P,1,10  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       30916
 HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
 HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr6  4674349   4747176 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72827
-chr6  4674349   4747204 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72855
-chr6  4674353   4747157 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72804
-chr6  4674353   4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72854
-chr6  4674383   4747116 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72733
-chr6  4674417   4747124 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72707
-chr6  4674417   4747188 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72771
-chr6  4677709   4747157 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       69448
+chr15   72589619        73055810        P,53,88 P,301,621       chr15   71912099        72596066        BN      6447
+chr15   72589619        73061204        P,53,89 P,303,622       chr15   71912099        72596066        BN      6447
+chr6    4674349 4747176 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72827
+chr6    4674349 4747204 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72855
+chr6    4674353 4747157 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72804
+chr6    4674353 4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72854
+chr6    4674383 4747116 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72733
+chr6    4674417 4747124 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72707
+chr6    4674417 4747188 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72771
+chr6    4677709 4747157 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       69448
 SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr2  152669460 152708670       P,36,62 P,88,163        chr2    152654404       152741111       BN,KD,LV        39210
-chr6  30723546  30742574        P,0,14  P,0,25  chr6    30630739        30878103        BN      19028
-chr6  30731967  30742578        P,0,14  P,0,25  chr6    30630739        30878103        BN      10611
-chr6  30733453  30742836        P,0,14  P,0,25  chr6    30630739        30878103        BN      9383
-chr6  30733505  30748462        P,0,15  P,0,27  chr6    30630739        30878103        BN      14957
-chr6  30738049  30748462        P,0,15  P,0,25  chr6    30630739        30878103        BN      10413
-chr6  30738052  30748465        P,0,15  P,0,25  chr6    30630739        30878103        BN      10413
-chr6  30738054  30738878        P,0,13  P,0,17  chr6    30630739        30878103        BN      824
+chr18   12955851        12984312        P,5,25  P,14,51 chr18   12721540        13014732        BN,LV,SP        28461
+chr18   12971922        12992950        P,0,22  P,7,77  chr18   12721540        13014732        BN,LV,SP        21028
+chr18   12972271        12984344        P,0,15  P,5,25  chr18   12721540        13014732        BN,LV,SP        12073
+chr2    152669460       152708670       P,36,62 P,88,163        chr2    152654404       152741111       BN,KD,LV        39210
+chr6    30723546        30742574        P,0,14  P,0,25  chr6    30630739        30878103        BN      19028
+chr6    30731967        30742578        P,0,14  P,0,25  chr6    30630739        30878103        BN      10611
+chr6    30733453        30742836        P,0,14  P,0,25  chr6    30630739        30878103        BN      9383
+chr6    30733505        30748462        P,0,15  P,0,27  chr6    30630739        30878103        BN      14957
+chr6    30738049        30748462        P,0,15  P,0,25  chr6    30630739        30878103        BN      10413
+chr6    30738052        30748465        P,0,15  P,0,25  chr6    30630739        30878103        BN      10413
+chr6    30738054        30738878        P,0,13  P,0,17  chr6    30630739        30878103        BN      824
 SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15   72589619        73055810        P,95,147        P,184,365       chr15   71912099        72596066        BN      6447
+chr15   72589619        73055810        P,95,147        P,184,365       chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
+chr15   72589619        73061204        P,96,147        P,188,368       chr15   71912099        72596066        BN      6447
+chr15   72589619        73061204        P,96,147        P,188,368       chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
+chr15   72799523        73061045        P,58,99 P,87,246        chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    230715
 KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr10   13060503        13127354        P,4,25  P,5,24  chr10   13011734        13167371        BN,ST   66851
+chr10   13090690        13124860        P,3,19  P,2,20  chr10   13011734        13167371        BN,ST   34170
+chr10   13090711        13125015        P,3,20  P,2,20  chr10   13011734        13167371        BN,ST   34304
+chr10   13090787        13124899        P,3,20  P,2,20  chr10   13011734        13167371        BN,ST   34112
+chr10   13090787        13131694        P,4,28  P,2,25  chr10   13011734        13167371        BN,ST   40907
+chr10   13090831        13116704        P,2,16  P,1,19  chr10   13011734        13167371        BN,ST   25873
+chr10   13090831        13116720        P,2,16  P,1,19  chr10   13011734        13167371        BN,ST   25889
+chr10   13090831        13116722        P,2,16  P,1,19  chr10   13011734        13167371        BN,ST   25891
+chr10   13090831        13116764        P,2,16  P,1,19  chr10   13011734        13167371        BN,ST   25933
+chr10   13090831        13116781        P,2,16  P,1,19  chr10   13011734        13167371        BN,ST   25950
+chr10   13090831        13124899        P,3,20  P,2,20  chr10   13011734        13167371        BN,ST   34068
+chr10   13090831        13124917        P,3,20  P,2,20  chr10   13011734        13167371        BN,ST   34086
+chr10   13090831        13124980        P,3,20  P,2,20  chr10   13011734        13167371        BN,ST   34149
+chr10   13090831        13130982        P,4,25  P,2,25  chr10   13011734        13167371        BN,ST   40151
+chr10   13090834        13130969        P,4,25  P,2,25  chr10   13011734        13167371        BN,ST   40135
+chr10   13091012        13125030        P,3,20  P,2,20  chr10   13011734        13167371        BN,ST   34018
+chr18   12955851        12984312        P,32,80 P,16,85 chr18   12721540        13014732        BN,LV,SP        28461
+chr18   12971922        12992950        P,23,92 P,6,97  chr18   12721540        13014732        BN,LV,SP        21028
+chr18   12972271        12984344        P,10,48 P,4,58  chr18   12721540        13014732        BN,LV,SP        12073
 KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15   72589619        73055810        P,416,521       P,337,528       chr15   71912099        72596066        BN      6447
+chr15   72589619        73061204        P,419,525       P,340,528       chr15   71912099        72596066        BN      6447
 ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr6  30731967  30742578        P,0,10  P,0,14  chr6    30630739        30878103        BN      10611
-chr6  30733453  30742836        P,0,10  P,0,14  chr6    30630739        30878103        BN      9383
-chr6  30733505  30748462        P,0,11  P,0,16  chr6    30630739        30878103        BN      14957
-chr6  30738049  30748462        P,0,10  P,0,10  chr6    30630739        30878103        BN      10413
-chr6  30738052  30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10413
+chr6    30731967        30742578        P,0,10  P,0,14  chr6    30630739        30878103        BN      10611
+chr6    30733453        30742836        P,0,10  P,0,14  chr6    30630739        30878103        BN      9383
+chr6    30733505        30748462        P,0,11  P,0,16  chr6    30630739        30878103        BN      14957
+chr6    30738049        30748462        P,0,10  P,0,10  chr6    30630739        30878103        BN      10413
+chr6    30738052        30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10413
 ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr7  59974148  60005064        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       30916
+chr15   72589619        73055810        P,171,259       P,228,370       chr15   71912099        72596066        BN      6447
+chr15   72589619        73061204        P,171,262       P,229,371       chr15   71912099        72596066        BN      6447
+chr15   96994822        97055956        P,7,26  P,7,23  chr15   96991272        97163544        SK      61134
+chr7    59974148        60005064        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       30916
 GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr2  152669460 152708670       P,82,122 P,146,196      chr2    152654404       152741111       BN,KD,LV        39210
-chr6  30723546  30742574        P,0,26  P,1,19  chr6    30630739        30878103        BN      19028
-chr6  30731967  30742578        P,0,26  P,0,17  chr6    30630739        30878103        BN      10611
-chr6  30733453  30742836        P,0,26  P,0,17  chr6    30630739        30878103        BN      9383
-chr6  30733505  30748462        P,1,32  P,0,23  chr6    30630739        30878103        BN      14957
-chr6  30738049  30748462        P,1,31  P,0,21  chr6    30630739        30878103        BN      10413
-chr6  30738052  30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10413
-chr6  30738054  30738878        P,0,19  P,0,8   chr6    30630739        30878103        BN      824
+chr10   13060503        13127354        P,1,20  P,5,26  chr10   13011734        13167371        BN,ST   66851
+chr10   13090690        13124860        P,0,16  P,3,18  chr10   13011734        13167371        BN,ST   34170
+chr10   13090711        13125015        P,0,16  P,3,19  chr10   13011734        13167371        BN,ST   34304
+chr10   13090787        13124899        P,0,16  P,3,19  chr10   13011734        13167371        BN,ST   34112
+chr10   13090787        13131694        P,0,19  P,3,22  chr10   13011734        13167371        BN,ST   40907
+chr10   13090831        13116704        P,0,13  P,2,13  chr10   13011734        13167371        BN,ST   25873
+chr10   13090831        13116720        P,0,13  P,2,13  chr10   13011734        13167371        BN,ST   25889
+chr10   13090831        13116722        P,0,13  P,2,13  chr10   13011734        13167371        BN,ST   25891
+chr10   13090831        13116764        P,0,13  P,2,13  chr10   13011734        13167371        BN,ST   25933
+chr10   13090831        13116781        P,0,13  P,2,13  chr10   13011734        13167371        BN,ST   25950
+chr10   13090831        13124899        P,0,16  P,3,19  chr10   13011734        13167371        BN,ST   34068
+chr10   13090831        13124917        P,0,16  P,3,19  chr10   13011734        13167371        BN,ST   34086
+chr10   13090831        13124980        P,0,16  P,3,19  chr10   13011734        13167371        BN,ST   34149
+chr10   13090831        13130982        P,0,19  P,3,21  chr10   13011734        13167371        BN,ST   40151
+chr10   13090834        13130969        P,0,19  P,3,21  chr10   13011734        13167371        BN,ST   40135
+chr2    152669460       152708670       P,82,122        P,146,196       chr2    152654404       152741111       BN,KD,LV        39210
+chr6    30723546        30742574        P,0,26  P,1,19  chr6    30630739        30878103        BN      19028
+chr6    30731967        30742578        P,0,26  P,0,17  chr6    30630739        30878103        BN      10611
+chr6    30733453        30742836        P,0,26  P,0,17  chr6    30630739        30878103        BN      9383
+chr6    30733505        30748462        P,1,32  P,0,23  chr6    30630739        30878103        BN      14957
+chr6    30738049        30748462        P,1,31  P,0,21  chr6    30630739        30878103        BN      10413
+chr6    30738052        30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10413
+chr6    30738054        30738878        P,0,19  P,0,8   chr6    30630739        30878103        BN      824
 GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15   72589619        73055810        P,306,387       P,435,632       chr15   71912099        72596066        BN      6447
+chr15   72589619        73061204        P,308,391       P,442,635       chr15   71912099        72596066        BN      6447
 LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr10   13060503        13127354        P,5,21  P,10,24 chr10   13011734        13167371        BN,ST   66851
+chr10   13090690        13124860        P,2,17  P,2,19  chr10   13011734        13167371        BN,ST   34170
+chr10   13090711        13125015        P,2,17  P,2,19  chr10   13011734        13167371        BN,ST   34304
+chr10   13090787        13124899        P,2,17  P,2,19  chr10   13011734        13167371        BN,ST   34112
+chr10   13090787        13131694        P,3,19  P,2,23  chr10   13011734        13167371        BN,ST   40907
+chr10   13090831        13112548        P,0,9   P,1,11  chr10   13011734        13167371        BN,ST   21717
+chr10   13090831        13114207        P,1,9   P,2,11  chr10   13011734        13167371        BN,ST   23376
+chr10   13090831        13116704        P,1,13  P,2,15  chr10   13011734        13167371        BN,ST   25873
+chr10   13090831        13116720        P,1,13  P,2,15  chr10   13011734        13167371        BN,ST   25889
+chr10   13090831        13116722        P,1,13  P,2,15  chr10   13011734        13167371        BN,ST   25891
+chr10   13090831        13116764        P,1,13  P,2,15  chr10   13011734        13167371        BN,ST   25933
+chr10   13090831        13116781        P,1,13  P,2,15  chr10   13011734        13167371        BN,ST   25950
+chr10   13090831        13124899        P,2,17  P,2,19  chr10   13011734        13167371        BN,ST   34068
+chr10   13090831        13124917        P,2,17  P,2,19  chr10   13011734        13167371        BN,ST   34086
+chr10   13090831        13124980        P,2,17  P,2,19  chr10   13011734        13167371        BN,ST   34149
+chr10   13090831        13130982        P,3,19  P,2,23  chr10   13011734        13167371        BN,ST   40151
+chr10   13090834        13130969        P,3,19  P,2,23  chr10   13011734        13167371        BN,ST   40135
+chr10   13090840        13113444        P,1,9   P,1,11  chr10   13011734        13167371        BN,ST   22604
 LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+chr15   97012912        97050087        P,1086,1257     P,1867,2058     chr15   96991272        97163544        SK      37175
 
 # count the line of imprinted genes in imprinted cluster. Some genes might overlap with two clusters
 for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
@@ -460,7 +604,54 @@ for head in BN SP HT SK KD ST GI LV
   done
 done
 
-
+11 BN_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+26 BN_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+3 SP_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+3 SP_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+4 HT_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+1 HT_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+4 SK_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+3 SK_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+4 KD_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+1 KD_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+4 ST_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+2 ST_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+6 GI_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+1 GI_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+5 LV_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
+1 LV_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
+13 BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+17 BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+1 SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+6 SP_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+0 HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+6 HT_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+4 SK_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+9 SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+4 KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+10 KD_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+4 ST_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+10 ST_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+3 GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+9 GI_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+2 LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+10 LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+70 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+54 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+5 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+34 SP_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+0 HT_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+35 HT_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+12 SK_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+31 SK_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+20 KD_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+38 KD_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+26 ST_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+41 ST_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+24 GI_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+47 GI_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
+21 LV_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
+36 LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
 
 p=fdr0.1
 effect=imprinting
@@ -485,8 +676,8 @@ bedtools merge -i <(sort-bed T8_${body}_${p}_effect_${effect}Incluster.bed)  -c 
 bedtools merge -s -i <(sort-bed T8_${body}_${p}_effect_${effect}Incluster.bed)  -c 4,5,6 -o distinct -d 0  > T8_${body}_${p}_effect_${effect}Incluster_s_merged.bed
 done
 
-#HERE
-how many imprinted genes/ncRNA in EACH imprinted cluster?
+
+# how many imprinted genes/ncRNA in EACH imprinted cluster?
 # those with genes
 p=fdr0.1
 effect=imprinting
