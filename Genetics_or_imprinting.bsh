@@ -41,7 +41,7 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
 #ln -s /workdir/sc2457/F1_Tissues/bigWig/${Head}_all_h5.preds.full.bed .
-intersectBed -s -a ${Head}_all_h5.preds.full.bed -b ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed |cut -f 1-6| LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  |grep -v chrX |grep -v chrY  > ${Head}_all_h5.preds.full_inProtein_coding.bed
+intersectBed -u -s -a ${Head}_all_h5.preds.full.bed -b ${Head}_gencode.vM20.annotation_transcript_protein_coding_Merged.bed |cut -f 1-6| LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  |grep -v chrX |grep -v chrY  > ${Head}_all_h5.preds.full_inProtein_coding.bed
 cat ${Head}_all_h5.preds.full_inProtein_coding.bed | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}' > ${Head}_all_h5.preds.full_inProtein_coding_plus.bed 
 cat ${Head}_all_h5.preds.full_inProtein_coding.bed | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}' > ${Head}_all_h5.preds.full_inProtein_coding_minus.bed 
 done
@@ -146,14 +146,14 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
     ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
-    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-   BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-   BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
   wait_a_second
   done
 
@@ -176,14 +176,14 @@ bed_dir=map2ref_bed
     ln -s ../${Head}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus.bed
     ln -s ../${Head}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus.bed
 
-    BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ncRNA_plus.bed ${P}_ncRNA_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ncRNA_minus.bed ${P}_ncRNA_minus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_tunitGene_plus.bed ${P}_tunitGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
     BinomialTest ${P}_tunitGene_minus.bed ${P}_tunitGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
-    BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ProteinCodingGene_plus.bed ${P}_ProteinCodingGene_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_ProteinCodingGene_minus.bed ${P}_ProteinCodingGene_minus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_plus.bed ${P}_dREG_outProtein_outTunit_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    #BinomialTest ${P}_dREG_outProtein_outTunit_minus.bed ${P}_dREG_outProtein_outTunit_minus ${MAT_READ_BED} ${PAT_READ_BED} &
   wait_a_second
   done
 
@@ -433,35 +433,35 @@ BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15   72589619        72811050        P,180,295       P,285,498       chr15   71912099        72596066        BN      6447
-chr7    6703891 6730431 P,0,11  P,0,11  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       26540
+chr15   72581500        72811050        P,185,301       P,292,504       chr15   71912099        72596066        BN      14566
+chr7    6701150 6730450 P,1,13  P,0,15  chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       29300
 HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+chr11   22973350        22982550        P,0,13  P,3,47  chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST    9200
 HT_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr6    4674349 4747207 P,0,10  P,6,71  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       72858
+chr6    4665700 4747350 P,0,10  P,6,82  chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       81650
 SK_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18   12955851        12992950        P,5,31  P,15,94 chr18   12721540        13014732        BN,LV,SP        37099
-chr6    30723546        30748465        P,0,15  P,0,27  chr6    30630739        30878103        BN      24919
+chr18   12955800        13000200        P,5,37  P,15,114        chr18   12721540        13014732        BN,LV,SP        44400
+chr6    30714100        30752700        P,0,15  P,0,27  chr6    30630739        30878103        BN      38600
 SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15   72589619        73060950        P,96,147        P,188,368       chr15   71912099        72596066        BN      6447
-chr15   72589619        73060950        P,96,147        P,188,368       chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
+chr15   72582600        73060950        P,100,147       P,190,370       chr15   71912099        72596066        BN      13466
+chr15   72582600        73060950        P,100,147       P,190,370       chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    259863
 KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10   13090700        13131694        P,4,28  P,2,25  chr10   13011734        13167371        BN,ST   40994
-chr18   12974200        12992950        P,12,72 P,3,79  chr18   12721540        13014732        BN,LV,SP        18750
+chr10   13090700        13134000        P,4,29  P,2,28  chr10   13011734        13167371        BN,ST   43300
+chr18   12974200        13001600        P,18,86 P,3,90  chr18   12721540        13014732        BN,LV,SP        27400
 KD_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15   72589619        72809250        P,171,266       P,162,248       chr15   71912099        72596066        BN      6447
+chr15   72582550        72809250        P,174,269       P,164,253       chr15   71912099        72596066        BN      13516
 ST_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr18   12973250        12992950        P,4,20  P,12,31 chr18   12721540        13014732        BN,LV,SP        19700
-chr6    30737800        30748465        P,0,10  P,0,10  chr6    30630739        30878103        BN      10665
+chr6    30737800        30751950        P,0,10  P,0,10  chr6    30630739        30878103        BN      14150
 ST_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15   72589619        72809850        P,85,130        P,113,175       chr15   71912099        72596066        BN      6447
-chr7    59974148        60005150        P,0,15  P,0,12  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       31002
+chr15   72583650        72809850        P,86,132        P,118,178       chr15   71912099        72596066        BN      12416
+chr7    59290050        60005150        P,0,27  P,3,17  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       715100
 GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-chr10   13090800        13131694        P,0,19  P,3,22  chr10   13011734        13167371        BN,ST   40894
-chr6    30737950        30748465        P,1,31  P,0,21  chr6    30630739        30878103        BN      10515
+chr10   13090800        13134150        P,0,20  P,3,25  chr10   13011734        13167371        BN,ST   43350
+chr6    30737950        30752550        P,1,32  P,0,22  chr6    30630739        30878103        BN      14600
 GI_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-chr15   72589619        72811150        P,212,324       P,263,421       chr15   71912099        72596066        BN      6447
+chr15   72583950        72811150        P,218,328       P,271,439       chr15   71912099        72596066        BN      12116
 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
@@ -593,6 +593,7 @@ chr10   13090840        13113444        P,1,9   P,1,11  chr10   13011734        
 LV_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
 chr15   97012912        97050087        P,1086,1257     P,1867,2058     chr15   96991272        97163544        SK      37175
 
+
 # count the line of imprinted genes in imprinted cluster. Some genes might overlap with two clusters
 for body in all_R1_ncRNA all_R1_tunitGene all_R1_ProteinCodingGene
   do
@@ -620,22 +621,22 @@ done
 1 GI_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
 5 LV_all_R1_ncRNA_plus_fdr0.1_effect_imprintingIncluster.bed
 1 LV_all_R1_ncRNA_minus_fdr0.1_effect_imprintingIncluster.bed
-13 BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-17 BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-1 SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+15 BN_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+19 BN_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+2 SP_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 6 SP_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-0 HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+1 HT_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 6 HT_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 4 SK_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-9 SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-4 KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+11 SK_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+5 KD_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 10 KD_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 4 ST_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 10 ST_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-3 GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+4 GI_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
 9 GI_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
-2 LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
-10 LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
+3 LV_all_R1_tunitGene_plus_fdr0.1_effect_imprintingIncluster.bed
+11 LV_all_R1_tunitGene_minus_fdr0.1_effect_imprintingIncluster.bed
 70 BN_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
 54 BN_all_R1_ProteinCodingGene_minus_fdr0.1_effect_imprintingIncluster.bed
 5 SP_all_R1_ProteinCodingGene_plus_fdr0.1_effect_imprintingIncluster.bed
@@ -707,22 +708,26 @@ T8_2Strand_p0.05_effect_${effect}.bed_cluster_INTERSECT_T8_all_R1_ncRNA_${p}_eff
 
 
 cat T8_2Strand_p0.05_effect_${effect}.bed_cluster_ProteinCodingGene_tunitGene_ncRNA |sort |uniq
-chr10:13011734-13167371 chr10   13011734        13167371        BN,ST   NA      BN,GI,KD,ST     NA
-chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST NA      BN,GI,HT,KD,LV,SK,SP,ST KD
-chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST NA      GI      KD
-chr11:22858106-23001124 chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST    NA      BN,GI,KD,LV,SK,SP,ST    NA
-chr11:22858106-23001124 chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST    NA      BN,LV   NA
-chr12:108836167-110507453       chr12   108836167       110507453       BN,GI,HT,LV,SK,ST       NA      BN      BN
-chr12:108836167-110507453       chr12   108836167       110507453       BN,GI,HT,LV,SK,ST       NA      BN      BN,GI,HT,LV,SK,ST
-chr15:71912099-72596066 chr15   71912099        72596066        BN      NA      BN      NA
-chr15:71912099-72596066 chr15   71912099        72596066        BN      NA      BN,GI,HT,KD,LV,SK,SP,ST NA
-chr15:72770375-73030238 chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    NA      BN,GI,HT,KD,LV,SK,SP,ST BN,GI,KD,LV,SP
-chr15:73121449-73135274 chr15   73121449        73135274        BN      NA      BN      NA
-chr15:73157061-73170560 chr15   73157061        73170560        BN      NA      BN      NA
-chr15:96991272-97163544 chr15   96991272        97163544        SK      NA      SK      NA
-chr17:12331162-12925535 chr17   12331162        12925535        BN,GI,HT,KD,LV,SK,SP,ST NA      BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,SP,ST
-chr18:12721540-13014732 chr18   12721540        13014732        BN,LV,SP        NA      BN,KD,LV,SK,ST  BN
+chr10:13011734-13167371 chr10   13011734        13167371        BN,ST   BN,GI,KD,LV,ST  BN,GI,KD,ST     NA
+chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,SP,ST KD
+chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,SP,ST GI      KD
+chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST GI      BN,GI,HT,KD,LV,SK,SP,ST KD
+chr11:11832817-12322538 chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST GI      GI      KD
+chr11:22858106-23001124 chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST    BN,GI,KD,LV,SK,SP,ST    BN,GI,HT,KD,LV,SK,SP,ST NA
+chr12:108836167-110507453       chr12   108836167       110507453       BN,GI,HT,LV,SK,ST       BN      NA      BN
+chr12:108836167-110507453       chr12   108836167       110507453       BN,GI,HT,LV,SK,ST       BN      NA      BN,GI,HT,LV,SK,ST
+chr15:71912099-72596066 chr15   71912099        72596066        BN      BN      BN      NA
+chr15:71912099-72596066 chr15   71912099        72596066        BN      BN      BN,GI,HT,KD,LV,SK,SP,ST NA
+chr15:71912099-72596066 chr15   71912099        72596066        BN      BN,GI,HT,KD,SK,SP,ST    BN      NA
+chr15:71912099-72596066 chr15   71912099        72596066        BN      BN,GI,HT,KD,SK,SP,ST    BN,GI,HT,KD,LV,SK,SP,ST NA
+chr15:72770375-73030238 chr15   72770375        73030238        BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,SK,SP,ST    BN,GI,HT,KD,LV,SK,SP,ST BN,GI,KD,LV,SP
+chr15:73121449-73135274 chr15   73121449        73135274        BN      BN      BN      NA
+chr15:73157061-73170560 chr15   73157061        73170560        BN      BN      BN      NA
+chr15:96991272-97163544 chr15   96991272        97163544        SK      LV,SK,ST        SK      NA
+chr17:12331162-12925535 chr17   12331162        12925535        BN,GI,HT,KD,LV,SK,SP,ST GI,HT,KD,LV,SK,SP,ST    BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,SP,ST
+chr18:12721540-13014732 chr18   12721540        13014732        BN,LV,SP        BN,KD,LV,SK,SP  BN,KD,LV,SK,SP  BN
 chr1:63187410-63447144  chr1    63187410        63447144        BN      BN      BN      NA
+chr2:152654404-152741111        chr2    152654404       152741111       BN,KD,LV        GI,SK   BN,LV   BN,ST
 chr2:152654404-152741111        chr2    152654404       152741111       BN,KD,LV        GI,SK   KD      BN,ST
 chr2:168921226-169026286        chr2    168921226       169026286       LV      NA      NA      NA
 chr2:174080042-174325458        chr2    174080042       174325458       BN,SP   NA      NA      BN,SK,SP
@@ -731,31 +736,24 @@ chr5:134418716-134423342        chr5    134418716       134423342       GI      
 chr6:30630739-30878103  chr6    30630739        30878103        BN      BN,GI,SK,ST     BN,GI,SK,ST     BN
 chr6:4492001-4902408    chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       BN      BN,GI,HT,KD,LV,SK,ST    NA
 chr6:4492001-4902408    chr6    4492001 4902408 BN,GI,KD,LV,SK,ST       BN,GI,HT,KD,LV,SK,SP,ST BN,GI,HT,KD,LV,SK,ST    NA
-chr6:58835481-58927743  chr6    58835481        58927743        BN      NA      NA      NA
+chr6:58835481-58927743  chr6    58835481        58927743        BN      NA      BN      NA
 chr7:112281632-112286493        chr7    112281632       112286493       SK      NA      NA      NA
 chr7:128686429-128698080        chr7    128686429       128698080       BN      BN      BN      NA
 chr7:142574333-142578903        chr7    142574333       142578903       SK      NA      NA      SK
 chr7:143041189-143511031        chr7    143041189       143511031       BN,GI,HT,KD,LV,SK,SP,ST NA      SK      BN,GI,HT,KD,LV,SK,SP,ST
 chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN      BN
 chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN      GI
-chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN,GI,HT,KD,LV,ST       BN
-chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN,GI,HT,KD,LV,ST       GI
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN,GI,HT,KD,LV,SK,ST    BN
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN      BN,GI,HT,KD,LV,SK,ST    GI
 chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN      BN
 chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN      GI
-chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,LV,ST       BN
-chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,LV,ST       GI
-chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN      BN      GI,HT,LV,SK,ST
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,LV,SK,ST    BN
+chr7:58925685-63091232  chr7    58925685        63091232        BN,GI,HT,KD,LV,SK       BN,GI,HT,KD,LV,SP,ST    BN,GI,HT,KD,LV,SK,ST    GI
 chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN      BN,GI,KD,LV,SK,SP,ST    GI,HT,LV,SK,ST
-chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN      BN,KD   GI,HT,LV,SK,ST
-chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,GI,KD,LV,SK,SP,ST    BN      GI,HT,LV,SK,ST
 chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,GI,KD,LV,SK,SP,ST    BN,GI,KD,LV,SK,SP,ST    GI,HT,LV,SK,ST
-chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,GI,KD,LV,SK,SP,ST    BN,KD   GI,HT,LV,SK,ST
-chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,KD,SK        BN      GI,HT,LV,SK,ST
 chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,KD,SK        BN,GI,KD,LV,SK,SP,ST    GI,HT,LV,SK,ST
-chr7:6377748-7205736    chr7    6377748 7205736 BN,GI,KD,LV,SK,ST       BN,KD,SK        BN,KD   GI,HT,LV,SK,ST
 chr9:89791204-90054507  chr9    89791204        90054507        BN      BN      BN      NA
 chr9:96431959-96530231  chr9    96431959        96530231        SK      NA      NA      SK
-
 
 
 ### work on consistency ###
