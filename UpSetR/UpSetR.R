@@ -14,6 +14,8 @@ for (kkk in Tissue_list){
   colnames(df)[grep("tmp", colnames(df))]=kkk
 }
 upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree")
+barplot(colSums(df[ , match(Tissue_list , names(df) ) ] ), col="dark red", las=1 )
+
 df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
 #a=hist(df$TissueCounts[df$TissueCounts>1], breaks = seq(-0.5,9,1))
 a=hist(df$TissueCounts[df$TissueCounts >=1], breaks = seq(0.5,9,1),
@@ -50,6 +52,7 @@ for (kkk in Tissue_list){
   colnames(df)[grep("tmp", colnames(df))]=kkk
 }
 upset(df, nsets = 8, sets =Tissue_list, keep.order = T, order.by = "degree", nintersects=100)
+barplot(colSums(df[ , match(Tissue_list , names(df) ) ] ), col = "blue", las=1, xlab= "Organ", ylab="Domain counts"  )
 df$TissueCounts= rowSums(df[ , match(Tissue_list , names(df) ) ] )  
 a=hist(df$TissueCounts, breaks = seq(-0.5,9,1))
 a=hist(df$TissueCounts[df$TissueCounts >=1], breaks = seq(0.5,9,1),

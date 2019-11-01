@@ -322,12 +322,28 @@ for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
 done
 bedtools merge -i <(sort-bed T8_2Strand_p0.05_effect_strain+imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
 
-
   28 T8_2Strand_p0.05_effect_imprinting.bed_cluster
   3470 T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
   3466 T8_2Strand_p0.05_effect_strain.bed_cluster
 
-
+# how many im domains ovelapped with st domains?
+bedtools intersect -u -a T8_2Strand_p0.05_effect_imprinting.bed_cluster_IGV.bed -b T8_2Strand_p0.05_effect_strain.bed_cluster_IGV.bed |wc -l
+15
+chr10   13011734        13167371        BN,ST
+chr11   11832817        12322538        BN,GI,HT,KD,LV,SK,SP,ST
+chr11   22858106        23001124        BN,GI,KD,LV,SK,SP,ST
+chr12   108836167       110507453       BN,GI,HT,LV,SK,ST
+chr15   96991272        97163544        SK
+chr17   12331162        12925535        BN,GI,HT,KD,LV,SK,SP,ST
+chr18   12721540        13014732        BN,LV,SP
+chr2    152654404       152741111       BN,KD,LV
+chr2    168921226       169026286       LV
+chr2    174080042       174325458       BN,SP
+chr4    118360945       118382784       LV
+chr7    112281632       112286493       SK
+chr7    143041189       143511031       BN,GI,HT,KD,LV,SK,SP,ST
+chr9    89791204        90054507        BN
+chr9    96431959        96530231        SK
 ## consistent across tissue
 # run scripts in UpSetR.R
 # strain effect cluster regardless of strandness
@@ -350,9 +366,10 @@ done
 mkdir /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/GeneAnnotationInCluster
 cd GeneAnnotationInCluster
 ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
-bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat ../T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat ../T8_2Strand_p0.05_effect_imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
-bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat ../T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-) |cut -f 4-7 |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
+ln -s ../T8_2Strand_p0.05_effect_*.bed_cluster .
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort| uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort| uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
+bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-) |cut -f 4-7 |sort |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
 
 
 ### How many AlleleHMM blocks (Consistent ones, mereged overlaps)? How frequently do they swtiches?
