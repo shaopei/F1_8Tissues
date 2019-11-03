@@ -1,4 +1,5 @@
 # use this one for final results!
+# only keep scripts for manuscript. A full version (might not be updated see Find_consistent_blocks_v2.bsh)
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
 # combine the significant alleleHMM blocks from the same tissue but different cross
@@ -163,27 +164,45 @@ done
 
 
 wc -l *_ABconsistent* |paste - -
-sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
+   1373 BN_MB6_combined_R1_HMM_minus_ABconsistent.bed      1195 BN_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   1503 BN_MB6_combined_R1_HMM_plus_ABconsistent.bed       1289 BN_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   1009 BN_PB6_combined_R1_HMM_minus_ABconsistent.bed       831 BN_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   1086 BN_PB6_combined_R1_HMM_plus_ABconsistent.bed        889 BN_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    907 GI_MB6_combined_R1_HMM_minus_ABconsistent.bed       693 GI_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    964 GI_MB6_combined_R1_HMM_plus_ABconsistent.bed        743 GI_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    848 GI_PB6_combined_R1_HMM_minus_ABconsistent.bed       766 GI_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    937 GI_PB6_combined_R1_HMM_plus_ABconsistent.bed        805 GI_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    258 HT_MB6_combined_R1_HMM_minus_ABconsistent.bed       150 HT_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    251 HT_MB6_combined_R1_HMM_plus_ABconsistent.bed        149 HT_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    310 HT_PB6_combined_R1_HMM_minus_ABconsistent.bed       279 HT_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    299 HT_PB6_combined_R1_HMM_plus_ABconsistent.bed        272 HT_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   1239 KD_MB6_combined_R1_HMM_minus_ABconsistent.bed      1079 KD_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   1354 KD_MB6_combined_R1_HMM_plus_ABconsistent.bed       1193 KD_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    855 KD_PB6_combined_R1_HMM_minus_ABconsistent.bed       693 KD_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    968 KD_PB6_combined_R1_HMM_plus_ABconsistent.bed        783 KD_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   2475 LV_MB6_combined_R1_HMM_minus_ABconsistent.bed      2165 LV_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   2563 LV_MB6_combined_R1_HMM_plus_ABconsistent.bed       2222 LV_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   2558 LV_PB6_combined_R1_HMM_minus_ABconsistent.bed      2434 LV_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   2683 LV_PB6_combined_R1_HMM_plus_ABconsistent.bed       2567 LV_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    681 SK_MB6_combined_R1_HMM_minus_ABconsistent.bed       444 SK_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    700 SK_MB6_combined_R1_HMM_plus_ABconsistent.bed        444 SK_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    893 SK_PB6_combined_R1_HMM_minus_ABconsistent.bed       733 SK_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    958 SK_PB6_combined_R1_HMM_plus_ABconsistent.bed        814 SK_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   1404 SP_MB6_combined_R1_HMM_minus_ABconsistent.bed      1157 SP_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   1455 SP_MB6_combined_R1_HMM_plus_ABconsistent.bed       1181 SP_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   1431 SP_PB6_combined_R1_HMM_minus_ABconsistent.bed      1336 SP_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   1506 SP_PB6_combined_R1_HMM_plus_ABconsistent.bed       1398 SP_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+    505 ST_MB6_combined_R1_HMM_minus_ABconsistent.bed       381 ST_MB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+    505 ST_MB6_combined_R1_HMM_plus_ABconsistent.bed        380 ST_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+   1158 ST_PB6_combined_R1_HMM_minus_ABconsistent.bed      1070 ST_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
+   1232 ST_PB6_combined_R1_HMM_plus_ABconsistent.bed       1131 ST_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
+  68534 total
 # use sed to insert the first line
-
-# put the combined consistent blocks on WashU browser
-cd /local/ftp/pub/hub/F1_Tissues/mm10
-ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent_* .   #*/
-export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
-for f in *_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
-do 
-h=`echo $f|cut -d _ -f 1-5`
-t=`echo $f| rev |cut -d . -f 2- |cut -d _ -f 1-2|rev`
-cat ${h}_minus_${t}.bed |grep -v "#"| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "-"}' > ${h}.tmp
-cat ${h}_plus_${t}.bed |grep -v "#" | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4, 111, "+"}' >> ${h}.tmp
-sort-bed ${h}.tmp > ${h}.tmp.sort.bed
-bedToBigBed  ${h}.tmp.sort.bed ${mouse_chinfo} ${h}_${t}.bb
-rm ${h}.tmp ${h}.tmp.sort.bed
-done
+sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
 
 
-
-cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
+# use a new folder (Combined_MB6andPB6) to examine the consistent blocks
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6  
 ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent* .   #*/
 
 
@@ -198,6 +217,8 @@ join_AB(){
 }
 
 # make a table with AB at MB6 and PB6
+# assign blocks that are consistent biased in both cross to strain effect or imprinted effect
+# blocks that are allelic biased in one cross, but S in the other cross, are named NA. and eliminated for later analysis
 p=0.05
 for f in *_MB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP${p}.bed
   do t=`echo $f|cut -d _ -f 1`
@@ -226,36 +247,26 @@ for head in BN SP HT SK KD ST GI LV
   done
   done
 
+  884 BN_plus_p0.05_effect_NA.bed          28 BN_plus_p0.05_effect_imprinting.bed         619 BN_plus_p0.05_effect_strain.bed    1531 total
+  820 BN_minus_p0.05_effect_NA.bed         27 BN_minus_p0.05_effect_imprinting.bed        576 BN_minus_p0.05_effect_strain.bed   1423 total
+  741 SP_plus_p0.05_effect_NA.bed           7 SP_plus_p0.05_effect_imprinting.bed         912 SP_plus_p0.05_effect_strain.bed    1660 total
+  641 SP_minus_p0.05_effect_NA.bed         10 SP_minus_p0.05_effect_imprinting.bed        916 SP_minus_p0.05_effect_strain.bed   1567 total
+  291 HT_plus_p0.05_effect_NA.bed           4 HT_plus_p0.05_effect_imprinting.bed          61 HT_plus_p0.05_effect_strain.bed     356 total
+  281 HT_minus_p0.05_effect_NA.bed          6 HT_minus_p0.05_effect_imprinting.bed         68 HT_minus_p0.05_effect_strain.bed    355 total
+  772 SK_plus_p0.05_effect_NA.bed           8 SK_plus_p0.05_effect_imprinting.bed         235 SK_plus_p0.05_effect_strain.bed    1015 total
+  733 SK_minus_p0.05_effect_NA.bed         14 SK_minus_p0.05_effect_imprinting.bed        208 SK_minus_p0.05_effect_strain.bed    955 total
+  726 KD_plus_p0.05_effect_NA.bed           8 KD_plus_p0.05_effect_imprinting.bed         617 KD_plus_p0.05_effect_strain.bed    1351 total
+  682 KD_minus_p0.05_effect_NA.bed         12 KD_minus_p0.05_effect_imprinting.bed        533 KD_minus_p0.05_effect_strain.bed   1227 total
+ 1011 ST_plus_p0.05_effect_NA.bed           9 ST_plus_p0.05_effect_imprinting.bed         241 ST_plus_p0.05_effect_strain.bed    1261 total
+  937 ST_minus_p0.05_effect_NA.bed         11 ST_minus_p0.05_effect_imprinting.bed        246 ST_minus_p0.05_effect_strain.bed   1194 total
+  668 GI_plus_p0.05_effect_NA.bed           5 GI_plus_p0.05_effect_imprinting.bed         435 GI_plus_p0.05_effect_strain.bed    1108 total
+  623 GI_minus_p0.05_effect_NA.bed         13 GI_minus_p0.05_effect_imprinting.bed        405 GI_minus_p0.05_effect_strain.bed   1041 total
+   915 LV_plus_p0.05_effect_NA.bed          11 LV_plus_p0.05_effect_imprinting.bed        1926 LV_plus_p0.05_effect_strain.bed    2852 total
+   841 LV_minus_p0.05_effect_NA.bed         15 LV_minus_p0.05_effect_imprinting.bed       1864 LV_minus_p0.05_effect_strain.bed   2720 total
 
-for f in *_MB6_combined_R1_HMM_plus_ABconsistent.bed
-  do t=`echo $f|cut -d _ -f 1`
-  for s in plus minus
-    do
-    join_in1=${t}_MB6_combined_R1_HMM_${s}_ABconsistent.bed 
-    join_in2=${t}_PB6_combined_R1_HMM_${s}_ABconsistent.bed 
-    join_out=${t}_combined_HMM_${s}_ABconsistent.bed
-    h=${t}_${s}_effect
-
-    join_AB ${join_in1} ${join_in2} ${join_out}
-    grep S ${join_out} > ${h}_NA.bed
-    im=${h}_imprinting.bed
-    st=${h}_strain.bed
-    rm ${im} ${st}
-    grep -v S ${join_out} | awk -v im=${im} -v st=${st} 'BEGIN{OFS="\t"} substr($4,1,1)==substr($5,1,1) {print $0 >> im} substr($4,1,1)!=substr($5,1,1) {print $0 >> st}' 
-    sed  -i '1i #chrm\tchrmStart\tchrmEnd\tMB6_winP_count_all_samples\tPB6_winP_count_all_samples' ${join_out}
-  done
-done
-
-for head in BN SP HT SK KD ST GI LV
-  do for s in plus minus
-do
-cat ${head}_${s}_p0.05_effect_imprinting.bed ${head}_${s}_p0.05_effect_strain.bed |sort-bed -|awk 'BEGIN{OFS="\t"; c=","} {split($4,a,","); split($5,b,","); print $1,$2,$3, a[1],b[1]}' \
-|awk 'BEGIN{OFS="\t"; c=","} {print $1,$2,$3, $4c$5}'  > ${head}_${s}_p0.05_effect_strain+imprinting.bed &
-done
-done
 
 # check overlap blocks of imprinting and see if there is inconsistency. eg: one MM, the other PP
-#f=LG_plus_p0.05_effect_imprinting.bed
+#f=BN_plus_p0.05_effect_imprinting.bed
 rm tmp.txt
 for body in _plus_p0.05_effect_imprinting.bed _minus_p0.05_effect_imprinting.bed
   do
@@ -311,19 +322,7 @@ for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
 bedtools merge -i <(sort-bed  T8_2Strand${coreBody}.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand${coreBody}.bed_cluster
 done
 
-# the domain that combine imprinting and strain effect (from both plus and minus strand )
-rm T8_2Strand_p0.05_effect_strain+imprinting.bed 
-for coreBody in _p0.05_effect_strain _p0.05_effect_imprinting
-  do
-  for body in _plus${coreBody}.bed _minus${coreBody}.bed
-    do
-    cat T8${body}_sort >> T8_2Strand_p0.05_effect_strain+imprinting.bed
-  done
-done
-bedtools merge -i <(sort-bed T8_2Strand_p0.05_effect_strain+imprinting.bed)  -c 4 -o distinct -d 0 |awk 'BEGIN {OFS="\t";m=":";d="-"}{print ($3-$2)/1000000, $1m$2d$3, $0}' > T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-
-  28 T8_2Strand_p0.05_effect_imprinting.bed_cluster
-  3470 T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
+    28 T8_2Strand_p0.05_effect_imprinting.bed_cluster
   3466 T8_2Strand_p0.05_effect_strain.bed_cluster
 
 # how many im domains ovelapped with st domains?
@@ -344,15 +343,16 @@ chr7    112281632       112286493       SK
 chr7    143041189       143511031       BN,GI,HT,KD,LV,SK,SP,ST
 chr9    89791204        90054507        BN
 chr9    96431959        96530231        SK
-## consistent across tissue
+
+
+## consistent biased blocks distribution across tissue
 # run scripts in UpSetR.R
-# strain effect cluster regardless of strandness
-# imprinting cluster regardless of strandness
-# cluster combined strain effect and imprinting regardless of strandness
+# strain effect domain regardless of strandness
+# imprinting domain regardless of strandness
 
 
-## characterize the clusters
-# the size of the cluster
+## characterize the domains
+# the size of the domain
 for f in T8_2Strand_p0.05_effect_*.bed_cluster
   do
 cat $f | awk 'BEGIN {OFS="\t"} {print $5-$4}' > ${f}_length
@@ -367,114 +367,6 @@ mkdir /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/GeneAnn
 cd GeneAnnotationInCluster
 ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
 ln -s ../T8_2Strand_p0.05_effect_*.bed_cluster .
-bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort| uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
 bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort| uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
 bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-) |cut -f 4-7 |sort |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
-
-
-### How many AlleleHMM blocks (Consistent ones, mereged overlaps)? How frequently do they swtiches?
-
-# merege consistent AlleleHMM blocks with strain or imprinting effect that are overlaped within each organ
-for head in BN SP HT SK KD ST GI LV
-  do 
-for strand in plus minus
-  do
-for effect in strain imprinting
-do 
-bedtools merge -c 4,5 -o distinct -d 0 -i <(sort-bed ${head}_${strand}_p0.05_effect_${effect}.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3, substr($4,1,1), substr($5,1,1)}')> ${head}_${strand}_p0.05_effect_${effect}_merged.bed
-done
-done
-done
-
-# intersect domains and consistent AlleleHMM blocks with strain or imprinting effect
-# how many blocks (strain or imprinting) in each domains?
-for head in BN SP HT SK KD ST GI LV
-  do 
-for effect in strain imprinting
-do 
-bedtools intersect -wo -a <(cat ${head}_*_p0.05_effect_${effect}_merged.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster|cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7}' |sort | uniq -c \
-| awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_AlleleHMM_blockCounts &
-done
-done
-
-for effect in strain imprinting
-do 
-echo $effect
-for head in BN SP HT SK KD ST GI LV
-  do 
-cat ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_AlleleHMM_blockCounts |paste - - - -
-done
-done
-
-# how many allelic bias states in each Domain? (only 1:M or P, or 2:M and P)
-# each organ
-for head in BN SP HT SK KD ST GI LV
-  do 
-for effect in strain imprinting
-do 
-bedtools intersect -wo -a <(cat ${head}_*_p0.05_effect_${effect}_merged.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster|cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c \
-| awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_Allele-Bias-StateCounts &
-done
-done
-
-# comnined organ
-rm T8_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withSwitchs 
-for head in BN SP HT SK KD ST GI LV
-  do 
-for effect in strain imprinting
-do 
-bedtools intersect -wo -a <(cat ${head}_*_p0.05_effect_${effect}_merged.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster|cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c \
-| awk 'BEGIN{OFS="\t"} ($1==2){print $0}' >> T8_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withSwitchs 
-done
-done
-
-for effect in strain imprinting
-do 
-echo $effect
-cat T8_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withSwitchs | sort |uniq |wc -l
-done
-
-for effect in strain imprinting
-do 
-echo $effect
-for head in BN SP HT SK KD ST GI LV
-  do 
-cat ${head}_p0.05_effect_${effect}_merged_count_in_T8_2Strand_p0.05_effect_${effect}.bed_cluster_Allele-Bias-StateCounts  |paste - - 
-done
-done
-
-
-#HERE
-
-for head in BN SP HT SK KD ST GI LV
-  do 
-bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster
-bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(grep ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_with
-bedtools intersect -wo -a <(cat HMM_bed/${head}_*bed |cut -f 1-3) -b  <(grep -v ${head} T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_AlleleHMM_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_without
-done
-
-for head in BN SP HT SK KD ST GI LV
-  do 
-for cross in MB6 PB6
-  do 
-for s in plus minus
-  do
-bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort | uniq -c > ${head}_${cross}_HMM_${s}_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster &
-done
-done
-done
-
-# How many AlleleHMM block swtiches per cluster?
-for head in BN SP HT SK KD ST GI LV
-  do 
-for cross in MB6 PB6
-  do 
-for s in plus minus
-  do
-#echo $head $cross $s 
-bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_${s}.bed |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}') -b  <(cat T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster |cut -f 3-) |awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c | awk 'BEGIN{OFS="\t"} {print $1}' |sort | uniq -c > ${head}_${cross}_HMM_${s}_count_in_T8_2Strand_p0.05_effect_strain+imprinting.bed_cluster_Allele-Bias-StateCounts &
-done
-done
-done
-
 
