@@ -17,6 +17,7 @@ h<- hist(log10(f1$V1),col="red"
      ,add=F
      ,las=2
      ,plot =FALSE
+     ,right = FALSE
 )
 
 h$counts=h$counts/sum(h$counts)
@@ -37,6 +38,7 @@ h2<- hist(log10(f2$V1),col="blue"
      #,add=F
      #,las=2
      ,plot =FALSE
+     ,right = FALSE
 )
 h2$counts=h2$counts/sum(h2$counts)
 plot(h2,col="blue" , add=T)
@@ -81,6 +83,7 @@ h2=hist(c(rep(0,dim(f2_0)[1] - dim(f2)[1]),f2$V1),col="blue"
        ,add=F
        ,las=1
        ,plot =FALSE
+       ,right = FALSE
 )
 
 h2$counts=h2$counts/sum(h2$counts)
@@ -105,6 +108,7 @@ h=hist(c(rep(0,dim(f1_0)[1] - dim(f1)[1]),f1$V1),col="red"
        ,add=T
        ,las=1
        ,plot =FALSE
+       ,right = FALSE
 )
 h$counts=h$counts/sum(h$counts)
 plot(h,col="red" ,density=25, add=T)
