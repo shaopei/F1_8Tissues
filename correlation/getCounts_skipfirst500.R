@@ -9,6 +9,7 @@ tus <- tus[(tus$V3-tus$V2)>1000,]  #use TRX size >1K
 geneID_name <- read.table("gencode.vM20_geneID_name_pair.txt", header=F)
 colnames(geneID_name)=c("GENEID", "GENENAME")
 
+# add geneID and gene name to the table
 library("sqldf")
 new_tus <- sqldf ("select V1,V2,V3,GENEID,GENENAME,V6 from tus left join geneID_name on tus.V4=geneID_name.GENEID" )
 bodies <- new_tus
@@ -39,19 +40,6 @@ for (s in stage){
 	filenames <- c(filenames, paste(s, replicate, sep="_"))
 }
 
-#stage     <- c("LG")
-#replicate <- c("MB6_F", "MB6_G", "PB6_C", "PB6_D", "PB6_E")
-
-#for (s in stage){
-#	filenames <- c(filenames, paste(s, replicate, sep="_"))
-#}
-
-#stage     <- c("TH")
-#replicate <- c("MB6_A", "PB6_B")
-
-#for (s in stage){
-#	filenames <- c(filenames, paste(s, replicate, sep="_"))
-#}
 
 stage     <- c("HT", "SK", "KD")
 replicate <- c("PB6_F5","PB6_F6")
@@ -67,7 +55,7 @@ for(f in filenames) {
 }
 colnames(counts) <- filenames
 save.image("data-counts.RData")
-#remove(counts)
+remove(counts)
 
 
 ## Gets RPKMs
@@ -78,7 +66,7 @@ for(f in filenames) {
 colnames(rpkm) <- filenames
 
 save.image("data-rpkms.RData")
-#remove(rpkm)
+remove(rpkm)
 
 
 ## make cluster
@@ -110,7 +98,7 @@ indx_trxSize<- (bodies[,3]-bodies[,2])>10000  # to get a robost signal
 indx <- indx_counts & indx_trxSize
 sub_rpkm <- rpkm[indx,colnames_keep]
 
-write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.txt", quote =FALSE, sep="\t") #full length
+write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.txt", quote =FALSE, sep="\t", col.names = TRUE) 
 
 
 
