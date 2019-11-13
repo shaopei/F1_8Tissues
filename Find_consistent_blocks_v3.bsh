@@ -64,6 +64,20 @@ ln -s /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B
 ln -s /workdir/sc2457/F1_Tissues/F1_Kidney/allelicbias-PersonalGenome_P.CAST_M.B6-${OR}_PB6_all_R1/AlleleHMM/${OR}_PB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed ${OR}_PB6_HMM_${s}.bed
 done
 
+# how many alleleHMM blocks?
+for t in BN HT SK SP KD LV GI ST
+  do wc -l ${t}*.bed |paste - - - - - 
+done
+   973 BN_MB6_HMM_minus.bed       1060 BN_MB6_HMM_plus.bed         715 BN_PB6_HMM_minus.bed        777 BN_PB6_HMM_plus.bed        3525 total
+  171 HT_MB6_HMM_minus.bed        154 HT_MB6_HMM_plus.bed         598 HT_PB6_HMM_minus.bed        638 HT_PB6_HMM_plus.bed        1561 total
+   385 SK_MB6_HMM_minus.bed        384 SK_MB6_HMM_plus.bed        1371 SK_PB6_HMM_minus.bed       1571 SK_PB6_HMM_plus.bed        3711 total
+   608 SP_MB6_HMM_minus.bed        661 SP_MB6_HMM_plus.bed        1168 SP_PB6_HMM_minus.bed       1222 SP_PB6_HMM_plus.bed        3659 total
+   859 KD_MB6_HMM_minus.bed        915 KD_MB6_HMM_plus.bed         583 KD_PB6_HMM_minus.bed        667 KD_PB6_HMM_plus.bed        3024 total
+  1140 LV_MB6_HMM_minus.bed       1134 LV_MB6_HMM_plus.bed        1761 LV_PB6_HMM_minus.bed       1902 LV_PB6_HMM_plus.bed        5937 total
+   528 GI_MB6_HMM_minus.bed        576 GI_MB6_HMM_plus.bed         875 GI_PB6_HMM_minus.bed        948 GI_PB6_HMM_plus.bed        2927 total
+   408 ST_MB6_HMM_minus.bed        412 ST_MB6_HMM_plus.bed        1272 ST_PB6_HMM_minus.bed       1363 ST_PB6_HMM_plus.bed        3455 total
+   
+
 # Combine AlleleHMM significantly biased blocks from MB6 and PB6(eg: comnined BN_MB6 and BN_PB6)
 # remove duplicate blocks
 mkdir combined_cross 
@@ -496,3 +510,6 @@ cat *_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_wi
 wc -l T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
 wc -l ../T8_2Strand_p0.05_effect_${effect}.bed_cluster
 done
+
+# organized in excel sheet  https://cornell.box.com/s/a47bkobn400reqjnxui79cx2jftapiv9
+#  and perform fisher.test in R  https://github.com/shaopei/F1_8Tissues/blob/master/allelic_bias_swtiches.R
