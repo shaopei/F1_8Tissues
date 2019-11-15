@@ -28,7 +28,7 @@ name = args[1]
 bed.path = args[2]
 bwPlus.path = args[3]
 bwMinus.path = args[4]
-ref.params.path = args[5] #optional
+ref.params.path = args[5]
 
 
 chrom=c("chr1",  "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17","chr18", "chr19", 
