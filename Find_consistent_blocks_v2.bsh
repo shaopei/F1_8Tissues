@@ -1,4 +1,4 @@
-# use this one for final results!
+# use Find_consistent_blocks_v3 for final results!
 # use the significantly AlleleHMM block identify by pooling the reads from the same tissue and cross , the pat and mat in PB6 WERE corrected.
 # eg: ${OR}_MB6_all_R1_${s}_regions_t1E-0${T}.sorted_binomtest_SigBlocks_IGV.bed  (the pat and mat in PB6 WERE corrected)
 # combine the significant alleleHMM blocks from the same tissue but different cross

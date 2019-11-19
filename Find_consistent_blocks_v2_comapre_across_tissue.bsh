@@ -667,3 +667,128 @@ for head in BN HT SK SP LG LV GI ST
   do wc -l ${head}*_1FMp0.05_effect* |paste - - - - - - - -
 done
 
+
+### The switches within domains
+cd /local/workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
+mkdir AlleleHMMInDomain
+cd AlleleHMMInDomain
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/HMM_bed
+
+
+## a loose criterium here: Use native AlleleHMM blocks 
+for effect in imprinting strain
+ do
+for head in BN SP HT SK KD ST GI LV
+  do 
+for cross in MB6 PB6
+  do 
+## Within each organ each cross, identify the domains that have alleleHMM blocks (identified from pool reads, not only the consistently biased ones) showing different allelic biases. 
+# combine plus and minus
+# identify the number of AB in each domains. (1AB=No switch, 2AB=with Switch)
+bedtools intersect -wo -a <(cat HMM_bed/${head}_${cross}_HMM_*.bed |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}')  -b  <(cat ../T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-)\
+|awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |sort|uniq -c > ${head}_${cross}_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_ABcounts
+
+# keep the domain with 2AB
+cat ${head}_${cross}_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_ABcounts| awk 'BEGIN{OFS="\t"} ($1>1){print $2, $3, $4 }' \
+> ${head}_${cross}_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+done
+
+## Within each organ, identify the domains with at least one cross with alleleHMM blocks showing different allelic biases.
+  cat ${head}_MB6_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches ${head}_PB6_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches \
+  |sort |uniq > ${head}_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+  wc -l ${head}_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+done
+done
+
+# Within each organ, identify the domains with at least one cross with alleleHMM blocks intersects (1AB or 2AB)
+for effect in imprinting strain
+ do echo ${effect}
+for head in BN SP HT SK KD ST GI LV
+  do #echo ${head}
+cat ${head}_MB6_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_ABcounts ${head}_PB6_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_ABcounts \
+|awk 'BEGIN{OFS="\t"} {print $2, $3, $4 }' |sort |uniq |wc -l
+done
+done
+
+## Finally, identify the domains with at least one organ with alleleHMM blocks showing different allelic biases.
+for effect in  strain imprinting
+ do
+cat *_HMM_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches |sort |uniq > T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+wc -l T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+wc -l ../T8_2Strand_p0.05_effect_${effect}.bed_cluster
+done
+
+
+## a strict criterium here: 
+# Use ONLY count strain effect block in strain effect domain
+# AND ONLY imprinted blocks in imprinted domain
+cd /local/workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
+mkdir StrainImprintedBlocksInDomains
+cd StrainImprintedBlocksInDomains
+
+for effect in imprinting strain
+ do
+for head in BN SP HT SK KD ST GI LV
+  do 
+bedtools intersect -wo -a <(cat ../${head}_plus_p0.05_effect_${effect}.bed ../${head}_minus_p0.05_effect_${effect}.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}')  -b  <(cat ../T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-)\
+|awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c \
+| awk 'BEGIN{OFS="\t"} ($1>1){print $2, $3, $4}' \
+> ${head}_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+wc -l ${head}_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+done
+done
+
+5 BN_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+1 SP_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+0 HT_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+2 SK_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+1 KD_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+1 ST_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+1 GI_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+2 LV_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
+36 BN_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+48 SP_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+1 HT_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+9 SK_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+29 KD_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+5 ST_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+19 GI_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+148 LV_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withABSwitches
+
+for effect in imprinting strain
+ do
+for head in BN SP HT SK KD ST GI LV
+  do 
+bedtools intersect -wo -a <(cat ../${head}_plus_p0.05_effect_${effect}.bed ../${head}_minus_p0.05_effect_${effect}.bed  |awk 'BEGIN{OFS="\t"} {print $1, $2, $3, substr($4,1,1)}')  -b  <(cat ../T8_2Strand_p0.05_effect_${effect}.bed_cluster |cut -f 3-)\
+|awk 'BEGIN{OFS="\t"} {print $5, $6, $7, $4}' |sort | uniq |cut -f 1-3 |uniq -c \
+| awk 'BEGIN{OFS="\t"} ($1==1){print $2, $3, $4}' \
+> ${head}_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withoutABSwitches
+wc -l ${head}_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withoutABSwitches
+done
+done
+
+16 BN_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+6 SP_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+6 HT_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+10 SK_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+8 KD_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+8 ST_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+9 GI_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+11 LV_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
+697 BN_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+976 SP_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+90 HT_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+273 SK_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+652 KD_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+338 ST_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+500 GI_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+1696 LV_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
+
+## Finally, identify the st domains with at least one organ with st blocks showing different allelic biases.
+# AND identify the im domains with at least one organ with im blocks showing different allelic biases.
+for effect in  strain imprinting
+ do
+cat *_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches |sort |uniq > T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+wc -l T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
+wc -l ../T8_2Strand_p0.05_effect_${effect}.bed_cluster
+done
