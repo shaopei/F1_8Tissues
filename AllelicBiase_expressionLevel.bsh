@@ -1,0 +1,261 @@
+### examine the distribution of the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 1. identify organ specific domains
+# 2. calculate rpm of domains from all organs
+# 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 4. make histogram
+
+
+
+# 1. identify organ specific domains
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/AllelicBiase_expressionLevel
+f=T8_2Strand_p0.05_effect_strain.bed_cluster
+grep -v , ../${f} | cut -f 3- > ${f}_organSpecific
+
+# 2. calculate rpm of domains from all organs
+# 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 4. make histogram
+ln -s /workdir/sc2457/F1_Tissues/bigWig/*_all_plus.bw .
+ln -s /workdir/sc2457/F1_Tissues/bigWig/*_all_minus.bw . #*/
+
+R --vanilla --slave --args $(pwd) T8_2Strand_p0.05_effect_strain.bed_cluster_organSpecific < getCounts_bed_NoStrandness.R
+
+
+###### use siploid genome mapping to calculate expression level ###
+### examine the distribution of the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 1. identify organ specific domains
+# 2. calculate rpm of domains from all organs
+# 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 4. make histogram
+###
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 10 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+
+BinomialTest_expression(){
+  # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
+  f=$1
+  j=$2
+  MAT_READ_BED=$3
+  PAT_READ_BED=$4
+  IDENTICAL_READ_BED=$5
+
+  bedtools coverage -s -a $f -b ${MAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+  bedtools coverage -s -a $f -b ${PAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+  bedtools coverage -s -a $f -b ${IDENTICAL_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  wait
+
+  # join mat, pat, iden read count 
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5 ${j}.mat_cov.bed ${j}.pat_cov.bed > ${j}.temp_cov.bed
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,1.6,2.5 ${j}.temp_cov.bed ${j}.iden_cov.bed |\
+  awk 'BEGIN{OFS="\t"; t=","} ($5>$6) {print $2, $3, $4, "M"t$5t$6, $5, $6, $7 }  ($5<$6) {print $2, $3, $4, "P"t$5t$6, $5, $6, $7}  ($5==$6) {print $2, $3, $4, "S"t$5t$6, $5, $6, $7} '  \
+  | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
+
+  mv ${j}.temp_cov.bed ${j}.mat_cov.bed ${j}.pat_cov.bed ${j}.iden_cov.bed toremove
+  # output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
+  python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}_binomtest.bed
+  mv ${j}.merged_cov.bed toremove
+
+  python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
+  #  awk 'NR==1 { print $0 } NR>1 && ($9+0) <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
+}
+
+
+cd /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/AllelicBiase_expressionLevel_diploidGenome
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
+
+# 1. identify organ specific domains
+f=T8_2Strand_p0.05_effect_strain.bed_cluster
+grep -v , ../${f} | cut -f 3- |LC_ALL=C sort -k1,1V -k2,2n > ${f}_organSpecific
+domain=${f}_organSpecific
+
+# 2. calculate rpm of domains from all organs
+cat ${domain} |awk 'BEGIN{OFS="\t"} {print $0, ".", "+"}' > ${domain}_plus
+cat ${domain} |awk 'BEGIN{OFS="\t"} {print $0, ".", "-"}' > ${domain}_minus
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+bed_dir=map2ref_bed
+  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    rm ${P}_domain_plus.bed ${P}_domain_minus.bed
+    ln -s ${domain}_plus ${P}_domain_plus.bed
+    ln -s ${domain}_minus ${P}_domain_minus.bed
+    BinomialTest_expression ${P}_domain_plus.bed ${P}_domain_plus ${MAT_READ_BED} ${PAT_READ_BED} ${IDENTICAL_READ_BED} &
+    BinomialTest_expression ${P}_domain_minus.bed ${P}_domain_minus ${MAT_READ_BED} ${PAT_READ_BED} ${IDENTICAL_READ_BED} & 
+    wait_a_second
+  done
+
+  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    # switch -m and -p for PB6
+    PAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    MAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    rm ${P}_domain_plus.bed ${P}_domain_minus.bed
+    ln -s ${domain}_plus ${P}_domain_plus.bed
+    ln -s ${domain}_minus ${P}_domain_minus.bed
+
+    BinomialTest_expression ${P}_domain_plus.bed ${P}_domain_plus ${MAT_READ_BED} ${PAT_READ_BED} ${IDENTICAL_READ_BED} &
+    BinomialTest_expression ${P}_domain_minus.bed ${P}_domain_minus ${MAT_READ_BED} ${PAT_READ_BED} ${IDENTICAL_READ_BED} & 
+    wait_a_second
+  done
+done
+
+## make a table of expression level in counts
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+   do for cross in MB6 PB6
+      do for s in plus minus
+         do echo -e 'chrm\tchrmStart\tchrmEnd\t'${Head}_${cross}_${s} > ${Head}_${cross}_${s}_readcounts.txt
+            cat ${Head}_${cross}_all_R1_domain_${s}_binomtest.bed | awk 'BEGIN {OFS="\t"; t="_"} NR>1 {print $1,$2,$3, $6+$7+$8}' >> ${Head}_${cross}_${s}_readcounts.txt
+done
+done
+done
+
+# combine counts from plus amd minus strand
+# combine counts from PB6 and MB6
+Rscript getCounts_combine_multiple_txtfiles.R
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Are those expressed really not biased???
+# examine the p-value of the non-biased organ with highest expression in the organ specific domains
+
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 10 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+
+BinomialTest(){
+  # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
+  f=$1
+  j=$2
+  MAT_READ_BED=$3
+  PAT_READ_BED=$4
+
+  bedtools coverage -s -a $f -b ${MAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.mat_cov.bed &
+  bedtools coverage -s -a $f -b ${PAT_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.pat_cov.bed &
+  #bedtools coverage -s -a $f -b ${IDENTICAL_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  wait
+
+  # filter the block and only keep block with at lease 1 allele-specific read
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($5+$6 >0) {print $0}' | \
+  awk 'BEGIN{OFS="\t"; t=","} ($5>$6) {print $2, $3, $4, "M"t$5t$6, $5, $6, "-" }  ($5<$6) {print $2, $3, $4, "P"t$5t$6, $5, $6, "-"}  ($5==$6) {print $2, $3, $4, "S"t$5t$6, $5, $6, "-"} '  \
+  | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
+
+  mv ${j}.mat_cov.bed ${j}.pat_cov.bed toremove
+  # output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
+  python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}_binomtest.bed
+  mv ${j}.merged_cov.bed toremove
+
+  python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
+  #  awk 'NR==1 { print $0 } NR>1 && ($9+0) <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
+}
+
+
+## map reads from each sample to the organ specific domains
+ln -s /workdir/sc2457/F1_Tissues/3rd_batch/map2ref/map2ref_bed/ .
+#f=T8_2Strand_p0.05_effect_strain.bed_cluster
+domain=${f}_organSpecific
+cat ${domain} |awk 'BEGIN{OFS="\t"} {print $0, ".", "+"}'|LC_ALL=C sort -k1,1V -k2,2n  > ${domain}_plus
+cat ${domain} |awk 'BEGIN{OFS="\t"} {print $0, ".", "-"}' |LC_ALL=C sort -k1,1V -k2,2n > ${domain}_minus
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+bed_dir=map2ref_bed
+  for f in ${bed_dir}/${Head}_MB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from MB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s ${domain}_plus ${P}_domain_plus.bed
+    ln -s ${domain}_minus ${P}_domain_minus.bed
+    BinomialTest ${P}_domain_plus.bed ${P}_domain_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_domain_minus.bed ${P}_domain_minus ${MAT_READ_BED} ${PAT_READ_BED} & 
+    wait_a_second
+  done
+
+  for f in ${bed_dir}/${Head}_PB6_*_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz  #each samples from PB6 of the same tissue
+    do PREFIX=`echo $f|cut -d . -f 1`
+    echo $PREFIX
+    # switch -m and -p for PB6
+    PAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    MAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz
+    #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+
+    P=`echo $PREFIX| cut -d / -f 2`
+    ln -s ${domain}_plus ${P}_domain_plus.bed
+    ln -s ${domain}_minus ${P}_domain_minus.bed
+
+    BinomialTest ${P}_domain_plus.bed ${P}_domain_plus ${MAT_READ_BED} ${PAT_READ_BED} &
+    BinomialTest ${P}_domain_minus.bed ${P}_domain_minus ${MAT_READ_BED} ${PAT_READ_BED} & 
+    wait_a_second
+  done
+done
+
+
+
+
+
