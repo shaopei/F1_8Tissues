@@ -31,4 +31,6 @@ for f in *_plus.bw
 	do PREFIX=`echo $f|rev|cut -d _ -f 2-|rev`
     echo $PREFIX
     normBw $PREFIX ${CI} &
-do
+done
+
+for f in BN_*_all_R1.*at_1bp_plus.bw
