@@ -1,8 +1,8 @@
 // ###### use mm10 reference genome mapping to calculate expression level ###
-// ### examine the distribution of the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+// ### examine the distribution of the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 // # 1. identify organ specific domains
-// # 2. calculate rpm of domains from all organs
-// # 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+// # 2. calculate rpkm of domains from all organs
+// # 3. calculate the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 // # 4. make histogram
 
 
@@ -12,8 +12,8 @@
 // f=T8_2Strand_p0.05_effect_strain.bed_cluster
 // grep -v , ../${f} | cut -f 3- > ${f}_organSpecific
 
-// # 2. calculate rpm of domains from all organs
-// # 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+// # 2. calculate rpkm of domains from all organs
+// # 3. calculate the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 // # 4. make histogram
 // ln -s /workdir/sc2457/F1_Tissues/bigWig/*_all_plus.bw .
 // ln -s /workdir/sc2457/F1_Tissues/bigWig/*_all_minus.bw . #*/
@@ -22,10 +22,10 @@
 
 
 // ###### use diploid genome mapping to calculate expression level ###
-// ### examine the distribution of the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+// ### examine the distribution of the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 // # 1. identify the organ specific domains
-// # 2. calculate rpm of the block from all organs
-// # 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+// # 2. calculate rpkm of the block from all organs
+// # 3. calculate the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 // # 4. make histogram
 // ###
 // wait_a_second() {
@@ -79,7 +79,7 @@
 // grep -v , ../${f} | cut -f 3- |LC_ALL=C sort -k1,1V -k2,2n > ${f}_organSpecific
 // domain=${f}_organSpecific
 
-// # 2. calculate rpm of domains from all organs
+// # 2. calculate rpkm of domains from all organs
 // cat ${domain} |awk 'BEGIN{OFS="\t"} {print $0, ".", "+"}' > ${domain}_plus
 // cat ${domain} |awk 'BEGIN{OFS="\t"} {print $0, ".", "-"}' > ${domain}_minus
 
@@ -137,16 +137,16 @@
 
 // # combine counts from plus amd minus strand
 // # combine counts from PB6 and MB6
-// # 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+// # 3. calculate the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 // # 4. make histogram
 // Rscript getCounts_combine_multiple_txtfiles.R
 
 
 ###### use diploid genome mapping to calculate expression level ###
-### examine the distribution of the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+### examine the distribution of the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 # 1. identify blocks within the organ specific domains
-# 2. calculate rpm of the block from all organs
-# 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 2. calculate rpkm of the block from all organs
+# 3. calculate the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 # 4. make histogram
 ###
 wait_a_second() {
@@ -219,7 +219,7 @@ bedtools merge -i T8_2Strand_p0.05_effect_strain_withStrandness.bed_organSpecifi
 # use blocks within organ-specific-biased domains
 osdBlock=T8_2Strand_p0.05_effect_strain_withStrandness.bed_organSpecific
 
-# 2. calculate rpm of osdBlock blocks in organ specific domain from all organs
+# 2. calculate rpkm (Reads per kilo base per million mapped reads) of osdBlock blocks in organ specific domain from all organs
 # need to seperate to plus and minus strands because BinomialTest_expression can only haddle one strand at a time
 grep + ${osdBlock} |LC_ALL=C sort -k1,1V -k2,2n > ${osdBlock}_plus
 grep - ${osdBlock} |LC_ALL=C sort -k1,1V -k2,2n> ${osdBlock}_minus
@@ -278,7 +278,7 @@ done
 
 # combine counts from plus amd minus strand
 # combine counts from PB6 and MB6
-# 3. calculate the ratio (non biased organ with highest expression level rpm)/ biased organ rpm
+# 3. calculate the ratio (non biased organ with highest expression level rpkm)/ biased organ rpkm
 # 4. make histogram
 # Rscript getCounts_combine_multiple_txtfiles.R
 Rscript getNonBiasedHighest_Biased_TotalReadCountRatio.R

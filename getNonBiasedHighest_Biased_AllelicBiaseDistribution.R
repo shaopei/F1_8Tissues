@@ -1,3 +1,4 @@
+# function to merge multiple files based on common columns
 multmerge = function(mypath, mypattern){
   filenames=list.files(path=mypath,  pattern = mypattern)
   datalist = lapply(filenames, function(x){read.table(x, head=T)})
@@ -32,14 +33,14 @@ hist(pValue$H.p, breaks = seq(0,1,1/100))
 dev.off()
 
 
-## 
+## get allele-specific reads
 AS.Read= multmerge(".", mypattern = glob2rx("*_AlleleSpecificReads.txt"))
+# get the Biased organ and the non-biased organ with highest expression level
 AS.Read= merge(AS.Read, rpkm_s)
 
-# identify M or P of the organ-specific blocks
+# identify the allelic bias states of the organ-specific blocks in the Biased organ (M or P) 
 for (i in 1:dim(AS.Read)[1]){
-  AS.Read$B.win[i] <- AS.Read[i,grep(paste(AS.Read$BiasedOrgan[i],"win",sep = "."),colnames(AS.Read))] #find the p value of biased organ
-  #pValue$H.p[i]=pValue[i,grep(pValue$NonBH[i],colnames(pValue))]#find the p value of non-biased organ with highest expression level
+  AS.Read$B.win[i] <- AS.Read[i,grep(paste(AS.Read$BiasedOrgan[i],"win",sep = "."),colnames(AS.Read))] 
 }
 AS.Read$B.win[AS.Read$B.win==1]="M"
 AS.Read$B.win[AS.Read$B.win==2]="P"
@@ -54,6 +55,7 @@ for (i in 1:dim(AS.Read)[1]){
 
 
 # calulate effect size (mat/pat or pat/mat depends on m |p of the biased organ)
+# mat/pat if the biased organ is M, otherwise pat/mat
 for (i in 1:dim(AS.Read)[1]){
   if (AS.Read$B.win[i] == "M"){
     AS.Read$H.effectSize[i] = AS.Read$H.mat[i]/AS.Read$H.pat[i]

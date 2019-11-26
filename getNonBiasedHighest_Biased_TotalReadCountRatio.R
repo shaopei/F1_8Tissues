@@ -1,3 +1,4 @@
+# function to merge multiple files based on common columns
 multmerge = function(mypath, mypattern){
   filenames=list.files(path=mypath,  pattern = mypattern)
   datalist = lapply(filenames, function(x){read.table(x, head=T)})
@@ -24,14 +25,14 @@ for(o in organs) {
 rpkm  <-counts
 targetCol = grep( "chr",colnames(counts), invert = T)
 rpkm[,targetCol] <- counts[,targetCol] * (1000/(counts$chrmEnd - counts$chrmStart)) * (1e6/colSums(counts[targetCol]))
-
+# get the biased organ in each block
 osdBlock = read.table("T8_2Strand_p0.05_effect_strain_withStrandness.bed_organSpecific", header = F)
 colnames(osdBlock)=c("chrm", "chrmStart", "chrmEnd", "BiasedOrgan", "_", "chrStrand")
 rpkm <- merge(rpkm, osdBlock[,grep( "_",colnames(osdBlock), invert = T)])
 
 rpkm$B=0 # rpkm of the organ specific domain in Biased organ)
 rpkm$H=0 # rpkm of the non-biased organ with highest expression level
-rpkm$NonBH = "A"
+rpkm$NonBH = "A" # the non-biased organ with highest expression level
 for (i in 1:dim(rpkm)[1]){
   rpkm$B[i]=rpkm[i,grep(rpkm$BiasedOrgan[i],colnames(rpkm))]
   rpkm$H[i]=max(rpkm[,targetCol][i,grep(rpkm$BiasedOrgan[i],colnames(rpkm)[targetCol], invert = T )])
