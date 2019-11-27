@@ -379,8 +379,17 @@ done
 # Histo_of_TSS_countsPerCluster.R
 mkdir /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/GeneAnnotationInCluster
 cd GeneAnnotationInCluster
-ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
 ln -s ../T8_2Strand_p0.05_effect_*.bed_cluster .
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation_geneMerged.bed .
+# mouse mm10_GRCm38
+# make bed from gtf from GENCODE
+# gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
+# avoid multiple count of genes share similarl location, need to merge bed of overlaping genes as follows:
+# cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="gene"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > gencode.vM20.annotation_gene.bed
+# bedtools merge -i <(cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="gene"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V ) -s -o collapse,distinct,distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V > gencode.vM20.annotation_geneMerged.bed
+
+
+
 bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_imprinting.bed_cluster |cut -f 3-) |cut -f 4-7 |sort| uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster
 bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1-3) -b  <(cat T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-) |cut -f 4-7 |sort |uniq -c > gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster
 
@@ -388,11 +397,12 @@ bedtools intersect -wo -a <(cat gencode.vM20.annotation_geneMerged.bed |cut -f 1
 
 ### The switches within domains
 ## a strict criterium here: 
-# Use ONLY count strain effect block in strain effect domain
+# Use ONLY strain effect block in strain effect domain
 # AND ONLY imprinted blocks in imprinted domain
 cd /local/workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6
 mkdir StrainImprintedBlocksInDomains
 cd StrainImprintedBlocksInDomains
+
 
 for effect in imprinting strain
  do
@@ -406,6 +416,7 @@ wc -l ${head}_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cl
 done
 done
 
+# number of domains show switches ($1>1) in that organ
 5 BN_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
 1 SP_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
 0 HT_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withABSwitches
@@ -435,6 +446,7 @@ wc -l ${head}_p0.05_effect_${effect}_IN_T8_2Strand_p0.05_effect_${effect}.bed_cl
 done
 done
 
+# number of domains show NO switch ($1==1) in that organ
 16 BN_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
 6 SP_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
 6 HT_p0.05_effect_imprinting_IN_T8_2Strand_p0.05_effect_imprinting.bed_cluster_withoutABSwitches
@@ -452,7 +464,7 @@ done
 500 GI_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
 1696 LV_p0.05_effect_strain_IN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutABSwitches
 
-## Finally, identify the st domains with at least one organ with st blocks showing different allelic biases.
+## Finally, identify the st domains with at least one organ with st blocks showing different allelic biases (withABSwitches).
 # AND identify the im domains with at least one organ with im blocks showing different allelic biases.
 for effect in  strain imprinting
  do
@@ -461,5 +473,5 @@ wc -l T8_2Strand_p0.05_effect_${effect}.bed_cluster_withABSwitches
 wc -l ../T8_2Strand_p0.05_effect_${effect}.bed_cluster
 done
 
-# organized in excel sheet  https://cornell.box.com/s/a47bkobn400reqjnxui79cx2jftapiv9
+# organized in excel sheet  https://www.dropbox.com/s/fqfgkuvjgnmalg0/Sup_table.xlsx?dl=0
 #  and perform fisher.test in R  https://github.com/shaopei/F1_8Tissues/blob/master/allelic_bias_swtiches.R
