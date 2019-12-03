@@ -1,0 +1,106 @@
+cd /workdir/sc2457/F1_Tissues/PolyA_Allele-specific
+
+
+## identify allele specific termination
+# intersect annotation (protein-coding genes) and AlleleHMM (native) blocks 
+
+ln -s ../Find_consistent_blocks/HMM_bed . # AlleleHMM blocks
+
+
+mkdir annotations
+cd annotations
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation.bed
+# mouse mm10_GRCm38
+# make bed from gtf from GENCODE
+# gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
+cat gencode.vM20.annotation.bed |awk 'BEGIN {OFS="\t"} ($8=="transcript"){print $0}' | grep protein_coding |gzip > gencode.vM20.annotation_transcript_protein_coding.bed.gz
+
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# keep transcript annotations that are overlap with dREG sites
+# use sort-bed
+intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) |sort-bed - | grep -v chrX | grep -v chrY | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
+zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_plus.bed.gz
+zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed.gz
+done
+
+# I checked the genome browser. Gencode annotation end at PolyA site, not overlapped with termiantion site
+# Use tunit to identify allelic termination site.
+
+cd ..
+
+# use tunits that DO overlap with the gene transcript from above as another set of gene transcription
+mkdir tunit_protein_coding
+cd tunit_protein_coding
+ln -s /workdir/sc2457/F1_Tissues/bigWig/tunit .
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+intersectBed -u -s -a tunit/${Head}_all_h5.preds.full.bed -b <(zcat ../annotations/${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz)  |grep -v chrX |grep -v chrY  \
+> ${Head}_all_h5.preds.full_inProtein_coding.bed
+done
+
+cd ..
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# use first bp of HMM 
+# cat HMM_bed/${Head}_*.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $2, $2+1, $4,$5,$6} ($6=="-") {print $1, $3-1, $3, $4,$5,$6}'
+intersectBed -s -u -a <(cat tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed |cut -f 1-6| grep -v chrX | grep -v chrY) \
+-b <(cat HMM_bed/${Head}_*.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $2, $2+1, $4,$5,$6} ($6=="-") {print $1, $3-1, $3, $4,$5,$6}')\
+> ${Head}_tunitIntersect1bpNativeHMM_AllelicTermination.bed  #AT is Allelic Termination
+
+done
+
+wc -l *AllelicTermination.bed
+ //  1789 BN_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //  1298 GI_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //   820 HT_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //  1350 KD_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //  1936 LV_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //  1978 SK_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //  1595 SP_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ //  1014 ST_tunitIntersect1bpNativeHMM_AllelicTermination.bed
+ // 11780 total
+
+#cat LV_AllelicTermination.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
+
+# Use consistently biased blocks
+mkdir ABconsistentHMM_bed
+cd ABconsistentHMM_bed
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent_FisherMethodP0.05.bed .   #*/
+cd ..
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# use first bp of HMM 
+cat ABconsistentHMM_bed/${Head}_*_plus_ABconsistent_FisherMethodP0.05.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} {print $1, $2, $2+1, $4,".","+"}' >${Head}_tmp.bed
+cat ABconsistentHMM_bed/${Head}_*_minus_ABconsistent_FisherMethodP0.05.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} {print $1, $3-1, $3, $4,".","-"}' >>${Head}_tmp.bed
+
+
+intersectBed -s -u -a <(cat tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed |cut -f 1-6| grep -v chrX | grep -v chrY) -b ${Head}_tmp.bed\
+> ${Head}_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed  #AT is Allelic Termination
+done
+
+ wc -l *FisherMethodP0.05HMM_AllelicTermination.bed
+  // 1521 BN_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  //  929 GI_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  //  364 HT_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1146 KD_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1816 LV_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1080 SK_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1386 SP_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  //  685 ST_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 8927 total
+
+#cat LV_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
+
+
+# HERE
+
+
+
+
