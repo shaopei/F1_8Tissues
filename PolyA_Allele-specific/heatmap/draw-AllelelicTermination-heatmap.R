@@ -1,7 +1,14 @@
-source("/local/workdir/zw355/proj/prj10-dreg/paper-fig-201808/heatmaps.R");
-source("../scripts/hist.param.R");
-source("../scripts/hist.svm.com.R");
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap")
+source("heatmaps.R");
+source("hist.param.R");
+source("hist.svm.com.R");
 
+### Load the package or install if not present
+#if (!require("RColorBrewer")) {
+#install.packages("RColorBrewer")
+#library(RColorBrewer)
+#}
+#library(pheatmap)
 
 read_peak_overlap <- function(dregX, file.peak, navg = 20)
 {
@@ -42,7 +49,6 @@ draw_legend <- function(bk, hmcols)
     axis(1, c(1, NROW(bk)/2, NROW(bk)), round(exp(c(bk[1], bk[round(NROW(bk)/2)], bk[NROW(bk)])),0), cex.axis=3, cex=3, tick=FALSE );
 }
 
-
 read_read_mat0 <-function (file.bw.org, dregX, step, navg = 20, times=1)
 {
     hmark <- load.bigWig( file.bw.org )
@@ -58,6 +64,21 @@ read_read_mat0 <-function (file.bw.org, dregX, step, navg = 20, times=1)
     return(avgMat);    
 }
 
+read_read_mat1 <-function (file.bw.org, dregX, step, navg = 1, times=1)
+{
+    hmark <- load.bigWig( file.bw.org )
+
+    hCountMatrix <- bed.step.bpQuery.bigWig( hmark, dregX[,c(1,2,3)] , step=step, abs.value=TRUE)
+    hCountMatrix <- lapply(1:NROW(hCountMatrix), function(i){ if(dregX[i,6]=="-") return(rev(hCountMatrix[[i]])) else return(hCountMatrix[[i]])} );
+    hmat <- times * matrix(unlist(hCountMatrix), nrow= NROW(dregX), byrow=TRUE) ;
+
+    #avgMat <- t(sapply(1:floor(NROW(hmat)/navg), function(x) {colMeans(hmat[((x-1)*navg+1):min(NROW(hmat),(x*navg)),])}))
+    
+    unload.bigWig(hmark);
+    
+    return(hmat);    
+}
+
 heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.png, 
                    subs = NULL, breaks = NULL, cols = NULL, step = 25) 
 {
@@ -67,12 +88,12 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
     dregX <- df.bed.strand 
     dregX <- dregX[grep("_|chrY|chrX", dregX[,1], invert=TRUE),]
 
-    hmat.pred <- read_read_mat0 (file.bw.pred, dregX[,c(1:6)], step, times=10)
-    hmat.org  <- read_read_mat0 (file.bw.org, dregX[,c(1:6)],  step, times=1)
+    hmat.pred <- read_read_mat1 (file.bw.pred, dregX[,c(1:6)], step, times=1)
+    hmat.org  <- read_read_mat1 (file.bw.org, dregX[,c(1:6)],  step, times=1)
 
     ## Write out a heatmap.
     if(is.null(breaks)) {
-        bk.org <- seq(min(hmat.org), max(hmat.org), 0.01)
+        bk.org <- seq(min(hmat.org), max(hmat.org), 1)
     } else {
         bk.org <- breaks
     }
@@ -84,7 +105,7 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
     }
 
     if(is.null(breaks)) {
-        bk.pred <- seq(min(hmat.pred), max(hmat.pred), 0.01)
+        bk.pred <- seq(min(hmat.pred), max(hmat.pred), 1)
     } else {
         bk.pred <- breaks
     }
@@ -142,6 +163,27 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
   
 } 
 
+dist = 10000
+AT <-  read.table("../BN_AT_2tunitIntersectNativeHMM_AlleleHMM_plus.bed", header = F)
+AT <- AT[,1:6]
+AT <- AT[order(AT$V3 - AT$V2, decreasing = T),]
+AT[,3] <- AT[,2] + dist
+
+file.plus.bw <-  ""
+file.minus.bw <-  ""
+
+
+file.png <- "../test-heatmap.png"
+heatmap.gene(AT, file.plus.bw, file.minus.bw, 
+             "../BN_MB6_all_R1.mat_1bp_plus.bw", AT, 
+             "../BN_MB6_all_R1.pat_1bp_plus.bw", AT, 
+             file.png, step = 10, breaks=seq(0, 3, 1));
+
+
+
+
+
+
 file.TSS.bed <- "/workdir/zw355/proj/prj15-histone/pred-k562/K562_DivergentPairs.bed"
 file.plus.bw  <- "/local/workdir/zw355/proj/prj10-dreg/k562/K562_unt.sort.bed.gz_plus.bw"
 file.minus.bw <- "/local/workdir/zw355/proj/prj10-dreg/k562/K562_unt.sort.bed.gz_minus.bw"
@@ -197,4 +239,6 @@ heatmap.gene(tb0, file.plus.bw, file.minus.bw,
 #        file.png, step = 100);
 }
 
+heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.png, 
+                   subs = NULL, breaks = NULL, cols = NULL, step = 25) 
 
