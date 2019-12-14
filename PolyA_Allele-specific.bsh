@@ -109,14 +109,17 @@ done
    359 ST_AT_2tunitIntersectNativeHMM_tunit.bed
  14496 total
 
-
 #cat LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
 # HERE
 
 
+# Length distribution of AlleleHMM blocks that contains allelic termination
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed ${Head}  < getLengthHist.R  &
+done
 
 
-
+draw-AllelelicTermination-heatmap.R
 
 
 
