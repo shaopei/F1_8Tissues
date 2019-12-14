@@ -149,6 +149,9 @@ heatmap.AT<-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,f
 
 AT <- AT[,1:6]
 AT <- AT[order(AT$V3 - AT$V2, decreasing = T),]
+# make all beds the same length
+# plus strand chromEnd = chromStart + dist
+# minus strand chromStart = chromEnd - dist
 bed6 <- AT
 for (i in 1:NROW(bed6)){
  if(bed6[i,6]=="-") {
@@ -158,10 +161,11 @@ for (i in 1:NROW(bed6)){
    }
 }
 
+# get the sum of reads in each bin (size = step)
 hmat.pat <- read_read_mat2 (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=1)
 hmat.mat  <- read_read_mat2 (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=1)
 
-
+# dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
 AT$steps <- (AT$V3-AT$V2)%/%step+1
 hmat.pat.AT.rowSums <- NULL
 hmat.mat.AT.rowSums <- NULL
@@ -176,13 +180,10 @@ hmat.high[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.ro
 hmat.low <- hmat.mat
 hmat.low[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] 
 
-#hmat.org <- hmat.low 
-#hmat.prep <- hmat.high 
-
 #save.image("data-hmat.RData")
 #load("data-hmat.RData")
 hmcols <- rev(colorRampPalette(brewer.pal(9,"RdBu"))(length(breaks)-1))
-
+# draw heatmap based on the score in the bins
 pdf(file.pdf, width=20, height = 20 )
    lay.heights <- c(0.85, 0.15);
    lay.widths  <- c(0.48, 0.04, 0.48 )
@@ -248,7 +249,9 @@ file.bw.minus.mat <- "../BN_MB6_all_R1.mat_1bp_minus.bw"
 heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=50000, step=500, file.pdf="heatmap_AT50Kb_step500.pdf", bl_wd=1, breaks=seq(0,10,1))
 
 
+
 between_organs_AT_bw_heatmap <- function (at, t){
+    # use Alleleic Termination from one organ and see the proseq reads abundance from another organ
 AT <-  read.table(paste("../",at,"_AT_2tunitIntersectNativeHMM_AlleleHMM.bed", sep=""), header = F)
 file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
 file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
