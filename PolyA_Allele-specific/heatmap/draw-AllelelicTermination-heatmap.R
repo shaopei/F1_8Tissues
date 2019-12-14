@@ -119,10 +119,20 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
     ## start new PNG file
     png(file.png, width=450*1.5, height = 800*1.2 )
 
+ 
     lay.heights <- c(0.85, 0.15);
     lay.widths  <- c(0.48, 0.04, 0.48 )
     layout(matrix(c(1, 5, 2, 3, 5, 4 ), nrow=2, byrow=T), widths=lay.widths, heights=lay.heights)
 
+    ##part2:
+    gt <- pheatmap( hmat.pred, cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols.pred, breaks = bk.pred, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
+    par(mar=c(0,0,0,0), plt=c(0.2, 0.8,0.2, 0.8 ));
+    plot(NA,NA, type="n", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), xaxs="i", yaxs="i", xaxt = "n", yaxt = "n", bty="n");
+    ##grid.newpage()
+    pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
+    gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 3 );
+    grid.draw(gt$gtable)
+    popViewport()
 
     ##part 1:
     gt <- pheatmap( hmat.org, cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols.org, breaks = bk.org, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
@@ -131,23 +141,8 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
     ##grid.newpage()
     pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
     gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 1)
-    #gt$gtable$grobs[[1]]$children[[1]]$gp$fill[,20:21] <- "#000000";
-    gt$gtable$grobs[[1]]$children[[1]]$gp$fill[,20] <- "#000000";
     grid.draw(gt$gtable)
     popViewport()
-
-    ##part 2
-    gt <- pheatmap( hmat.pred, cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols.pred, breaks = bk.pred, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
-    par(mar=c(0,0,0,0), plt=c(0.2, 0.8,0.2, 0.8 ));
-    plot(NA,NA, type="n", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), xaxs="i", yaxs="i", xaxt = "n", yaxt = "n", bty="n");
-    ##grid.newpage()
-    pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
-    gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 3 );
-    #gt$gtable$grobs[[1]]$children[[1]]$gp$fill[,20:21] <- "#000000";
-    gt$gtable$grobs[[1]]$children[[1]]$gp$fill[,20] <- "#000000";
-    grid.draw(gt$gtable)
-    popViewport()
-
 
     ##part 3:
     ## draw colorScale for peak track
@@ -156,6 +151,7 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
     ##part 4:
     ## draw colorScale for Heatmap
     draw_legend(bk.pred, hmcols.pred );
+
 
     dev.off(); 
 
