@@ -168,6 +168,18 @@ AT <-  read.table("../BN_AT_2tunitIntersectNativeHMM_AlleleHMM_plus.bed", header
 AT <- AT[,1:6]
 AT <- AT[order(AT$V3 - AT$V2, decreasing = T),]
 AT[,3] <- AT[,2] + dist
+#AT[,2] <- AT[,2] - dist
+
+dregX <- AT
+file.bw.pred <- "../BN_MB6_all_R1.pat_1bp_plus.bw"
+file.bw.org <- "../BN_MB6_all_R1.mat_1bp_plus.bw"
+
+step=100
+hmat.pred <- read_read_mat1 (file.bw.pred, dregX[,c(1:6)], step, times=1)
+hmat.org  <- read_read_mat1 (file.bw.org, dregX[,c(1:6)],  step, times=1)
+
+save.image("data-hmat.RData")
+load("data-hmat.RData")
 
 file.plus.bw <-  ""
 file.minus.bw <-  ""
@@ -175,10 +187,12 @@ file.minus.bw <-  ""
 
 file.png <- "../test-heatmap.png"
 heatmap.gene(AT, file.plus.bw, file.minus.bw, 
-             "../BN_MB6_all_R1.mat_1bp_plus.bw", AT, 
              "../BN_MB6_all_R1.pat_1bp_plus.bw", AT, 
+             "../BN_MB6_all_R1.mat_1bp_plus.bw", AT, 
              file.png, step = 10, breaks=seq(0, 3, 1));
 
+#save.image("data-hmat.RData")
+load("data-hmat.RData")
 
 
 
