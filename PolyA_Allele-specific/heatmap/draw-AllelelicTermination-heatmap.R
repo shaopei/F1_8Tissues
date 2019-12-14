@@ -46,7 +46,7 @@ draw_legend <- function(bk, hmcols)
     par(mar=c(10,0,0,0), plt=c(0.15, 1.00, 0.4, 0.8 ));
     plot(NA,NA, type="n", xlim=c(1, NROW(bk)*0.85/0.7), ylim=c(0,1), xlab="", ylab="", bty="n", xaxt="n", yaxt= "n",bty="n" );
     for(i in 1:NROW(bk)) rect(i,0, i+1, 1, col=hmcols[i], border=hmcols[i]);
-    axis(1, c(1, NROW(bk)/2, NROW(bk)), round(exp(c(bk[1], bk[round(NROW(bk)/2)], bk[NROW(bk)])),0), cex.axis=3, cex=3, tick=FALSE );
+    axis(1, c(1, NROW(bk)/2, NROW(bk)), round((c(bk[1], bk[round(NROW(bk)/2)], bk[NROW(bk)])),0), cex.axis=3, cex=3, tick=FALSE );
 }
 
 read_read_mat0 <-function (file.bw.org, dregX, step, navg = 20, times=1)
@@ -79,7 +79,7 @@ read_read_mat1 <-function (file.bw.org, dregX, step, navg = 1, times=1)
     return(hmat);    
 }
 
-heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.png, 
+heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.pdf, 
                    subs = NULL, breaks = NULL, cols = NULL, step = 25) 
 {
    if(is.na(file.bw.org) || is.na(file.bw.pred))
@@ -116,8 +116,8 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
         hmcols.pred <- colorRampPalette(cols)(length(bk.pred)-1) # red
     }
 
-    ## start new PNG file
-    png(file.png, width=450*1.5, height = 800*1.2 )
+    ## start new pdf file
+    pdf(file.pdf, width=20, height = 20 )
 
  
     lay.heights <- c(0.85, 0.15);
@@ -159,14 +159,15 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
   
 } 
 
-dist = 10000
+dist = 100000
 AT <-  read.table("../BN_AT_2tunitIntersectNativeHMM_AlleleHMM_plus.bed", header = F)
 AT <- AT[,1:6]
 AT <- AT[order(AT$V3 - AT$V2, decreasing = T),]
-AT[,3] <- AT[,2] + dist
-#AT[,2] <- AT[,2] - dist
-
 dregX <- AT
+dregX[,3] <- dregX[,2] + dist
+
+
+
 file.bw.pred <- "../BN_MB6_all_R1.pat_1bp_plus.bw"
 file.bw.org <- "../BN_MB6_all_R1.mat_1bp_plus.bw"
 
@@ -175,20 +176,41 @@ hmat.pred <- read_read_mat1 (file.bw.pred, dregX[,c(1:6)], step, times=1)
 hmat.org  <- read_read_mat1 (file.bw.org, dregX[,c(1:6)],  step, times=1)
 
 save.image("data-hmat.RData")
+dev.off()
+load("data-hmat.RData")
+
+
+AT$steps <- (AT$V3-AT$V2)%/%step+1
+hmat.pred.AT.rowSums <- NULL
+hmat.org.AT.rowSums <- NULL
+for (i in 1:NROW(hmat)){
+  hmat.pred.AT.rowSums[i] <- sum(hmat.pred[i,][1:min(AT$steps[i],dist/step)]) 
+  hmat.org.AT.rowSums[i] <- sum(hmat.org[i,][1:min(AT$steps[i],dist/step)]) 
+  }
+
+hmat.high <- hmat.org
+hmat.high[hmat.pred.AT.rowSums > hmat.org.AT.rowSums, ] = hmat.pred[hmat.pred.AT.rowSums > hmat.org.AT.rowSums, ] 
+
+hmat.low <- hmat.org
+hmat.low[hmat.pred.AT.rowSums < hmat.org.AT.rowSums, ] = hmat.pred[hmat.pred.AT.rowSums < hmat.org.AT.rowSums, ] 
+
+hmat.org <- hmat.low 
+hmat.prep <- hmat.high 
+
+#save.image("data-hmat.RData")
 load("data-hmat.RData")
 
 file.plus.bw <-  ""
 file.minus.bw <-  ""
 
 
-file.png <- "../test-heatmap.png"
+file.pdf <- "../test-heatmap.pdf"
 heatmap.gene(AT, file.plus.bw, file.minus.bw, 
              "../BN_MB6_all_R1.pat_1bp_plus.bw", AT, 
              "../BN_MB6_all_R1.mat_1bp_plus.bw", AT, 
-             file.png, step = 10, breaks=seq(0, 3, 1));
+             file.pdf, step = 10, breaks=seq(0, 3, 1));
 
-#save.image("data-hmat.RData")
-load("data-hmat.RData")
+
 
 
 
@@ -221,34 +243,16 @@ if(0)
 {
 write.bed(tb0, file="Alex.Mnase.Tss.sup.bed", compress=FALSE)
 
-file.png <- "Alex-H3K36me3-strand-heatmap.png"
+file.pdf <- "Alex-H3K36me3-strand-heatmap.pdf"
 heatmap.gene(tb0, file.plus.bw, file.minus.bw, 
         file.Alex.Mnase.H3k36me3.bw, file.Alex.Mnase.H3k36me3.peak, 
         "../pred-alex/raw.Alex-Mnase-H3k36me3.pred.TSS.sup.bw", file.Alex.Mnase.H3k36me3.peak, 
-        file.png, step = 100);
+        file.pdf, step = 100);
 
-file.png <- "Alex-H3K79me3-strand-heatmap.png"
+file.pdf <- "Alex-H3K79me3-strand-heatmap.pdf"
 heatmap.gene(tb0, file.plus.bw, file.minus.bw, 
         file.Alex.Mnase.H3k79me3.bw, file.Alex.Mnase.H3k79me3.peak, 
         "../pred-alex/raw.Alex-Mnase-H3k79me3.pred.TSS.sup.bw", file.Alex.Mnase.H3k79me3.peak, 
-        file.png, step = 100);
+        file.pdf, step = 100);
 }
-
-if(1)
-{
-file.png <- "GM-H3K36me3-strand-heatmap.png"
-heatmap.gene(tb0, file.plus.bw, file.minus.bw, 
-        file.gm.H3k36me3.bw, file.gm.H3k36me3.peak, 
-        file.gm.H3k36me3.pred.raw, file.gm.H3k36me3.peak, 
-        file.png, step = 100);
-
-#file.png <- "GM-H3K79me3-strand-heatmap.png"
-#heatmap.gene(tb0, file.plus.bw, file.minus.bw,  
-#        file.gm.H3k79me3.bw, file.gm.H3k79me3.peak, 
-#        file.gm.H3k79me3.pred.raw, file.gm.H3k79me3.peak, 
-#        file.png, step = 100);
-}
-
-heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.png, 
-                   subs = NULL, breaks = NULL, cols = NULL, step = 25) 
 
