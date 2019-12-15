@@ -145,11 +145,15 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
   
 } 
 
-heatmap.AT<-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, high.low.by, file.pdf="heatmap.pdf", bl_wd=1, breaks=seq(0,10,1)){
+heatmap.AT<-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, high.low.by=NULL, sort.by.HL.start = FALSE, file.pdf="heatmap.pdf", bl_wd=1, breaks=seq(0,10,1)){
 
 AT <- AT[,1:6]
-AT_length_order <- order(AT$V3 - AT$V2, decreasing = T)
-AT <- AT[AT_length_order ,]
+if (sort.by.HL.start) {
+    length_order  <- order((high.low.by$V2 - AT$V2), decreasing = T)
+    } else {
+    length_order  <- order(AT$V3 - AT$V2, decreasing = T)
+    }
+AT <- AT[length_order  ,]
 # make all beds the same length
 # plus strand chromEnd = chromStart + dist
 # minus strand chromStart = chromEnd - dist
@@ -177,7 +181,7 @@ bin_number <- dist/step
           hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][1:min(AT$steps[i],bin_number)]) 
           }
     } else {
-        HL <- high.low.by[AT_length_order ,]
+        HL <- high.low.by[length_order  ,]
         HL$start <- (HL$V2-AT$V2)%/%step
         HL$end <- (HL$V3-AT$V2)%/%step+1
         hmat.pat.AT.rowSums <- NULL
@@ -328,4 +332,35 @@ heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.
 heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
 heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
 heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500, high.low.by=AT_intersect, sort.by.HL.start =TRUE , file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, high.low.by=AT_intersect, sort.by.HL.start =TRUE ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, high.low.by=AT_intersect, sort.by.HL.start =TRUE ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000, high.low.by=AT_intersect, sort.by.HL.start =TRUE ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+
+
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500,  file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+
+between_organs_AT_bw_heatmap_2 <- function (at, t){
+    # use Alleleic Termination from one organ and see the proseq reads abundance from another organ
+AT_intersect <- read.table(paste("../",at,"_AT_3tunitIntersectNativeHMM_intersectRegion.bed", sep=""), header = F)
+file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+file.bw.plus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+file.bw.minus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500,  file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+#heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+}
+
+between_organs_AT_bw_heatmap_2("BN","BN")
+between_organs_AT_bw_heatmap_2("LV","LV")
+between_organs_AT_bw_heatmap_2("LV","BN")
+between_organs_AT_bw_heatmap_2("BN","LV")
+
+
 
