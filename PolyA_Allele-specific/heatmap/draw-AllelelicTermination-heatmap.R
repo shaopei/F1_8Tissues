@@ -145,10 +145,11 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
   
 } 
 
-heatmap.AT<-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, file.pdf="heatmap.pdf", bl_wd=1, breaks=seq(0,10,1)){
+heatmap.AT<-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, high.low.by, file.pdf="heatmap.pdf", bl_wd=1, breaks=seq(0,10,1)){
 
 AT <- AT[,1:6]
-AT <- AT[order(AT$V3 - AT$V2, decreasing = T),]
+AT_length_order <- order(AT$V3 - AT$V2, decreasing = T)
+AT <- AT[AT_length_order ,]
 # make all beds the same length
 # plus strand chromEnd = chromStart + dist
 # minus strand chromStart = chromEnd - dist
@@ -164,21 +165,34 @@ for (i in 1:NROW(bed6)){
 # get the sum of reads in each bin (size = step)
 hmat.pat <- read_read_mat2 (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=1)
 hmat.mat  <- read_read_mat2 (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=1)
-
-# dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
 AT$steps <- (AT$V3-AT$V2)%/%step+1
-hmat.pat.AT.rowSums <- NULL
-hmat.mat.AT.rowSums <- NULL
-for (i in 1:NROW(hmat.pat)){
-  hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][1:min(AT$steps[i],dist/step)]) 
-  hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][1:min(AT$steps[i],dist/step)]) 
-  }
+bin_number <- dist/step
+    
+    if(is.null(high.low.by)) {
+        # dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
+        hmat.pat.AT.rowSums <- NULL
+        hmat.mat.AT.rowSums <- NULL
+        for (i in 1:NROW(hmat.pat)){
+          hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][1:min(AT$steps[i],bin_number)]) 
+          hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][1:min(AT$steps[i],bin_number)]) 
+          }
+    } else {
+        HL <- high.low.by[AT_length_order ,]
+        HL$start <- (HL$V2-AT$V2)%/%step
+        HL$end <- (HL$V3-AT$V2)%/%step+1
+        hmat.pat.AT.rowSums <- NULL
+        hmat.mat.AT.rowSums <- NULL
+        for (i in 1:NROW(hmat.pat)){
+          hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][max(1,min(HL$start[i],bin_number)) : min(HL$end[i],bin_number)]) 
+          hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][max(1,min(HL$start[i],bin_number))  : min(HL$end[i],bin_number)]) 
+          }
+    }
+        hmat.high <- hmat.mat
+        hmat.high[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] 
 
-hmat.high <- hmat.mat
-hmat.high[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] 
+        hmat.low <- hmat.mat
+        hmat.low[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] 
 
-hmat.low <- hmat.mat
-hmat.low[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] 
 
 #save.image("data-hmat.RData")
 #load("data-hmat.RData")
@@ -197,10 +211,19 @@ pdf(file.pdf, width=20, height = 20 )
     pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
     gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 1)
     # add a black line to indicates the boundry of AT
-    for (i in 1:NROW(hmat.high)){
-      if (AT$steps[i] <= dist/step){
-      gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
-      }
+    if(is.null(high.low.by)) {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          }
+        }
+    } else {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((min(HL$start[i],bin_number)-bl_wd),0) : min(HL$start[i],bin_number) ] <- "#000000";
+          }
+        }
     }
     grid.draw(gt$gtable)
     popViewport()
@@ -213,10 +236,19 @@ pdf(file.pdf, width=20, height = 20 )
     pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
     gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 3 );
     # add a black line to indicates the boundry of AT
-    for (i in 1:NROW(hmat.high)){
-      if (AT$steps[i] <= dist/step){
-      gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
-      }
+    if(is.null(high.low.by)) {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          }
+        }
+    } else {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((min(HL$start[i],bin_number)-bl_wd),0) : min(HL$start[i],bin_number) ] <- "#000000";
+          }
+        }
     }
     grid.draw(gt$gtable)
     popViewport()
@@ -267,4 +299,33 @@ between_organs_AT_bw_heatmap("BN","BN")
 between_organs_AT_bw_heatmap("LV","LV")
 between_organs_AT_bw_heatmap("LV","BN")
 between_organs_AT_bw_heatmap("BN","LV")
+
+at="BN"
+t="BN"
+
+AT <-  read.table(paste("../",at,"_AT_2tunitIntersectNativeHMM_tunit.bed", sep=""), header = F)
+file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+file.bw.plus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+file.bw.minus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=50000, step=500, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=100000, step=1000, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=1000000, step=1000, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=5000000, step=1000, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT5Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+
+# order by tunit length
+# high low by the reads count in the intersection
+at="BN"
+t="BN"
+
+tunit <-  read.table(paste("../",at,"_AT_3tunitIntersectNativeHMM_tunits.bed", sep=""), header = F)
+AT_intersect <- read.table(paste("../",at,"_AT_3tunitIntersectNativeHMM_intersectRegion.bed", sep=""), header = F)
+file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+file.bw.plus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+file.bw.minus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500, high.low.by=AT_intersect , file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
+heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
 
