@@ -145,6 +145,130 @@ heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org,
   
 } 
 
+heatmap.AT0 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, high.low.by=NULL, sort.by.HL.start = FALSE, file.pdf="heatmap.pdf", bl_wd=1, breaks=seq(0,10,1)){
+# high.low.by is bed regions
+
+AT <- AT[,1:6]
+if (sort.by.HL.start) {
+    length_order  <- order((high.low.by$V2 - AT$V2), decreasing = T)
+    } else {
+    length_order  <- order(AT$V3 - AT$V2, decreasing = T)
+    }
+AT <- AT[length_order  ,]
+# make all beds the same length
+# plus strand chromEnd = chromStart + dist
+# minus strand chromStart = chromEnd - dist
+bed6 <- AT
+for (i in 1:NROW(bed6)){
+ if(bed6[i,6]=="-") {
+    bed6[i,2] <- bed6[i,3]- dist}
+ else
+   {bed6[i,3] <- bed6[i,2] +dist
+   }
+}
+
+# get the sum of reads in each bin (size = step)
+hmat.pat <- read_read_mat2 (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=1)
+hmat.mat  <- read_read_mat2 (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=1)
+AT$steps <- (AT$V3-AT$V2)%/%step+1
+bin_number <- dist/step
+    
+    if(is.null(high.low.by)) {
+        # dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
+        hmat.pat.AT.rowSums <- NULL
+        hmat.mat.AT.rowSums <- NULL
+        for (i in 1:NROW(hmat.pat)){
+          hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][1:min(AT$steps[i],bin_number)]) 
+          hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][1:min(AT$steps[i],bin_number)]) 
+          }
+    } else {
+        HL <- high.low.by[length_order  ,]
+        HL$start <- (HL$V2-AT$V2)%/%step
+        HL$end <- (HL$V3-AT$V2)%/%step+1
+        hmat.pat.AT.rowSums <- NULL
+        hmat.mat.AT.rowSums <- NULL
+        for (i in 1:NROW(hmat.pat)){
+          hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][max(1,min(HL$start[i],bin_number)) : min(HL$end[i],bin_number)]) 
+          hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][max(1,min(HL$start[i],bin_number))  : min(HL$end[i],bin_number)]) 
+          }
+    }
+        hmat.high <- hmat.mat
+        hmat.high[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] 
+
+        hmat.low <- hmat.mat
+        hmat.low[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] 
+
+
+#save.image("data-hmat.RData")
+#load("data-hmat.RData")
+hmcols <- rev(colorRampPalette(brewer.pal(9,"RdBu"))(length(breaks)-1))
+# draw heatmap based on the score in the bins
+pdf(file.pdf, width=20, height = 20 )
+   lay.heights <- c(0.85, 0.15);
+   lay.widths  <- c(0.48, 0.04, 0.48 )
+   layout(matrix(c(1, 5, 2, 3, 5, 4 ), nrow=2, byrow=T), widths=lay.widths, heights=lay.heights)
+
+    ##part 1:
+    gt <- pheatmap( hmat.low , cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols, breaks = breaks, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
+    par(mar=c(0,0,0,0), plt=c(0.2, 0.8,0.2, 0.8 ));
+    plot(NA,NA, type="n", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), xaxs="i", yaxs="i", xaxt = "n", yaxt = "n", bty="n");
+    ##grid.newpage()
+    pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
+    gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 1)
+    # add a black line to indicates the boundry of AT
+    if(is.null(high.low.by)) {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          }
+        }
+    } else {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((min(HL$start[i],bin_number)-bl_wd),0) : min(HL$start[i],bin_number) ] <- "#000000";
+          }
+        }
+    }
+    grid.draw(gt$gtable)
+    popViewport()
+
+    ##part 2
+    gt <- pheatmap( hmat.high, cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols, breaks = breaks, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
+    par(mar=c(0,0,0,0), plt=c(0.2, 0.8,0.2, 0.8 ));
+    plot(NA,NA, type="n", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), xaxs="i", yaxs="i", xaxt = "n", yaxt = "n", bty="n");
+    ##grid.newpage()
+    pushViewport(viewport(layout = grid.layout(2, 3, widths=lay.widths, heights=lay.heights) ))
+    gt$gtable$vp <- viewport(layout.pos.row = 1, layout.pos.col = 3 );
+    # add a black line to indicates the boundry of AT
+    if(is.null(high.low.by)) {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          }
+        }
+    } else {
+        for (i in 1:NROW(hmat.high)){
+          if (AT$steps[i] <= bin_number){
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((AT$steps[i]-bl_wd),0) : AT$steps[i] ] <- "#000000";
+          gt$gtable$grobs[[1]]$children[[1]]$gp$fill[i, max((min(HL$start[i],bin_number)-bl_wd),0) : min(HL$start[i],bin_number) ] <- "#000000";
+          }
+        }
+    }
+    grid.draw(gt$gtable)
+    popViewport()
+
+    ##part 3:
+    ## draw colorScale for peak track
+    draw_legend(breaks, hmcols );
+    
+    ##part 4:
+    ## draw colorScale for Heatmap
+    draw_legend(breaks, hmcols );
+    dev.off()
+
+}
+
 avgMat <-function (hmat ,navg = 20){
     avgMat <- t(sapply(1:floor(NROW(hmat)/navg), function(x) {colMeans(hmat[((x-1)*navg+1):min(NROW(hmat),(x*navg)),])}))
 }
