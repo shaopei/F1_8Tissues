@@ -149,7 +149,7 @@ avgMat <-function (hmat ,navg = 20){
     avgMat <- t(sapply(1:floor(NROW(hmat)/navg), function(x) {colMeans(hmat[((x-1)*navg+1):min(NROW(hmat),(x*navg)),])}))
 }
 
-heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, up_dist =20000, file.pdf="heatmap.pdf", hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, bl_wd=1, breaks=seq(0,10,1), show.AT.line=TRUE, navg = 20){
+heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, up_dist =20000, file.pdf="heatmap.pdf", hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, bl_wd=1, breaks=seq(0,10,1), show.AT.line=TRUE, navg = 10){
 AT <- AT[,1:6]
 length_order  <- order(AT$V3 - AT$V2, decreasing = T)
 AT <- AT[length_order  ,]
@@ -203,7 +203,7 @@ hmat.high <- avgMat(hmat.high, navg = navg)
 newAT <- cbind(AT$start.steps, AT$end.steps)
 aveAT <- avgMat(newAT, navg = navg)
 
-#save.image("data-hmat.RData")
+#save.image(paste(file.pdf,".RData", sep=""))
 #load("data-hmat.RData")
 hmcols <- colorRampPalette(brewer.pal(9,"Reds"))(length(breaks)-1)
 # draw heatmap based on the score in the bins
@@ -213,7 +213,7 @@ pdf(file.pdf, width=20, height = 20 )
    layout(matrix(c(1, 5, 2, 3, 5, 4 ), nrow=2, byrow=T), widths=lay.widths, heights=lay.heights)
 
     ##part 1:
-    gt <- pheatmap( hmat.low , cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols, breaks = breaks, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
+    gt <- pheatmap( hmat.low , cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols, breaks = breaks, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T, border_color = NA )
     par(mar=c(0,0,0,0), plt=c(0.2, 0.8,0.2, 0.8 ));
     plot(NA,NA, type="n", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), xaxs="i", yaxs="i", xaxt = "n", yaxt = "n", bty="n");
     ##grid.newpage()
@@ -231,7 +231,7 @@ pdf(file.pdf, width=20, height = 20 )
     popViewport()
 
     ##part 2
-    gt <- pheatmap( hmat.high, cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols, breaks = breaks, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T )
+    gt <- pheatmap( hmat.high, cluster_rows = FALSE, cluster_cols = FALSE, col= hmcols, breaks = breaks, legend=FALSE, show_rownames=FALSE, show_colnames=FALSE, silent=T, border_color = NA )
     par(mar=c(0,0,0,0), plt=c(0.2, 0.8,0.2, 0.8 ));
     plot(NA,NA, type="n", xlab="", ylab="", xlim=c(0,1), ylim=c(0,1), xaxs="i", yaxs="i", xaxt = "n", yaxt = "n", bty="n");
     ##grid.newpage()
@@ -368,9 +368,9 @@ hl.bw.minus.mat <- paste("../",at,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
 heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500,  file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT50Kb_step500_navg",navg,".pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=TRUE, navg=navg)
 heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT100Kb_step1K_navg",navg,".pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=TRUE, navg=navg)
 heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K_navg",navg,".pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=TRUE, navg=navg)
-heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500,  file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT50Kb_step500_navg",navg,"0.pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=FALSE, navg=navg)
-heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT100Kb_step1K_navg",navg,"0.pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=FALSE, navg=navg)
-heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K_navg",navg,"0.pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=FALSE, navg=navg)
+heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500,  file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT50Kb_step500_navg",navg,"_noLine.pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=FALSE, navg=navg)
+heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT100Kb_step1K_navg",navg,"_noLine.pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=FALSE, navg=navg)
+heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K_navg",navg,"_noLine.pdf",sep=""), hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat, bl_wd=1, breaks=seq(0,10,1), show.AT.line=FALSE, navg=navg)
 }
 
 
@@ -384,3 +384,8 @@ between_organs_AT_bw_heatmap_3("BN","BN", navg=10)
 between_organs_AT_bw_heatmap_3("LV","LV", navg=10)
 between_organs_AT_bw_heatmap_3("LV","BN", navg=10)
 between_organs_AT_bw_heatmap_3("BN","LV", navg=10)
+
+between_organs_AT_bw_heatmap_3("BN","BN", navg=20)
+between_organs_AT_bw_heatmap_3("LV","LV", navg=20)
+between_organs_AT_bw_heatmap_3("LV","BN", navg=20)
+between_organs_AT_bw_heatmap_3("BN","LV", navg=20)
