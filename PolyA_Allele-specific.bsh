@@ -112,12 +112,33 @@ done
 #cat LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
 # HERE
 
+# the regions where tunit overlaps alleleHMM
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+intersectBed -s -wb -a ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed -b ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed > ${Head}_temp
+cat ${Head}_temp |awk 'BEGIN{OFS="\t"} ($10==$16) {print $0}'| cut -f 1-6 > ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed
+cat ${Head}_temp |awk 'BEGIN{OFS="\t"} ($10==$16) {print $0}'| cut -f 13- > ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed
+done
 
 # Length distribution of AlleleHMM blocks that contains allelic termination
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed ${Head}  < getLengthHist.R  &
 done
 
+# Length distribution of interect of AlleleHMM blocks and the paired tunits
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
+done
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed < Keep_AT_less_than_Xratio_tunits.R
+done
+
+# Length distribution of interect of AlleleHMM blocks and the paired tunits
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
+done
 
 draw-AllelelicTermination-heatmap.R
 
