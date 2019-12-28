@@ -574,80 +574,6 @@ heatmap.AT4_allreads <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.
 }
 
 
-dist = 50000
-step=1000
-bl_wd=1
-breaks <- seq(0,10,1)
-
-
-
-AT <-  read.table("../BN_AT_2tunitIntersectNativeHMM_AlleleHMM.bed", header = F)
-file.bw.plus.pat <- "../BN_MB6_all_R1.pat_1bp_plus.bw"
-file.bw.minus.pat <- "../BN_MB6_all_R1.pat_1bp_minus.bw"
-file.bw.plus.mat <- "../BN_MB6_all_R1.mat_1bp_plus.bw"
-file.bw.minus.mat <- "../BN_MB6_all_R1.mat_1bp_minus.bw"
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=50000, step=500, file.pdf="heatmap_AT50Kb_step500.pdf", bl_wd=1, breaks=seq(0,10,1))
-
-
-
-between_organs_AT_bw_heatmap <- function (at, t){
-    # use Alleleic Termination from one organ and see the proseq reads abundance from another organ
-AT <-  read.table(paste("../",at,"_AT_2tunitIntersectNativeHMM_AlleleHMM.bed", sep=""), header = F)
-file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
-file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
-file.bw.plus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
-file.bw.minus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=50000, step=500, file.pdf=paste(at,"-AT_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=100000, step=1000, file.pdf=paste(at,"-AT_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-
-}
-
-
-between_organs_AT_bw_heatmap("BN","BN")
-between_organs_AT_bw_heatmap("LV","LV")
-between_organs_AT_bw_heatmap("LV","BN")
-between_organs_AT_bw_heatmap("BN","LV")
-
-at="BN"
-t="BN"
-
-AT <-  read.table(paste("../",at,"_AT_2tunitIntersectNativeHMM_tunit.bed", sep=""), header = F)
-file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
-file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
-file.bw.plus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
-file.bw.minus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=50000, step=500, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=100000, step=1000, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=1000000, step=1000, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=5000000, step=1000, file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT5Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-
-# order by tunit length
-# high low by the reads count in the intersection
-at="BN"
-t="BN"
-
-tunit <-  read.table(paste("../",at,"_AT_3tunitIntersectNativeHMM_tunits.bed", sep=""), header = F)
-AT_intersect <- read.table(paste("../",at,"_AT_3tunitIntersectNativeHMM_intersectRegion.bed", sep=""), header = F)
-file.bw.plus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
-file.bw.minus.pat <- paste("../",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
-file.bw.plus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
-file.bw.minus.mat <- paste("../",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500, high.low.by=AT_intersect , file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000, high.low.by=AT_intersect ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500, high.low.by=AT_intersect, sort.by.HL.start =TRUE , file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, high.low.by=AT_intersect, sort.by.HL.start =TRUE ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, high.low.by=AT_intersect, sort.by.HL.start =TRUE ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(tunit, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000, high.low.by=AT_intersect, sort.by.HL.start =TRUE ,file.pdf=paste(at,"-ATtunit_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-
-
-heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=50000, step=500,  file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT50Kb_step500.pdf",sep=""), bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=100000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT100Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=1000000, step=1000, file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT1Mb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
-
 between_organs_AT_bw_heatmap_2 <- function (at, t){
     # use Alleleic Termination from one organ and see the proseq reads abundance from another organ
 AT_intersect <- read.table(paste("../",at,"_AT_3tunitIntersectNativeHMM_intersectRegion.bed", sep=""), header = F)
@@ -661,10 +587,10 @@ heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,f
 heatmap.AT(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, dist=200000, step=1000,file.pdf=paste(at,"-ATtunitAlleleHMMInterectRegion_", t,"-bw-heatmap_AT200Kb_step1K.pdf",sep="") , bl_wd=1, breaks=seq(0,10,1))
 }
 
-between_organs_AT_bw_heatmap_2("BN","BN")
-between_organs_AT_bw_heatmap_2("LV","LV")
-between_organs_AT_bw_heatmap_2("LV","BN")
-between_organs_AT_bw_heatmap_2("BN","LV")
+# between_organs_AT_bw_heatmap_2("BN","BN")
+# between_organs_AT_bw_heatmap_2("LV","LV")
+# between_organs_AT_bw_heatmap_2("LV","BN")
+# between_organs_AT_bw_heatmap_2("BN","LV")
 
 between_organs_AT_bw_heatmap_3 <- function (at, t, navg=5){
     # use Alleleic Termination from one organ and see the proseq reads abundance from another organ
@@ -687,20 +613,20 @@ heatmap.AT3(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,
 
 
 
-between_organs_AT_bw_heatmap_3("BN","BN")
-between_organs_AT_bw_heatmap_3("LV","LV")
-between_organs_AT_bw_heatmap_3("LV","BN")
-between_organs_AT_bw_heatmap_3("BN","LV")
+# between_organs_AT_bw_heatmap_3("BN","BN")
+# between_organs_AT_bw_heatmap_3("LV","LV")
+# between_organs_AT_bw_heatmap_3("LV","BN")
+# between_organs_AT_bw_heatmap_3("BN","LV")
 
-between_organs_AT_bw_heatmap_3("BN","BN", navg=10)
-between_organs_AT_bw_heatmap_3("LV","LV", navg=10)
-between_organs_AT_bw_heatmap_3("LV","BN", navg=10)
-between_organs_AT_bw_heatmap_3("BN","LV", navg=10)
+# between_organs_AT_bw_heatmap_3("BN","BN", navg=10)
+# between_organs_AT_bw_heatmap_3("LV","LV", navg=10)
+# between_organs_AT_bw_heatmap_3("LV","BN", navg=10)
+# between_organs_AT_bw_heatmap_3("BN","LV", navg=10)
 
-between_organs_AT_bw_heatmap_3("BN","BN", navg=20)
-between_organs_AT_bw_heatmap_3("LV","LV", navg=20)
-between_organs_AT_bw_heatmap_3("LV","BN", navg=20)
-between_organs_AT_bw_heatmap_3("BN","LV", navg=20)
+# between_organs_AT_bw_heatmap_3("BN","BN", navg=20)
+# between_organs_AT_bw_heatmap_3("LV","LV", navg=20)
+# between_organs_AT_bw_heatmap_3("LV","BN", navg=20)
+# between_organs_AT_bw_heatmap_3("BN","LV", navg=20)
 
 between_organs_AT_bw_heatmap_4 <- function (at, t, navg=1){
     # use Alleleic Termination from one organ and see the proseq reads abundance from another organ
@@ -716,130 +642,16 @@ heatmap.AT4_allreads(AT_intersect, file.bw.plus.pat,file.bw.minus.pat, file.bw.p
 
 
 
-between_organs_AT_bw_heatmap_4("BN","BN", navg=1)
-between_organs_AT_bw_heatmap_4("LV","LV", navg=1)
-between_organs_AT_bw_heatmap_4("LV","BN", navg=1)
-between_organs_AT_bw_heatmap_4("BN","LV", navg=1)
+# between_organs_AT_bw_heatmap_4("BN","BN", navg=1)
+# between_organs_AT_bw_heatmap_4("LV","LV", navg=1)
+# between_organs_AT_bw_heatmap_4("LV","BN", navg=1)
+# between_organs_AT_bw_heatmap_4("BN","LV", navg=1)
 
 
 
 
-file.bw.plus.pat <- paste("../",t,"_all_plus.bw", sep="")
-file.bw.minus.pat <- paste("../",t,"_all_minus.bw", sep="")
-file.bw.plus.mat <- paste("../",t,"_all_plus.bw", sep="")
-file.bw.minus.mat <- paste("../",t,"_all_minus.bw", sep="")
+# file.bw.plus.pat <- paste("../",t,"_all_plus.bw", sep="")
+# file.bw.minus.pat <- paste("../",t,"_all_minus.bw", sep="")
+# file.bw.plus.mat <- paste("../",t,"_all_plus.bw", sep="")
+# file.bw.minus.mat <- paste("../",t,"_all_minus.bw", sep="")
 
-library(matrixStats)
-
-metaplot.AT5 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=20000, step=50, up_dist =20000, file.pdf="heatmap.pdf", hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 10, use.log=FALSE, times=1){
-  AT <- AT[,1:6]
-  # make all beds the same length
-  # plus strand chromEnd = chromStart + dist
-  # minus strand chromStart = chromEnd - dist
-  bed6 <- AT
-  for (i in 1:NROW(bed6)){
-    if(bed6[i,6]=="-") {
-      bed6[i,3] <- AT[i,3] + up_dist
-      bed6[i,2] <- AT[i,3] - dist}
-    else
-    {bed6[i,2] <- AT[i,2] - up_dist
-    bed6[i,3] <- AT[i,2] + dist
-    }
-  }
-  
-  # get the sum of reads in each bin (size = step)
-  hmat.pat <- read_read_mat2 (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=times, use.log=use.log)
-  hmat.mat <- read_read_mat2 (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=times, use.log=use.log)     
-  
-  AT$start.steps <- up_dist%/%step+1
-  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-  bin_number <- (up_dist + dist)/step
-    
-    if(is.null(hl.bw.plus.pat)) {
-        # dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
-        hmat.pat.AT.rowSums <- NULL
-        hmat.mat.AT.rowSums <- NULL
-        for (i in 1:NROW(hmat.pat)){
-          hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-          hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-          }
-    } else {
-        hl.pat <- read_read_mat2 (hl.bw.plus.pat, hl.bw.minus.pat, bed6[,c(1:6)], step, times=times)
-        hl.mat  <- read_read_mat2 (hl.bw.plus.mat, hl.bw.minus.mat, bed6[,c(1:6)],  step, times=times)
-        hmat.pat.AT.rowSums <- NULL
-        hmat.mat.AT.rowSums <- NULL
-        for (i in 1:NROW(hmat.pat)){
-          hmat.pat.AT.rowSums[i] <- sum(hl.pat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-          hmat.mat.AT.rowSums[i] <- sum(hl.mat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-          }
-    }
-        hmat.high <- hmat.mat
-        hmat.high[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] 
-
-        hmat.low <- hmat.mat
-        hmat.low[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] 
-
-        output_window =10000
-meta.hmat.high <- colMedians(hmat.high)[((up_dist-output_window)%/%step) : ((up_dist+output_window)%/%step)]
-meta.hmat.low <- colMedians(hmat.low)[((up_dist-output_window)%/%step) : ((up_dist+output_window)%/%step)]
-# 5 prime meta plot
-
-plot(seq(-1 * (output_window), output_window,step), meta.hmat.high, type = "l", col="red" )
-lines(seq(-1 * (output_window), output_window,step), meta.hmat.low, col="blue")
-
-}
-
-metaplot.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist=20000, step=50, up_dist =20000, file.pdf="heatmap.pdf", hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 10, use.log=FALSE, times=1){
-  AT <- AT[,1:6]
-  # make all beds the same length
-  bed6 <- AT
-  for (i in 1:NROW(bed6)){
-    if(bed6[i,6]=="-") {
-      bed6[i,3] <- AT[i,2] + up_dist
-      bed6[i,2] <- AT[i,2] - dist}
-    else
-    {bed6[i,2] <- AT[i,3] - up_dist
-    bed6[i,3] <- AT[i,3] + dist
-    }
-  }
-  
-  # get the sum of reads in each bin (size = step)
-  hmat.pat <- read_read_mat2 (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=times, use.log=use.log)
-  hmat.mat <- read_read_mat2 (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=times, use.log=use.log)     
-  
-  AT$start.steps <- up_dist%/%step+1
-  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-  bin_number <- (up_dist + dist)/step
-  
-  if(is.null(hl.bw.plus.pat)) {
-    # dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
-    hmat.pat.AT.rowSums <- NULL
-    hmat.mat.AT.rowSums <- NULL
-    for (i in 1:NROW(hmat.pat)){
-      hmat.pat.AT.rowSums[i] <- sum(hmat.pat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-      hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-    }
-  } else {
-    hl.pat <- read_read_mat2 (hl.bw.plus.pat, hl.bw.minus.pat, bed6[,c(1:6)], step, times=times)
-    hl.mat  <- read_read_mat2 (hl.bw.plus.mat, hl.bw.minus.mat, bed6[,c(1:6)],  step, times=times)
-    hmat.pat.AT.rowSums <- NULL
-    hmat.mat.AT.rowSums <- NULL
-    for (i in 1:NROW(hmat.pat)){
-      hmat.pat.AT.rowSums[i] <- sum(hl.pat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-      hmat.mat.AT.rowSums[i] <- sum(hl.mat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
-    }
-  }
-  hmat.high <- hmat.mat
-  hmat.high[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums > hmat.mat.AT.rowSums, ] 
-  
-  hmat.low <- hmat.mat
-  hmat.low[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] = hmat.pat[hmat.pat.AT.rowSums < hmat.mat.AT.rowSums, ] 
-  
-  
-  meta.hmat.high <- colMeans(hmat.high)
-  meta.hmat.low <- colMeans(hmat.low)
-  # 5 prime meta plot
-  plot(seq(-1 * up_dist+step/2, dist,step), meta.hmat.high, type = "l", col="red" )
-  lines(seq(-1 * up_dist+step/2, dist,step), meta.hmat.low, col="blue")
-  
-}

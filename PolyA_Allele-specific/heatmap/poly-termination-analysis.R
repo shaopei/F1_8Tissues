@@ -254,7 +254,7 @@ navg=1
 
 tissues <- c("BN", "LV","SP")
 for (at in tissues){
-  at="SP"
+  #at="SP"
   for (t in tissues){
     AT <- read.table(paste("./",at,"_AT_",Tversion,"_intersectRegion.bed", sep=""), header = F)
     t.value <-Tunit_BW_pairs (at, t)
@@ -296,3 +296,222 @@ for (at in tissues){
   }
 }
 
+#metaplot
+navg=1
+#at="LV"; other = "BN"
+#at="BN"; t = "LV"
+
+tissues <- c("BN", "LV","SP")
+cols <- c("purple","dark orange", "black")
+
+library(RColorBrewer)
+#display.brewer.all()
+#display.brewer.pal(n = 6,name = "Spectral")
+cols <- brewer.pal(n = 6,name = "Spectral")
+
+par(mfrow=c(3,3))
+for (at in tissues){
+  #at="SP"
+  add=FALSE
+  i=1
+  for (t in tissues){
+    AT <- read.table(paste("./",at,"_AT_",Tversion,"_intersectRegion.bed", sep=""), header = F)
+    t.value <-Tunit_BW_pairs (at, t)
+    #AT <- AT[t.value > -1,]
+    
+    #for (t in c("LV", "BN")){
+    file.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+    file.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+    file.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+    file.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+    hl.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+    hl.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+    hl.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+    hl.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+    file.plus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_plus.rpm.bw", sep="")
+    file.minus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_minus.rpm.bw", sep="")
+    
+    # metaplot.AT (AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+    #               map5=TRUE,
+    #               up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #              show.window=20000, ylim = c(0,2),
+    #              xlab="AT start at 0",
+    #               name=paste(at,"-AT_",t,"-bw", sep = ""),
+    #               hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
+    #               use.log=FALSE)
+    # 
+    # metaplot.AT (AT[t.value > -1 & t.value < 0,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+    #              map5=TRUE,
+    #              up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #              show.window=20000, ylim = c(0,2),
+    #              xlab="AT start at 0",
+    #              name=paste(at,"-AT_",t,"-bw"," t.value > -1 & t.value < 0", sep = ""),
+    #              hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
+    #              use.log=FALSE)
+    # 
+    # metaplot.AT (AT[t.value >= 0,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+    #              map5=TRUE,
+    #              up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #              show.window=20000, ylim = c(0,2),
+    #              xlab="AT start at 0",
+    #              name=paste(at,"-AT_",t,"-bw"," t.value >= 0", sep = ""),
+    #              hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
+    #              use.log=FALSE)
+    # metaplot.AT (AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+    #               map5=FALSE,
+    #               up_dist =50000, dist=50000, step=1000,  file.pdf="heatmap.pdf",
+    #               name=paste(at,"-AT_",t,"-bw", sep = ""),
+    #               hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
+    #               use.log=FALSE)
+   
+    # metaplot.AT.allReads(AT, file.plus.bw,file.minus.bw,
+    #                      name=paste(at,"-AT", sep = ""),
+    #                      map5=TRUE,
+    #                      add=add, col=cols[i], ylim=c(0,0.3),
+    #                      xlab=" AT start at 0",
+    #                      show.window=20000,
+    #                                 up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #                                 use.log=FALSE)
+  
+    
+      metaplot.AT.allReads(AT, file.plus.bw,file.minus.bw,
+                         name=paste(at,"-AT_",t,"-bw", sep = ""),
+                         map5=TRUE,
+                         add=FALSE, col=cols[1], ylim=c(0,0.5),
+                         xlab=" AT Start at 0",
+                         show.window=5000,
+                         up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+                         use.log=FALSE)
+    metaplot.AT.allReads(AT[t.value > -1 & t.value <= -0.5,], file.plus.bw,file.minus.bw,
+                         name=paste(at,"-AT", sep = ""),
+                         map5=TRUE,
+                         add=TRUE, col=cols[6],  ylim=c(0,0.5),
+                         xlab=" AT Start at 0", lty=1,
+                         show.window=5000,
+                         up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+                         use.log=FALSE)
+    metaplot.AT.allReads(AT[t.value > -0.5 & t.value <= 0,], file.plus.bw,file.minus.bw,
+                         name=paste(at,"-AT", sep = ""),
+                         map5=TRUE,
+                         add=TRUE, col=cols[5],  ylim=c(0,0.5),
+                         xlab=" AT Start at 0", lty=1,
+                         show.window=5000,
+                         up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+                         use.log=FALSE)
+    metaplot.AT.allReads(AT[t.value > 0  & t.value <= 0.5 ,], file.plus.bw,file.minus.bw,
+                         name=paste(at,"-AT", sep = ""),
+                         map5=TRUE,
+                         add=TRUE,  col=cols[3],  ylim=c(0,0.5),
+                         xlab=" AT Start at 0", lty=1,
+                         show.window=5000,
+                         up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+                         use.log=FALSE)
+    metaplot.AT.allReads(AT[t.value > 0.5 ,], file.plus.bw,file.minus.bw,
+                         name=paste(at,"-AT", sep = ""),
+                         map5=TRUE,
+                         add=TRUE,  col=cols[2],  ylim=c(0,0.5),
+                         xlab=" AT Start at 0", lty=1,
+                         show.window=5000,
+                         up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+                         use.log=FALSE)
+    
+    
+    # metaplot.AT.allReads(AT, file.plus.bw,file.minus.bw,
+    #                      name=paste(at,"-AT", sep = ""),
+    #                      map5=FALSE,
+    #                      add=FALSE, col=cols[i], ylim=c(0,0.3),
+    #                      xlab=" AT END at 0",
+    #                      show.window=5000,
+    #                      up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #                      use.log=FALSE)
+    # metaplot.AT.allReads(AT[t.value > -1 & t.value < 0,], file.plus.bw,file.minus.bw,
+    #                      name=paste(at,"-AT", sep = ""),
+    #                      map5=FALSE,
+    #                      add=TRUE, col=cols[i], ylim=c(0,0.3),
+    #                      xlab=" AT END at 0", lty=2,
+    #                      show.window=5000,
+    #                      up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #                      use.log=FALSE)
+    # metaplot.AT.allReads(AT[t.value >= 0 ,], file.plus.bw,file.minus.bw,
+    #                      name=paste(at,"-AT", sep = ""),
+    #                      map5=FALSE,
+    #                      add=TRUE, col="red", ylim=c(0,0.3),
+    #                      xlab=" AT END at 0", lty=1,
+    #                      show.window=5000,
+    #                      up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+    #                      use.log=FALSE)
+    # metaplot.AT.allReads(AT, file.plus.bw,file.minus.bw,  
+    #                      name=paste(at,"-AT", sep = ""), map5=FALSE, add=add, col=cols[i], ylim=c(0,3),
+    #                      xlab=" AT end at 0",
+    #                      up_dist =50000, dist=50000, step=1000,  file.pdf="heatmap.pdf", 
+    #                      use.log=FALSE)
+   i=1
+   
+  }
+  #legend("topleft", title="bw",legend=c("brain", "spleen", "liver"),
+  #       col=c("purple", "black","dark orange"), bty = "n", lty=1)
+  legend("topright", title="t=log10(tunit rpkm+0.01",legend=c("all", " t > 0.5 ","0 < t <= 0.5","-0.5 < t <= 0", "-1< t <= -0.5"), 
+         bty = "n", lty=1, col=cols[c(1,2,3,5,6)])
+  # abline(h=0.1, col="green")
+}
+
+Tversion="3tunitIntersectNativeHMM"
+# relative expression 
+tissues <- c("BN", "LV","SP")
+cols <- c("purple","dark orange", "black")
+
+library(RColorBrewer)
+#display.brewer.all()
+#display.brewer.pal(n = 6,name = "Spectral")
+cols <- brewer.pal(n = 6,name = "Spectral")[c(1,2,5,6)]
+
+par(mfrow=c(3,3))
+for (at in tissues){
+  #at="BN"
+  for (t in tissues){
+    AT <- read.table(paste("./",at,"_AT_",Tversion,"_intersectRegion.bed", sep=""), header = F)
+    AT$r.value <-Tunit_BW_pairs (at, t) - Tunit_BW_pairs (at,at) #Tunit_BW_pairs output log10(rpkm+1)
+    AT <- AT[order(AT$r.value, decreasing = TRUE),]
+    
+    file.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+    file.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+    file.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+    file.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+    hl.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
+    hl.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
+    hl.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
+    hl.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
+    file.plus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_plus.rpm.bw", sep="")
+    file.minus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_minus.rpm.bw", sep="")
+    
+    s = seq(1,dim(AT)[1], dim(AT)[1]%/%4 -1)
+    s[length(s)] = dim(AT)[1]
+    cat(length(s))
+    
+    add=FALSE
+    for (i in 1:4 ){
+      q <- AT[s[i]:s[i+1],]
+      metaplot.AT.allReads(q, file.plus.bw,file.minus.bw,
+                           name=paste(at,"-AT_",t,"-bw_quantile_n=",dim(AT)[1]%/%4, sep = ""),
+                           map5=TRUE,
+                           add=add, col=cols[i], ylim=c(0,0.3),
+                           xlab=" AT Start at 0",
+                           show.window=20000,
+                           up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf",
+                           use.log=FALSE)   
+      add=TRUE
+    }
+    legend("topright", title="t/at",legend=c("q1","q2","q3","q4"), 
+           bty = "n", lty=1, col=cols[c(1,2,3,4)])
+  }
+}
+
+
+dev.off()
+par(mfrow=c(3,3))
+for (at in tissues){
+  #at="BN"
+  for (t in tissues){
+    plot((Tunit_BW_pairs (at, t) - Tunit_BW_pairs (at,at)), Tunit_BW_pairs (at, t), main=paste(at,"-AT_",t,"-bw", sep = ""))
+  }
+}
