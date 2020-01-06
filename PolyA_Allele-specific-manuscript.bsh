@@ -1,0 +1,235 @@
+cd /workdir/sc2457/F1_Tissues/PolyA_Allele-specific
+
+
+## identify allele specific termination
+# intersect annotation (protein-coding genes) and AlleleHMM (native) blocks 
+
+ln -s ../Find_consistent_blocks/HMM_bed . # AlleleHMM blocks
+
+
+mkdir annotations
+cd annotations
+ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation.bed
+# mouse mm10_GRCm38
+# make bed from gtf from GENCODE
+# gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
+cat gencode.vM20.annotation.bed |awk 'BEGIN {OFS="\t"} ($8=="transcript"){print $0}' | grep protein_coding |gzip > gencode.vM20.annotation_transcript_protein_coding.bed.gz
+
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# keep transcript annotations that are overlap with dREG sites
+# use sort-bed
+intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) |sort-bed - | grep -v chrX | grep -v chrY | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
+zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_plus.bed.gz
+zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed.gz
+done
+
+# I checked the genome browser. Gencode annotation end at PolyA site, not overlapped with termiantion site
+# Use tunit to identify allelic termination site.
+
+cd ..
+
+# use tunits that DO overlap with the gene transcript from above as another set of gene transcription
+mkdir tunit_protein_coding
+cd tunit_protein_coding
+ln -s /workdir/sc2457/F1_Tissues/bigWig/tunit .
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+intersectBed -u -s -a tunit/${Head}_all_h5.preds.full.bed -b <(zcat ../annotations/${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz)  |grep -v chrX |grep -v chrY  \
+> ${Head}_all_h5.preds.full_inProtein_coding.bed
+done
+
+cd ..
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# use first bp of HMM 
+# tunits that overlaps with 1st bp of AlleleHMM blocks
+# -u Write original A entry once if any overlaps found in B
+intersectBed -s -u -a <(cat tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed |cut -f 1-6| grep -v chrX | grep -v chrY) \
+-b <(cat HMM_bed/${Head}_*.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $2, $2+1, $4, NR,$6} ($6=="-") {print $1, $3-1, $3, $4, NR,$6}') \
+> ${Head}_AT_0tunitIntersectNativeHMM_tunits.bed  #AT is AllelicTermination
+
+# the 1bp where 1st bp of AlleleHMM blocks overlap with tunits
+intersectBed -s -wo -b <(cat tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed |cut -f 1-6| grep -v chrX | grep -v chrY) \
+-a <(cat HMM_bed/${Head}_*.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $2, $2+1, $4, NR,$6} ($6=="-") {print $1, $3-1, $3, $4, NR,$6}') \
+|cut -f 1-12 > ${Head}_wb_tmp.bed  
+# AlleleHMM blocks whose 1st bp overlap with tunits col1-6, col7-12 the tunits that overlap with AlleleHMM
+# keep AlleleHMM blocks where the 1st bp were inside Tunits
+intersectBed -s -wo -a <(cat HMM_bed/${Head}_*.bed | grep -v '#' | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, $4, NR,$6}' ) -b ${Head}_wb_tmp.bed \
+| awk 'BEGIN {OFS="\t"}($5==$11){print $1,$2,$3,$4,$5,$6, $13, $14, $15, $16, $17, $18}' > ${Head}_AT_0tunitIntersectNativeHMM_AlleleHMM.bed 
+rm ${Head}_wb_tmp.bed
+
+## examine the pair tunits and AlleleHMM blocks to remove internal enhancers 
+# from the blocks that 1st bp within tunits
+# keep the ones whose last bp outside 0-90% of tunit length
+rm ${Head}_pair_tmp -r
+mkdir ${Head}_pair_tmp
+cat ${Head}_AT_0tunitIntersectNativeHMM_AlleleHMM.bed  | awk -v d=${Head}_pair_tmp 'BEGIN {OFS="\t"} {print $0 >> d"/"$10".bed"}'
+
+rm ${Head}_AT_2tunitIntersectNativeHMM_tmp.bed
+for f in ${Head}_pair_tmp/*.bed   #*/
+  do 
+  #last bp of AlleleHMM blocks
+  cat ${f} |awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $3-1, $3, $4, $5,$6} ($6=="-") {print $1, $2, $2+1, $4, $5,$6}' > temp_a
+  
+  # first 90% length of tunits
+  cat ${f} | cut -f 7- |uniq | awk '{OFS="\t"}($6=="+"){s=$2; e=$3; print $1,$2, e-((e-s)/10),$4,$5,$6} ($6=="-"){s=$2; e=$3; print $1, s+((e-s)/10), $3,$4,$5,$6}' > temp_b  
+  
+  # keep the ones whose last bp outside 0-90% of tunit length
+  intersectBed -s -v -a temp_a -b temp_b >> ${Head}_AT_2tunitIntersectNativeHMM_tmp.bed 
+done
+rm ${Head}_pair_tmp -r
+# Recover AlleleHMM blocks location (instead of only last bp)
+intersectBed -s -wo -a ${Head}_AT_0tunitIntersectNativeHMM_AlleleHMM.bed -b ${Head}_AT_2tunitIntersectNativeHMM_tmp.bed \
+| awk 'BEGIN {OFS="\t"}($5==$17){print $0}'|cut -f 1-12 |uniq |sort-bed - |uniq > ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed 
+cat ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed |cut -f 7- |uniq |sort-bed - |uniq > ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed
+done
+
+
+# some tunits have two AlleleHMM blocks, one from MB6 the other from PB6
+  1093 BN_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   880 BN_AT_2tunitIntersectNativeHMM_tunit.bed
+   903 GI_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   787 GI_AT_2tunitIntersectNativeHMM_tunit.bed
+   591 HT_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   559 HT_AT_2tunitIntersectNativeHMM_tunit.bed
+   996 KD_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   863 KD_AT_2tunitIntersectNativeHMM_tunit.bed
+  1541 LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+  1234 LV_AT_2tunitIntersectNativeHMM_tunit.bed
+  1098 SK_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   992 SK_AT_2tunitIntersectNativeHMM_tunit.bed
+  1189 SP_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+  1004 SP_AT_2tunitIntersectNativeHMM_tunit.bed
+   407 ST_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   359 ST_AT_2tunitIntersectNativeHMM_tunit.bed
+ 14496 total
+
+#cat LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
+# HERE
+
+# the regions where tunit overlaps alleleHMM
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+intersectBed -s -wb -a ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed -b ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed > ${Head}_temp
+cat ${Head}_temp |awk 'BEGIN{OFS="\t"} ($10==$16) {print $0}'| cut -f 1-6 > ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed
+cat ${Head}_temp |awk 'BEGIN{OFS="\t"} ($10==$16) {print $0}'| cut -f 13- > ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed
+done
+
+# Length distribution of AlleleHMM blocks that contains allelic termination
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed ${Head}  < getLengthHist.R  &
+done
+
+# Length distribution of interect of AlleleHMM blocks and the paired tunits
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
+done
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed < Keep_AT_less_than_Xratio_tunits.R
+done
+
+# Length distribution of interect of AlleleHMM blocks and the paired tunits
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do R --vanilla --slave --args $(pwd) ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
+done
+
+draw-AllelelicTermination-heatmap.R
+draw-AllelelicTermination-metaplot.R
+poly-termination-analysis.R  # more analysis
+poly-termination-analysis-figures.R # analysis for figures chosen
+
+
+# how many tunits with AT in each organ and total (exclude overlapped)
+[sc2457@cbsudanko 4tunitIntersectNativeHMM]$ wc -l *
+   570 BN_AT_4tunitIntersectNativeHMM_tunits.bed  # has duplication, need to remove that
+   347 GI_AT_4tunitIntersectNativeHMM_tunits.bed
+   220 HT_AT_4tunitIntersectNativeHMM_tunits.bed
+   398 KD_AT_4tunitIntersectNativeHMM_tunits.bed
+   640 LV_AT_4tunitIntersectNativeHMM_tunits.bed
+   581 SK_AT_4tunitIntersectNativeHMM_tunits.bed
+   454 SP_AT_4tunitIntersectNativeHMM_tunits.bed
+   282 ST_AT_4tunitIntersectNativeHMM_tunits.bed
+  3492 total
+
+# merge the tunits from 8 organs with strandness
+coreBody=AT_4tunitIntersectNativeHMM_tunits.bed 
+rm T8_temp
+for head in BN SP HT SK KD ST GI LV
+  do
+  cat ${head}_${coreBody} >> T8_temp 
+done
+wc -l T8_temp 
+  # merge overlapped and/or book-ended (-d 0). Force strandedness (-s)
+bedtools merge -s -i <(sort-bed  T8_temp)  -d 0  > T8_${coreBody}
+
+wc -l T8_${coreBody}
+#2278 T8_AT_4tunitIntersectNativeHMM_tunits.bed
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Use consistently biased blocks
+mkdir ABconsistentHMM_bed
+cd ABconsistentHMM_bed
+ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/*_ABconsistent_FisherMethodP0.05.bed .   #*/
+cd ..
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do 
+echo $Head
+# use first bp of HMM 
+cat ABconsistentHMM_bed/${Head}_*_plus_ABconsistent_FisherMethodP0.05.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} {print $1, $2, $2+1, $4,".","+"}' >${Head}_tmp.bed
+cat ABconsistentHMM_bed/${Head}_*_minus_ABconsistent_FisherMethodP0.05.bed | grep -v '#'| awk 'BEGIN {OFS="\t"} {print $1, $3-1, $3, $4,".","-"}' >>${Head}_tmp.bed
+
+
+intersectBed -s -u -a <(cat tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed |cut -f 1-6| grep -v chrX | grep -v chrY) -b ${Head}_tmp.bed\
+> ${Head}_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed  #AT is Allelic Termination
+done
+
+ wc -l *FisherMethodP0.05HMM_AllelicTermination.bed
+  // 1521 BN_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  //  929 GI_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  //  364 HT_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1146 KD_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1816 LV_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1080 SK_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 1386 SP_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  //  685 ST_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed
+  // 8927 total
+
+#cat LV_tunitIntersect1bpABconsistentFisherMethodP0.05HMM_AllelicTermination.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
+
+
+
+
+
+
+
