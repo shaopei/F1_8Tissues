@@ -1,4 +1,4 @@
-cd /workdir/sc2457/F1_Tissues/PolyA_Allele-specific
+cd /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript
 
 
 ## identify allele specific termination
@@ -26,12 +26,10 @@ zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEG
 zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed.gz
 done
 
-# I checked the genome browser. Gencode annotation end at PolyA site, not overlapped with termiantion site
-# Use tunit to identify allelic termination site.
-
 cd ..
 
-# use tunits that DO overlap with the gene transcript from above as another set of gene transcription
+# use tunits that DO overlap with the gene transcript with dREG sites from above as gene transcription
+# exclude chrX and chrY
 mkdir tunit_protein_coding
 cd tunit_protein_coding
 ln -s /workdir/sc2457/F1_Tissues/bigWig/tunit .
@@ -113,6 +111,7 @@ done
 # HERE
 
 # the regions where tunit overlaps alleleHMM
+# tunits might have duplicates corresponding to AlleleHMM blocks from both MB6 and PB6
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
@@ -131,23 +130,21 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
 done
 
+# some lenght of Allelic termination windows (AT window) are more than 20% the length of tunits, which doesnot make biological sense
+# So we add another filter and only keep AT windows that are less than or equal to 20% the length of tunits
+
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed < Keep_AT_less_than_Xratio_tunits.R
 done
 
-# Length distribution of interect of AlleleHMM blocks and the paired tunits
+# Length distribution of interect of AlleleHMM blocks and the paired tunits in each organ
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
 done
 
-draw-AllelelicTermination-heatmap.R
-draw-AllelelicTermination-metaplot.R
-poly-termination-analysis.R  # more analysis
-poly-termination-analysis-figures.R # analysis for figures chosen
-
 
 # how many tunits with AT in each organ and total (exclude overlapped)
-[sc2457@cbsudanko 4tunitIntersectNativeHMM]$ wc -l *
+wc -l *_4tunitIntersectNativeHMM_tunits.bed
    570 BN_AT_4tunitIntersectNativeHMM_tunits.bed  # has duplication, need to remove that
    347 GI_AT_4tunitIntersectNativeHMM_tunits.bed
    220 HT_AT_4tunitIntersectNativeHMM_tunits.bed
@@ -157,6 +154,23 @@ poly-termination-analysis-figures.R # analysis for figures chosen
    454 SP_AT_4tunitIntersectNativeHMM_tunits.bed
    282 ST_AT_4tunitIntersectNativeHMM_tunits.bed
   3492 total
+
+rm temp.txt
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+  do 
+echo ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed >> temp.txt
+sort-bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed |uniq |wc -l  >> temp.txt
+done
+
+cat temp.txt |paste - - 
+BN_AT_4tunitIntersectNativeHMM_tunits.bed       475
+HT_AT_4tunitIntersectNativeHMM_tunits.bed       211
+SK_AT_4tunitIntersectNativeHMM_tunits.bed       518
+SP_AT_4tunitIntersectNativeHMM_tunits.bed       402
+KD_AT_4tunitIntersectNativeHMM_tunits.bed       351
+LV_AT_4tunitIntersectNativeHMM_tunits.bed       536
+GI_AT_4tunitIntersectNativeHMM_tunits.bed       311
+ST_AT_4tunitIntersectNativeHMM_tunits.bed       246
 
 # merge the tunits from 8 organs with strandness
 coreBody=AT_4tunitIntersectNativeHMM_tunits.bed 
@@ -173,10 +187,12 @@ wc -l T8_${coreBody}
 #2278 T8_AT_4tunitIntersectNativeHMM_tunits.bed
 
 
+## scripts for panels
 
-
-
-
+draw-AllelelicTermination-heatmap.R
+draw-AllelelicTermination-metaplot.R
+poly-termination-analysis.R  # more analysis
+poly-termination-analysis-figures.R # analysis for figures chosen
 
 
 
