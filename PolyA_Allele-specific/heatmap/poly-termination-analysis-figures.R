@@ -396,7 +396,8 @@ for (at in tissue_list_full){
 }
 dev.off()
 
-# expression of all reads (not only allelic specific ones)
+# heat map
+
 navg=1
 
 tissues <- c("BN", "LV","SP")
@@ -439,17 +440,20 @@ for (at in tissues){
     file.plus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_plus.rpm.bw", sep="")
     file.minus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_minus.rpm.bw", sep="")
     
-    heatmap.AT4_allreads(AT, file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw,
+    # expression of all reads (not only allelic specific ones)
+    heatmap.AT4_allreads(AT, file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw, 
                          dist=20000, step=500,
                          file.pdf=paste(t,".bw_",1,".pdf",sep=""),
                          bl_wd=1, show.AT.line=TRUE, navg=navg, times=20, use.log=FALSE, breaks=seq(0, 10, 0.01))
-    heatmap.AT3(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+    # expression of allelic specific reads
+    # only use tunits with  log10(rpkm+0.01) > -1
+    heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
                 hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
                 dist=20000, step=500,
                 file.pdf=paste(at,".AT_",t,".bw_",2,".pdf",sep=""),
                 bl_wd=1, show.AT.line=TRUE, navg=navg, use.log=FALSE,
                 times=10, breaks = seq(0,20,0.01))
-    heatmap.AT3(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+    heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
                 hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
                 dist=20000, step=500,
                 file.pdf=paste(at,".AT_",t,".bw_",2,"_noline.pdf",sep=""),
@@ -484,3 +488,48 @@ if(0){
               bl_wd=1, show.AT.line=TRUE, navg=navg, use.log=FALSE,
               times=1000, breaks = seq(0,5,0.01))
 }
+
+# get the length distribution of AT windows from all organs
+f1_p = "T8_AT_4tunitIntersectNativeHMM_intersectRegion.bed"
+pdf("T8_ATwindow_length.pdf", width=5, height = 5)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+f1=read.table(f1_p,header=F)
+h<- hist(log10(f1$V3-f1$V2),
+         , breaks = seq(0,7,1)
+         ,plot =FALSE
+         ,right = FALSE)
+
+h$counts=h$counts/sum(h$counts)
+plot(h,
+     col="red", 
+     #,density=25     
+     ylab="Proportion",
+     xlim=c(0,7),
+     xlab="AT window length (bp)",
+     las=2,
+     xaxt='n',
+     main=""
+     )
+axis(1, at=seq(0,7,1), labels=c(0,"10","102","103","104","105","106","107"), las=1)
+# axis(1, at=seq(0,7,1), labels=c(0,10,100,"1,000","10,000","100,000","1,000,000","10,000,000"), las=2)
+
+dev.off()
+
+pdf("Organs_ATwindow_length_violin.pdf", width=5, height = 5)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+
+  getATLength <- function(t, path="./", body=paste("_AT",Tversion, "intersectRegion.bed", sep = "_")){
+    df <- read.table(paste(path,t,body, sep=""), header = F)
+    return(log10(df$V3-df$V2))
+  } 
+  
+  vioplot(getATLength(tussue_list[1]),getATLength(tussue_list[2]),getATLength(tussue_list[3]),getATLength(tussue_list[4]),getATLength(tussue_list[5]),getATLength(tussue_list[6]),getATLength(tussue_list[7]),getATLength(tussue_list[8]),
+          names = tussue_list ,
+          ylab= "log10(AT length)",
+          ylim = c(0,7),
+          main=Tversion )
+
