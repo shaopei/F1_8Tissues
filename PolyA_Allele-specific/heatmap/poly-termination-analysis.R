@@ -84,7 +84,7 @@ read_count <- function(file.plus.bw, file.minus.bw , bed6) {
   return(CountMatrix);    
 }
 
-#tussue_list <-c("BN", "HT", "SK", "SP", "KD", "LV", "GI", "ST")
+tussue_list <-c("BN", "HT", "SK", "SP", "KD", "LV", "GI", "ST")
 tussue_list <-c("BN",  "SP", "LV")
 
 
@@ -103,11 +103,11 @@ getATLength <- function(t, path="./", body=paste("_AT",Tversion, "intersectRegio
 } 
 
 setwd(paste("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/tunitIntersectNativeHMM",Tversion,sep = "/"))
-vioplot(getTunitLength(tussue_list[1]),getTunitLength(tussue_list[2]),getTunitLength(tussue_list[3]), #getTunitLength(tussue_list[4]), getTunitLength(tussue_list[5]),getTunitLength(tussue_list[6]),getTunitLength(tussue_list[7]),getTunitLength(tussue_list[8]),
+vioplot(getTunitLength(tussue_list[1]),getTunitLength(tussue_list[2]),getTunitLength(tussue_list[3]), getTunitLength(tussue_list[4]), getTunitLength(tussue_list[5]),getTunitLength(tussue_list[6]),getTunitLength(tussue_list[7]),getTunitLength(tussue_list[8]),
         names = tussue_list ,
         ylab= "log10(Tunit length)", main=Tversion )
 
-vioplot(getATLength(tussue_list[1]),getATLength(tussue_list[2]),getATLength(tussue_list[3]),#getATLength(tussue_list[4]),getATLength(tussue_list[5]),getATLength(tussue_list[6]),getATLength(tussue_list[7]),getATLength(tussue_list[8]),
+vioplot(getATLength(tussue_list[1]),getATLength(tussue_list[2]),getATLength(tussue_list[3]),getATLength(tussue_list[4]),getATLength(tussue_list[5]),getATLength(tussue_list[6]),getATLength(tussue_list[7]),getATLength(tussue_list[8]),
         names = tussue_list ,
         ylab= "log10(AT length)",
         ylim = c(0,7),

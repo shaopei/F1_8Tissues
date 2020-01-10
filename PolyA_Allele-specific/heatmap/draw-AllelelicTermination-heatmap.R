@@ -78,8 +78,7 @@ read_read_mat2_log <-function (file.plus.bw, file.minus.bw , bed6, step, navg = 
     read_read_mat2(file.plus.bw, file.minus.bw , bed6, step, navg = navg, times=times, use.log=TRUE)
 }
 
-heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.pdf, 
-                        subs = NULL, breaks = NULL, cols = NULL, step = 25) {
+heatmap.gene<-function( df.bed.strand, file.plus.bw, file.minus.bw, file.bw.org, file.peak.org, file.bw.pred, file.peak.pred, file.pdf, subs = NULL, breaks = NULL, cols = NULL, step = 25) {
   if(is.na(file.bw.org) || is.na(file.bw.pred))
     return;
   

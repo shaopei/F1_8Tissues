@@ -141,14 +141,36 @@ do R --vanilla --slave --args $(pwd) ${Head}_AT_4tunitIntersectNativeHMM_interse
 done
 
 draw-AllelelicTermination-heatmap.R
+draw-AllelelicTermination-metaplot.R
+poly-termination-analysis.R  # more analysis
+poly-termination-analysis-figures.R # analysis for figures chosen
 
 
+# how many tunits with AT in each organ and total (exclude overlapped)
+[sc2457@cbsudanko 4tunitIntersectNativeHMM]$ wc -l *
+   570 BN_AT_4tunitIntersectNativeHMM_tunits.bed  # has duplication, need to remove that
+   347 GI_AT_4tunitIntersectNativeHMM_tunits.bed
+   220 HT_AT_4tunitIntersectNativeHMM_tunits.bed
+   398 KD_AT_4tunitIntersectNativeHMM_tunits.bed
+   640 LV_AT_4tunitIntersectNativeHMM_tunits.bed
+   581 SK_AT_4tunitIntersectNativeHMM_tunits.bed
+   454 SP_AT_4tunitIntersectNativeHMM_tunits.bed
+   282 ST_AT_4tunitIntersectNativeHMM_tunits.bed
+  3492 total
 
+# merge the tunits from 8 organs with strandness
+coreBody=AT_4tunitIntersectNativeHMM_tunits.bed 
+rm T8_temp
+for head in BN SP HT SK KD ST GI LV
+  do
+  cat ${head}_${coreBody} >> T8_temp 
+done
+wc -l T8_temp 
+  # merge overlapped and/or book-ended (-d 0). Force strandedness (-s)
+bedtools merge -s -i <(sort-bed  T8_temp)  -d 0  > T8_${coreBody}
 
-
-
-
-
+wc -l T8_${coreBody}
+#2278 T8_AT_4tunitIntersectNativeHMM_tunits.bed
 
 
 

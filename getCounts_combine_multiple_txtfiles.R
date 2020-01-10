@@ -46,7 +46,7 @@ par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 
-hist(log2(rpkm$NonBH_B_ratio), xlab="log2(rpkm non-biased organ with highest expression level/Biased organ)"
+hist(log2(rpkm$NonBH_B_ratio)#, xlab="log2(rpkm non-biased organ with highest expression level/Biased organ)"
      , breaks = seq(-10,10,1/10), xlab="log2(rpkm NonBiasHighest/Biased)", main="")
 abline(v=0, col="red")
 dev.off()

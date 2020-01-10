@@ -386,6 +386,7 @@ ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotati
 # gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
 # avoid multiple count of genes share similarl location, need to merge bed of overlaping genes as follows:
 # cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="gene"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V  > gencode.vM20.annotation_gene.bed
+# -s option will only merge intervals that are overlapping/bookended and are on the same strand
 # bedtools merge -i <(cat gencode.vM20.annotation.bed | cut -f 1-8 |awk 'BEGIN {OFS="\t"} ($8=="gene"){print $0}' |LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V ) -s -o collapse,distinct,distinct  -c 4,5,6 |awk 'BEGIN {OFS="\t"; a="111"} {print $1,$2,$3,$4,a,$6}'|LC_ALL=C sort --temporary-directory=/workdir/sc2457/tmp/ --parallel=10 -V > gencode.vM20.annotation_geneMerged.bed
 
 
