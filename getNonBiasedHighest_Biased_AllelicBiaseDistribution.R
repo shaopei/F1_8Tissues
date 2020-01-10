@@ -117,3 +117,52 @@ legend("topright",
        , bty = "n"
 )
 dev.off()
+
+### not
+### to estimate the parameters of beta-binomial ###
+
+library('VGAM')
+fit.B.ab <- vglm(formula = cbind(AS.Read$B.mat,AS.Read$B.pat) ~ 1, family = "betabinomialff")
+Coef(fit.B.ab)
+
+B.shape1 = Coef(fit.B.ab)[1]
+B.shape2 = Coef(fit.B.ab)[2]
+fit.B.rho <- vglm(formula = cbind(AS.Read$B.mat,AS.Read$B.pat) ~ 1, family = "betabinomial")
+Coef(fit.B.rho)
+#mu       rho 
+#0.5057735 0.3439821
+
+fit.H.ab <- vglm(formula = cbind(AS.Read$H.mat,AS.Read$H.pat) ~ 1, family = "betabinomialff")
+Coef(fit.H.ab)
+#shape1   shape2 
+#7.230871 7.024651 
+H.shape1 = Coef(fit.H.ab)[1]
+H.shape2 = Coef(fit.H.ab)[2]
+fit.H.rho <- vglm(formula = cbind(AS.Read$H.mat,AS.Read$H.pat) ~ 1, family = "betabinomial")
+Coef(fit.H.rho)
+#mu        rho 
+#0.50723306 0.0655451
+
+all.mat <- NULL
+all.pat <- NULL
+organs <- c("BN", "HT", "SK", "SP", "KD", "LV", "GI" ,"ST")
+for (o in organs){
+  m = AS.Read[,grep(paste(o, "mat", sep = "."), colnames(AS.Read))]
+  p = AS.Read[,grep(paste(o, "pat", sep = "."), colnames(AS.Read))]
+  all.mat = c(all.mat, m)
+  all.pat = c(all.pat, p)
+}
+
+fit.all.rho <- vglm(formula = cbind(all.mat, all.pat) ~ 1, family = "betabinomial")
+mu = Coef(fit.all.rho)[1]
+rho = Coef(fit.all.rho)[2]
+
+hist(pbetabinom (AS.Read$H.mat, AS.Read$H.pat+AS.Read$H.mat, mu, rho))
+hist(pbetabinom (AS.Read$B.mat, AS.Read$B.pat+AS.Read$B.mat, mu, rho))
+
+hist(pbetabinom.ab (apply(cbind(AS.Read$B.mat,AS.Read$B.pat), 1, min),AS.Read$B.pat+AS.Read$B.mat, H.shape1, H.shape2))
+hist(pbetabinom.ab (AS.Read$H.mat,AS.Read$H.pat+AS.Read$H.mat, H.shape1, H.shape2))
+hist(pbetabinom (AS.Read$H.mat, AS.Read$H.pat+AS.Read$H.mat, 0.5, 0.07))
+hist(pbetabinom (apply(cbind(AS.Read$H.mat,AS.Read$H.pat), 1, min),AS.Read$H.pat+AS.Read$B.mat, 0.5))
+hist(pbetabinom (apply(cbind(AS.Read$B.mat,AS.Read$B.pat), 1, min),AS.Read$B.pat+AS.Read$B.mat, 0.5))
+
