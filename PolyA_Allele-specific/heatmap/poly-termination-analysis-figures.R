@@ -444,7 +444,7 @@ for (at in tissues){
     heatmap.AT4_allreads(AT, file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw, 
                          dist=20000, step=500,
                          file.pdf=paste(t,".bw_",1,".pdf",sep=""),
-                         bl_wd=1, show.AT.line=TRUE, navg=navg, times=20, use.log=FALSE, breaks=seq(0, 10, 0.01))
+                         bl_wd=1, show.AT.line=TRUE, navg=navg, times=30, use.log=FALSE, breaks=seq(0, 10, 0.01))
     # expression of allelic specific reads
     # only use tunits with  log10(rpkm+0.01) > -1
     heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
@@ -517,7 +517,7 @@ axis(1, at=seq(0,7,1), labels=c(0,"10","102","103","104","105","106","107"), las
 
 dev.off()
 
-pdf("Organs_ATwindow_length_violin.pdf", width=5, height = 5)
+pdf("Organs_ATwindow_length_violin.pdf", width=10, height = 8)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
@@ -529,7 +529,11 @@ par(cex.lab=2.2, cex.axis=2.2)
   
   vioplot(getATLength(tussue_list[1]),getATLength(tussue_list[2]),getATLength(tussue_list[3]),getATLength(tussue_list[4]),getATLength(tussue_list[5]),getATLength(tussue_list[6]),getATLength(tussue_list[7]),getATLength(tussue_list[8]),
           names = tussue_list ,
-          ylab= "log10(AT length)",
-          ylim = c(0,7),
-          main=Tversion )
+          ylab= "log10(AT window length)",
+#          ylim = c(0,6),
+          main="" ,
+          col="red",
+          las=1)
 
+  dev.off()
+  

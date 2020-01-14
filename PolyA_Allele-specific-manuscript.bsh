@@ -125,36 +125,66 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed ${Head}_AT_2tunitIntersectNativeHMM_tunit.bed ${Head}  < getLengthHist.R  &
 done
 
-# Length distribution of interect of AlleleHMM blocks and the paired tunits
+# Length distribution of intersect of AlleleHMM blocks and the paired tunits
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
 done
 
-# some lenght of Allelic termination windows (AT window) are more than 20% the length of tunits, which doesnot make biological sense
-# So we add another filter and only keep AT windows that are less than or equal to 20% the length of tunits
+# some lenght of Allelic termination windows (AT window) are more than 50% the length of tunits, which doesnot make biological sense
+# So we add another filter and only keep AT windows that are less than or equal to 50% the length of tunits
+# change to 50% instead
 
 for Head in BN HT  SK  SP  KD  LV  GI  ST
-do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed < Keep_AT_less_than_Xratio_tunits.R
+do R --vanilla --slave --args $(pwd) ${Head}_AT_3tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_3tunitIntersectNativeHMM_tunits.bed ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed 0.5 < Keep_AT_less_than_Xratio_tunits.R
 done
 
-# Length distribution of interect of AlleleHMM blocks and the paired tunits in each organ
+# Length distribution of interect of AlleleHMM blocks and the paired tunits in each organ 
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do R --vanilla --slave --args $(pwd) ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed ${Head}  < getLengthHist.R  &
 done
 
+# identify the orignal AlleleHMM blocks 
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+  do
+intersectBed -s -wao -a ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b ${Head}_AT_2tunitIntersectNativeHMM_AlleleHMM.bed \
+| awk 'BEGIN {OFS="\t"}($4==$10){print $0}'|cut -f 7-18 |uniq |sort-bed - |uniq > ${Head}_AT_4tunitIntersectNativeHMM_AlleleHMM.bed 
+done
+
+ wc -l *_4tunitIntersectNativeHMM_AlleleHMM.bed
+   917 BN_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   641 GI_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   409 HT_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   743 KD_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+  1152 LV_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   869 SK_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   842 SP_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   360 ST_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+  5933 total
+
+
 
 # how many tunits with AT in each organ and total (exclude overlapped)
 wc -l *_4tunitIntersectNativeHMM_tunits.bed
-   570 BN_AT_4tunitIntersectNativeHMM_tunits.bed  # has duplication, need to remove that
-   347 GI_AT_4tunitIntersectNativeHMM_tunits.bed
-   220 HT_AT_4tunitIntersectNativeHMM_tunits.bed
-   398 KD_AT_4tunitIntersectNativeHMM_tunits.bed
-   640 LV_AT_4tunitIntersectNativeHMM_tunits.bed
-   581 SK_AT_4tunitIntersectNativeHMM_tunits.bed
-   454 SP_AT_4tunitIntersectNativeHMM_tunits.bed
-   282 ST_AT_4tunitIntersectNativeHMM_tunits.bed
-  3492 total
+  //  570 BN_AT_4tunitIntersectNativeHMM_tunits.bed  # has duplication, need to remove that
+  //  347 GI_AT_4tunitIntersectNativeHMM_tunits.bed
+  //  220 HT_AT_4tunitIntersectNativeHMM_tunits.bed
+  //  398 KD_AT_4tunitIntersectNativeHMM_tunits.bed
+  //  640 LV_AT_4tunitIntersectNativeHMM_tunits.bed
+  //  581 SK_AT_4tunitIntersectNativeHMM_tunits.bed
+  //  454 SP_AT_4tunitIntersectNativeHMM_tunits.bed
+  //  282 ST_AT_4tunitIntersectNativeHMM_tunits.bed
+  // 3492 total
 
+
+   917 BN_AT_4tunitIntersectNativeHMM_tunits.bed
+   641 GI_AT_4tunitIntersectNativeHMM_tunits.bed
+   409 HT_AT_4tunitIntersectNativeHMM_tunits.bed
+   743 KD_AT_4tunitIntersectNativeHMM_tunits.bed
+  1152 LV_AT_4tunitIntersectNativeHMM_tunits.bed
+   869 SK_AT_4tunitIntersectNativeHMM_tunits.bed
+   842 SP_AT_4tunitIntersectNativeHMM_tunits.bed
+   360 ST_AT_4tunitIntersectNativeHMM_tunits.bed
+  5933 total
 rm temp.txt
 for Head in BN HT  SK  SP  KD  LV  GI  ST
   do 
@@ -163,14 +193,23 @@ sort-bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed |uniq |wc -l  >> temp.tx
 done
 
 cat temp.txt |paste - - 
-BN_AT_4tunitIntersectNativeHMM_tunits.bed       475
-HT_AT_4tunitIntersectNativeHMM_tunits.bed       211
-SK_AT_4tunitIntersectNativeHMM_tunits.bed       518
-SP_AT_4tunitIntersectNativeHMM_tunits.bed       402
-KD_AT_4tunitIntersectNativeHMM_tunits.bed       351
-LV_AT_4tunitIntersectNativeHMM_tunits.bed       536
-GI_AT_4tunitIntersectNativeHMM_tunits.bed       311
-ST_AT_4tunitIntersectNativeHMM_tunits.bed       246
+// BN_AT_4tunitIntersectNativeHMM_tunits.bed       475
+// HT_AT_4tunitIntersectNativeHMM_tunits.bed       211
+// SK_AT_4tunitIntersectNativeHMM_tunits.bed       518
+// SP_AT_4tunitIntersectNativeHMM_tunits.bed       402
+// KD_AT_4tunitIntersectNativeHMM_tunits.bed       351
+// LV_AT_4tunitIntersectNativeHMM_tunits.bed       536
+// GI_AT_4tunitIntersectNativeHMM_tunits.bed       311
+// ST_AT_4tunitIntersectNativeHMM_tunits.bed       246
+
+BN_AT_4tunitIntersectNativeHMM_tunits.bed       742
+HT_AT_4tunitIntersectNativeHMM_tunits.bed       390
+SK_AT_4tunitIntersectNativeHMM_tunits.bed       791
+SP_AT_4tunitIntersectNativeHMM_tunits.bed       721
+KD_AT_4tunitIntersectNativeHMM_tunits.bed       650
+LV_AT_4tunitIntersectNativeHMM_tunits.bed       931
+GI_AT_4tunitIntersectNativeHMM_tunits.bed       568
+ST_AT_4tunitIntersectNativeHMM_tunits.bed       317
 
 # merge the tunits from 8 organs with strandness
 coreBody=AT_4tunitIntersectNativeHMM_tunits.bed 
@@ -184,8 +223,8 @@ wc -l T8_temp
 bedtools merge -s -i <(sort-bed  T8_temp)  -d 0  > T8_${coreBody}
 
 wc -l T8_${coreBody}
-#2278 T8_AT_4tunitIntersectNativeHMM_tunits.bed
-
+// #2278 T8_AT_4tunitIntersectNativeHMM_tunits.bed
+3450 T8_AT_4tunitIntersectNativeHMM_tunits.bed
 
 # legnth distribution of AT windows. combined all AT windows from all organs WITHOUT removing duplicates 
 rm T8_AT_4tunitIntersectNativeHMM_intersectRegion.bed 
