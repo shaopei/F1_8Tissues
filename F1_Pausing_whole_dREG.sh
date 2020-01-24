@@ -1,7 +1,9 @@
 ### identify trasncript annotation that have a dREG sites near the 5' 100bp regions
 studyBed=dREG
+ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed .
 
-# Use dREG sites with  mat reads >=5 AND pat reads >=5 (not strand specific)
+# Use dREG sites with  mat reads >=5 AND pat reads >=5 (not strand specific (NS))
 for Head in HT KD SK
 do
 #  bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
@@ -10,6 +12,7 @@ done
 wait
 
 # label the dREG sites as in dREG100
+# output the whole dREG region with plus and minus strand (2 lines)
 for Head in HT KD SK
 do
   python Fake_Find_span_between_max_read_spots_reportWholedREG.py ${Head}_${studyBed}_5mat5pat_NS_uniq.bed ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed & 
@@ -17,6 +20,7 @@ done
 wait
 
 # Use dREG sites with  mat reads >=5 AND pat reads >=5 (strand specific)
+# one dREG can be plus only, minus only, or both plus and minus with  mat reads >=5 AND pat reads >=5
 for Head in HT KD SK
 do
 #  bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
@@ -40,7 +44,7 @@ do
   bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed &
 done
 done
-wait
+wait 
 
 # use python script to generaye input for KS test
 for Head in HT KD SK
