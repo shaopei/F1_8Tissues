@@ -89,6 +89,26 @@ do
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }'  > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed
 done
 
+for Tissue in HT KD SK
+do
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed.bed
+done
 
+
+### furthur analysis in R
+# make heatmap of proseq reads in short and long pause using 
+# SingleRunOn_Pause_analysis.R
+
+### make heatmap of SNPs locations
+# make SNPs location bigwig files
+ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered .
+# generate a smaller SNP file for IGV, SNPs within 100bp of the dREG sites
+cat P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6, ".", "+"}' |sort-bed - | bgzip > P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered.bed.gz &
+CHINFO=/local/storage/data/mm10/mm10.chromInfo
+j=P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
+# Convert to bedGraph ... 
+bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_plus.bedGraph 
+# Then to bigWig
+bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_plus.bw &
 
 
