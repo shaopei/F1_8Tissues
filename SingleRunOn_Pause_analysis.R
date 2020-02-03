@@ -53,11 +53,17 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
   return(hmat);    
 }
 
+
+t="KD"
+pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+AT <- pause_window
+AT <- AT[AT$V1 != 'chrX',]
+
 heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,
-                         dist=200, step=2, up_dist =20, file.pdf="heatmap.pdf", 
-                         bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1){
-  # AT here is the window of pause
-  AT <- AT[,1:6]
+                         dist=200, step=2, up_dist =20, file.pdf="heatmap.pdf", map5=TRUE,
+                         bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=FALSE, navg = 1, use.log=FALSE, times=1){
+  # AT here is the window of pause, dREG sites
+  AT <- AT[,1:6] 
   
   # identify the location of max reads in mat and pat pause
   # determine the location of long pause and short pause
@@ -73,35 +79,64 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
     AT$long.pause[i] = max(hmat.pat.peak[i],  hmat.mat.peak[i]) 
   }
   
-  length_order  <- order(AT$long.pause - AT$short.paus, decreasing = T)
+  length_order  <- order(AT$long.pause - AT$short.pause, decreasing = T)
+  AT$l = AT$long.pause - AT$short.pause
   AT <- AT[length_order  ,]
   hmat.pat.peak <-  hmat.pat.peak[length_order]
   hmat.mat.peak <- hmat.mat.peak[length_order]
-  AT$V2 <- AT$V2 + AT$short.pause * step
-  AT$V3 <- AT$V2 + AT$long.pause * step
 
+  # new AT is the the wondow between short and long pause
+  # + strand, V2=short, V3=long
+  # - strand, V3=short, V2=long
+  for (i in 1:NROW(AT)){
+    if(AT[i,6]=="-") {
+      AT$V2[i] <- AT$V3[i] - AT$long.pause[i] * step 
+      AT$V3[i] <- AT$V3[i] - AT$short.pause[i] * step
+    }
+    else{
+      AT$V2[i] <- AT$V2[i] + AT$short.pause[i] * step
+      AT$V3[i] <- AT$V2[i] + AT$long.pause[i] * step
+    }
+  }
   
-  # make all beds the same length
+
+  # for heatmap, need to make all beds the same length
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
   bed6 <- AT
-  for (i in 1:NROW(bed6)){
-    if(bed6[i,6]=="-") {
-      bed6[i,3] <- AT[i,3] + up_dist
-      bed6[i,2] <- AT[i,3] - dist}
-    else
-    {bed6[i,2] <- AT[i,2] - up_dist
-    bed6[i,3] <- AT[i,2] + dist
-    }
-  }
 
+  if (map5){
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,3] + up_dist
+        bed6[i,2] <- AT[i,3] - dist}
+      else
+      {bed6[i,2] <- AT[i,2] - up_dist
+      bed6[i,3] <- AT[i,2] + dist
+      }
+    }
+    AT$start.steps <- up_dist%/%step+1
+    AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
+    bin_number <- (up_dist + dist)/step
+  }else{
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,2] + up_dist
+        bed6[i,2] <- AT[i,2] - dist}
+      else
+      {bed6[i,2] <- AT[i,3] - up_dist
+      bed6[i,3] <- AT[i,3] + dist
+      }
+    }
+    AT$start.steps <- (up_dist - (AT$V3-AT$V2))%/%step + 1
+    AT$end.steps <- up_dist%/%step + 1
+    bin_number <- (up_dist + dist)/step
+  }
+  
   hmat.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=times, use.log=use.log)
   hmat.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=times, use.log=use.log) 
   
-
-  AT$start.steps <- up_dist%/%step+1
-  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-  bin_number <- (up_dist + dist)/step
+  
   
   # long pause
   hmat.high <- hmat.mat
@@ -207,9 +242,10 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
 
 heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
                                   dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf",
-                                  bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1){
+                                  bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1, 
+                                  heatmap=TRUE, metaplot=TRUE, map5=TRUE){
   AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-                  breaks=breaks, show.AT.line=FALSE,  navg = navg, times=times,
+                  breaks=breaks, show.AT.line=FALSE,  navg = navg, times=times, map5=map5,
                   dist=dist, step=step, up_dist =up_dist , file.pdf=paste("allelicReads_heatmap_step",step,"_up",up_dist,"_dist",dist,".pdf",sep = ""))
 
   
@@ -218,7 +254,8 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
   bed6 <- AT
-  for (i in 1:NROW(bed6)){
+ if(0){
+   for (i in 1:NROW(bed6)){
     if(bed6[i,6]=="-") {
       bed6[i,3] <- AT[i,3] + up_dist
       bed6[i,2] <- AT[i,3] - dist}
@@ -228,15 +265,43 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
     }
   }
   
+  AT$start.steps <- up_dist%/%step+1
+  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
+  bin_number <- (up_dist + dist)/step
+}
+  
+  if (map5){
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,3] + up_dist
+        bed6[i,2] <- AT[i,3] - dist}
+      else
+      {bed6[i,2] <- AT[i,2] - up_dist
+      bed6[i,3] <- AT[i,2] + dist
+      }
+    }
+    AT$start.steps <- up_dist%/%step+1
+    AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
+    bin_number <- (up_dist + dist)/step
+  }else{
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,2] + up_dist
+        bed6[i,2] <- AT[i,2] - dist}
+      else
+      {bed6[i,2] <- AT[i,3] - up_dist
+      bed6[i,3] <- AT[i,3] + dist
+      }
+    }
+    AT$start.steps <- (up_dist - (AT$V3-AT$V2))%/%step + 1
+    AT$end.steps <- up_dist%/%step + 1
+    bin_number <- (up_dist + dist)/step
+  }
   # get the sum of reads in each bin (size = step)
   hmat.pat <- read_read_mat_S (file.plus.bw, file.minus.bw, bed6[,c(1:6)], step, times=times, use.log=use.log)
   hmat.mat <-hmat.pat 
   
-  
-  
-  AT$start.steps <- up_dist%/%step+1
-  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-  bin_number <- (up_dist + dist)/step
+
   
   
   hmat.high <- hmat.mat
@@ -252,6 +317,7 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
     aveAT<- cbind(AT$start.steps, AT$end.steps)
   }
   
+  if (heatmap){
   #save.image(paste(file.pdf,".RData", sep=""))
   #load("data-hmat.RData")
   ## Write out a heatmap.
@@ -331,7 +397,7 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   ## draw colorScale for Heatmap
   draw_legend(bk.high, hmcols.high, use.log =  use.log  );
   dev.off()
-  
+  }
 }
 
 ### SNP locations
@@ -339,37 +405,71 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
 
 heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw ,
                                         dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf",
-                                        bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1){
+                                        bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1,
+                                        map5 =TRUE,
+                                        heatmap=TRUE, metaplot=TRUE) {
   AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat)
+  
+  
   
   # make all beds the same length
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
   bed6 <- AT
-  for (i in 1:NROW(bed6)){
-    if(bed6[i,6]=="-") {
-      bed6[i,3] <- AT[i,3] + up_dist
-      bed6[i,2] <- AT[i,3] - dist}
-    else
-    {bed6[i,2] <- AT[i,2] - up_dist
-    bed6[i,3] <- AT[i,2] + dist
-    }
-  }
   
+  ###
+  if(0){
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,3] + up_dist
+        bed6[i,2] <- AT[i,3] - dist}
+      else
+      {bed6[i,2] <- AT[i,2] - up_dist
+      bed6[i,3] <- AT[i,2] + dist
+      }
+    }
+    
+    AT$start.steps <- up_dist%/%step+1
+    AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
+    bin_number <- (up_dist + dist)/step
+  }  
+  
+  if (map5){
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,3] + up_dist
+        bed6[i,2] <- AT[i,3] - dist}
+      else
+      {bed6[i,2] <- AT[i,2] - up_dist
+      bed6[i,3] <- AT[i,2] + dist
+      }
+    }
+    AT$start.steps <- up_dist%/%step+1
+    AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
+    bin_number <- (up_dist + dist)/step
+  }else{
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,2] + up_dist
+        bed6[i,2] <- AT[i,2] - dist}
+      else
+      {bed6[i,2] <- AT[i,3] - up_dist
+      bed6[i,3] <- AT[i,3] + dist
+      }
+    }
+    AT$start.steps <- (up_dist - (AT$V3-AT$V2))%/%step + 1
+    AT$end.steps <- up_dist%/%step + 1
+    bin_number <- (up_dist + dist)/step
+  }
+
   # get the sum of reads in each bin (size = step)
   hmat.pat <- read_read_mat_SNPs (SNP.bw, bed6[,c(1:6)], step, times=times, use.log=use.log)
   hmat.mat <-hmat.pat 
   
-  
-  
-  AT$start.steps <- up_dist%/%step+1
-  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-  bin_number <- (up_dist + dist)/step
-  
-  
   hmat.high <- hmat.mat
   hmat.low <- hmat.mat
   
+  if (heatmap){
   
   if (navg > 1){
     hmat.low <- avgMat(hmat.low, navg = navg)
@@ -459,8 +559,113 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   ## draw colorScale for Heatmap
   draw_legend(bk.high, hmcols.high, use.log =  use.log  );
   dev.off()
-  
+  }
 }
+
+
+metaplot.AT <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, 
+                       name="", map5=TRUE, 
+                       up_dist =50000, dist=50000, step=100,  file.pdf="heatmap.pdf", 
+                       show.window=5000, 
+                       ylim=c(0,1), 
+                       xlab="", ylab= "proseq signal",
+                       hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, 
+                       use.log=FALSE){
+  
+  AT <- AT[,1:6] 
+  
+  # identify the location of max reads in mat and pat pause
+  # determine the location of long pause and short pause
+  hmat.pat.peak <- NULL
+  hmat.mat.peak <- NULL
+  for (i in 1:NROW(AT)){
+    hmat.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, AT[i,], step, times=times, use.log=use.log)
+    hmat.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, AT[i,], step, times=times, use.log=use.log) 
+    
+    hmat.pat.peak[i] <- which(hmat.pat == max(hmat.pat))
+    hmat.mat.peak[i] <- which(hmat.mat == max(hmat.mat))
+    AT$short.pause[i] = min(hmat.pat.peak[i],  hmat.mat.peak[i]) 
+    AT$long.pause[i] = max(hmat.pat.peak[i],  hmat.mat.peak[i]) 
+  }
+  
+  length_order  <- order(AT$long.pause - AT$short.paus, decreasing = T)
+  AT <- AT[length_order  ,]
+  hmat.pat.peak <-  hmat.pat.peak[length_order]
+  hmat.mat.peak <- hmat.mat.peak[length_order]
+  AT$V2 <- AT$V2 + AT$short.pause * step
+  AT$V3 <- AT$V2 + AT$long.pause * step
+  
+  
+  AT <- AT[,1:6]
+  # make all beds the same length
+  # plus strand chromEnd = chromStart + dist
+  # minus strand chromStart = chromEnd - dist
+  bed6 <- AT
+  if (map5){
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,3] + up_dist
+        bed6[i,2] <- AT[i,3] - dist}
+      else
+      {bed6[i,2] <- AT[i,2] - up_dist
+      bed6[i,3] <- AT[i,2] + dist
+      }
+    }
+    AT$start.steps <- up_dist%/%step+1
+    AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
+    bin_number <- (up_dist + dist)/step
+  }else{
+    for (i in 1:NROW(bed6)){
+      if(bed6[i,6]=="-") {
+        bed6[i,3] <- AT[i,2] + up_dist
+        bed6[i,2] <- AT[i,2] - dist}
+      else
+      {bed6[i,2] <- AT[i,3] - up_dist
+      bed6[i,3] <- AT[i,3] + dist
+      }
+    }
+    AT$start.steps <- (up_dist - (AT$V3-AT$V2))%/%step + 1
+    AT$end.steps <- up_dist%/%step + 1
+    bin_number <- (up_dist + dist)/step
+  }
+  
+  # get the sum of reads in each bin (size = step)
+  hmat.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=times, use.log=use.log)
+  hmat.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=times, use.log=use.log) 
+  
+  
+  
+  # long pause
+  hmat.high <- hmat.mat
+  hmat.high[hmat.pat.peak >hmat.mat.peak, ] = hmat.pat[hmat.pat.peak >hmat.mat.peak, ] 
+  
+  # short pause
+  hmat.low <- hmat.pat
+  hmat.low[hmat.pat.peak >hmat.mat.peak, ] = hmat.mat[hmat.pat.peak >hmat.mat.peak, ]
+  
+  
+  if(NROW(bed6)<100){
+    meta.hmat.high <- colMedians(hmat.high)
+    meta.hmat.low <- colMedians(hmat.low)
+  }else{
+    meta.hmat.high.temp <- subsampled.quantiles.metaprofile(hmat.high)
+    meta.hmat.high <- meta.hmat.high.temp$middle
+    meta.hmat.low.temp <- subsampled.quantiles.metaprofile(hmat.low)
+    meta.hmat.low <- meta.hmat.low.temp$middle
+  }
+  show.window <- min(show.window, (up_dist+dist))
+  plot(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.high[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
+       main = name,
+       ylab= ylab,
+       type = "l", 
+       ylim = ylim,
+       xlab=xlab
+  )
+  lines(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.low[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="blue")
+  legend("topright", legend=c("high", "low"),
+         col=c("red", "blue"), bty = "n", lty=1)
+}
+
 
 
 t="KD"
@@ -498,24 +703,40 @@ heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.
 
 heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
                        dist=200, step=2, up_dist =50, file.pdf="allreads_heatmap_step2_up50_dist200.pdf",
-                       breaks=seq(0, 20, 0.001), navg = navg)
-}
+                       breaks=seq(0, 20, 0.001), times=times)
 
 heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
                        dist=100, step=2, up_dist =50, file.pdf="allreads_heatmap_step2_up50_dist100.pdf",
-                       breaks=seq(0, 20, 0.001), navg = navg)
+                       breaks=seq(0, 20, 0.001), times=times, map5=FALSE)
 
 
 heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
                        dist=200, step=10, up_dist =50, file.pdf="allreads_heatmap_step10_up50_dist200.pdf",
-                       breaks=seq(0, 20, 0.001), navg = navg)
+                       breaks=seq(0, 20, 0.001), times=times)
 
-
+heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
+                       dist=50, step=10, up_dist =200, file.pdf="allreads_heatmap_step10_up50_dist200_map3.pdf",
+                       breaks=seq(0, 20, 0.001), times=times, map5=FALSE)
 
 heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
                               dist=200, step=10, up_dist =50, file.pdf="SNPs_heatmap_step10_up50_dist200.pdf",
-                              breaks=seq(0, 4, 0.1))
+                              breaks=seq(0, 4, 0.1), map5=TRUE)
 heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
-                              dist=100, step=2, up_dist =50, file.pdf="SNPs_heatmap_step2_up50_dist100.pdf",
-                              breaks=seq(0, 1, 0.1))
-                       
+                              dist=100, step=2, up_dist =200, file.pdf="SNPs_heatmap_step2_up100_dist100.pdf",
+                              breaks=seq(0, 1, 0.1), map5=TRUE)
+heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=100, step=2, up_dist =200, file.pdf="SNPs_heatmap_step2_up100_dist100_3prime.pdf",
+                              breaks=seq(0, 1, 0.1), map5=FALSE)
+}
+heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =200, file.pdf="allreads_heatmap_step2_up200_dist200_map3.pdf",
+                       breaks=seq(0, 20, 0.001), times=times, map5=FALSE)
+heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =200, file.pdf="allreads_heatmap_step2_up200_dist200_map5.pdf",
+                       breaks=seq(0, 20, 0.001), times=times, map5=TRUE)
+heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=200, step=2, up_dist =200, file.pdf="SNPs_heatmap_step2_up200_dist200.pdf",
+                              breaks=seq(0, 1, 0.1), map5=TRUE)
+heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=200, step=2, up_dist =200, file.pdf="SNPs_heatmap_step2_up200_dist200_map3.pdf",
+                              breaks=seq(0, 1, 0.1), map5=FALSE)
