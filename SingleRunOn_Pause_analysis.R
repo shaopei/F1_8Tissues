@@ -37,10 +37,9 @@ read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 2
 
 read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.log=FALSE)
 {
-  bw.plus  <- load.bigWig( file.plus.bw )
-  bw.minus <- load.bigWig( file.minus.bw )
+  bw.plus  <- load.bigWig(SNP.bw )
   
-  hCountMatrix <- bed6.step.bpQuery.bigWig(bw.plus, bw.minus, bed6[,c(1:6)] , step=step, abs.value=TRUE, op = "sum")
+  hCountMatrix <- bed.step.bpQuery.bigWig(bw.plus, bed6[,c(1:3)] , step=step, abs.value=TRUE, op = "sum")
   hCountMatrix <- lapply(1:NROW(hCountMatrix), function(i){ if(bed6[i,6]=="-") return(rev(hCountMatrix[[i]])) else return(hCountMatrix[[i]])} );
   if (!use.log){
     hmat <- times * matrix(unlist(hCountMatrix), nrow= NROW(bed6), byrow=TRUE) ;
@@ -50,25 +49,9 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
   #avgMat <- t(sapply(1:floor(NROW(hmat)/navg), function(x) {colMeans(hmat[((x-1)*navg+1):min(NROW(hmat),(x*navg)),])}))
   
   unload.bigWig(bw.plus);
-  unload.bigWig(bw.minus);
   
   return(hmat);    
 }
-
-pause_window <- read.table("/Volumes/SPC_SD/KD_IGV/KD_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", header = F)
-AT <- pause_window
-AT <- AT[AT$V1 != 'chrX',]
-t="KD"
-#KD_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw
-file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw", sep="")
-file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_minus.bw", sep="")
-file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw", sep="")
-file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_minus.bw", sep="")
-file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5_dedup_QC_end_plus.bw", sep="")
-file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5_dedup_QC_end_minus.bw", sep="")
-SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
-
-breaks =seq(0, 10, 0.001)
 
 heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,
                          dist=200, step=2, up_dist =20, file.pdf="heatmap.pdf", 
@@ -120,9 +103,11 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
   AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
   bin_number <- (up_dist + dist)/step
   
+  # long pause
   hmat.high <- hmat.mat
   hmat.high[hmat.pat.peak >hmat.mat.peak, ] = hmat.pat[hmat.pat.peak >hmat.mat.peak, ] 
   
+  # short pause
   hmat.low <- hmat.pat
   hmat.low[hmat.pat.peak >hmat.mat.peak, ] = hmat.mat[hmat.pat.peak >hmat.mat.peak, ]
   
@@ -218,25 +203,17 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
     return (AT)
 }
 
-AT <- pause_window
-AT <- AT[AT$V1 != 'chrX',]
-heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-              breaks=breaks)
-
-heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-              breaks=breaks, show.AT.line=FALSE,
-              dist=200, step=2, up_dist =50, file.pdf="heatmap_step2_up50_dist200_noline.pdf")
-
-heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-              breaks=breaks,
-              dist=1000, step=2, up_dist =500, file.pdf="heatmap_step2_up500_dist1000.pdf")
 
 
 heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
                                   dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf",
                                   bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1){
-  AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat)
+  AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+                  breaks=breaks, show.AT.line=FALSE,  navg = navg, times=times,
+                  dist=dist, step=step, up_dist =up_dist , file.pdf=paste("allelicReads_heatmap_step",step,"_up",up_dist,"_dist",dist,".pdf",sep = ""))
 
+  
+  
   # make all beds the same length
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
@@ -261,10 +238,10 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
   bin_number <- (up_dist + dist)/step
   
-
+  
   hmat.high <- hmat.mat
   hmat.low <- hmat.mat
-
+  
   
   if (navg > 1){
     hmat.low <- avgMat(hmat.low, navg = navg)
@@ -356,19 +333,13 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   dev.off()
   
 }
-
-heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
-                       dist=200, step=2, up_dist =50, file.pdf="allreads_heatmap_step2_up50_dist200.pdf",
-                       breaks=seq(0, 20, 0.001))
-
-
-
 
 ### SNP locations
 # make SNPs location as bigwig files
+
 heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw ,
-                                  dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf",
-                                  bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1){
+                                        dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf",
+                                        bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1){
   AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat)
   
   # make all beds the same length
@@ -386,7 +357,7 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   }
   
   # get the sum of reads in each bin (size = step)
-  hmat.pat <- read_read_mat_S (file.plus.bw, file.minus.bw, bed6[,c(1:6)], step, times=times, use.log=use.log)
+  hmat.pat <- read_read_mat_SNPs (SNP.bw, bed6[,c(1:6)], step, times=times, use.log=use.log)
   hmat.mat <-hmat.pat 
   
   
@@ -491,5 +462,60 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   
 }
 
-                       
+
+t="KD"
+pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+AT <- pause_window
+AT <- AT[AT$V1 != 'chrX',]
+end=".rpm.bw"; times=10
+end=".bw"; times=1
+#HT.mat.map2ref.1bp_plus.bw
+file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
+file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
+file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
+file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
+file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+
+breaks =seq(0, 10, 0.001)
+
+
+if(0){
+  heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+                breaks=breaks)
+heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+              breaks=breaks, show.AT.line=FALSE,
+              dist=200, step=2, up_dist =50, file.pdf="allelicReads_heatmap_step2_up50_dist200.pdf")
+
+
+#heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+#              breaks=breaks,
+#              dist=1000, step=2, up_dist =500, file.pdf="heatmap_step2_up500_dist1000.pdf")
+
+
+
+
+heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =50, file.pdf="allreads_heatmap_step2_up50_dist200.pdf",
+                       breaks=seq(0, 20, 0.001), navg = navg)
+}
+
+heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
+                       dist=100, step=2, up_dist =50, file.pdf="allreads_heatmap_step2_up50_dist100.pdf",
+                       breaks=seq(0, 20, 0.001), navg = navg)
+
+
+heatmap.Pause_allreads(AT, file.plus.bw, file.minus.bw ,
+                       dist=200, step=10, up_dist =50, file.pdf="allreads_heatmap_step10_up50_dist200.pdf",
+                       breaks=seq(0, 20, 0.001), navg = navg)
+
+
+
+heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=200, step=10, up_dist =50, file.pdf="SNPs_heatmap_step10_up50_dist200.pdf",
+                              breaks=seq(0, 4, 0.1))
+heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=100, step=2, up_dist =50, file.pdf="SNPs_heatmap_step2_up50_dist100.pdf",
+                              breaks=seq(0, 1, 0.1))
                        

@@ -1,3 +1,4 @@
+cd /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate
 ### identify trasncript annotation that have a dREG sites near the 5' 100bp regions
 studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
@@ -19,7 +20,7 @@ do
 done
 wait
 
-# Use dREG sites with  mat reads >=5 AND pat reads >=5 (strand specific)
+# Use dREG sites with  mat reads >=5 AND pat reads >=5 (strand specific) (above was non-strand specific, here furthur restrict 5 mat reads AND 5 pat reads per strand)
 # one dREG can be plus only, minus only, or both plus and minus with  mat reads >=5 AND pat reads >=5
 for Head in HT KD SK
 do
@@ -62,7 +63,7 @@ do
 R --vanilla --slave --args $(pwd) ${Tissue} ${studyBed}_5mat5pat_uniq < KStest_flexible_length.R &
 done
 
-# HERE!!!
+
 for Head in HT KD SK
 do
   #echo ${Head}_all.dREG.peak.score.bed.gz
@@ -91,8 +92,39 @@ done
 
 for Tissue in HT KD SK
 do
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed.bed
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed
 done
+
+
+# merge bigwig files from mouse F5 and F6
+#cd map2ref_1bpbed
+#KD_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw  KD_PB6_F6_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw
+#KD_PB6_F5_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw  KD_PB6_F6_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw
+
+
+ 
+export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+for Tissue in HT KD SK
+do
+  for parent in mat pat
+  do
+    for strand in plus minus
+    do
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}.${parent}.map2ref.1bp_${strand}.bw map2ref_1bpbed/${Tissue}_PB6_*_dedup_R1.${parent}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_${strand}.bw"
+done
+done
+done
+
+#Myproseq2.0Output/KD_PB6_F5_dedup_QC_end_plus.bw  Myproseq2.0Output/KD_PB6_F6_dedup_QC_end_plus.bw
+for Tissue in HT KD SK
+do
+  for strand in plus minus
+  do
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}_PB6_F5N6_dedup_QC_end_${strand}.bw Myproseq2.0Output/${Tissue}_PB6_F5_dedup_QC_end_${strand}.bw  Myproseq2.0Output/${Tissue}_PB6_F6_dedup_QC_end_${strand}.bw"
+done
+done
+
 
 
 ### furthur analysis in R
