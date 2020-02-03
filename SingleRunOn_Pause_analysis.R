@@ -254,22 +254,7 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
   bed6 <- AT
- if(0){
-   for (i in 1:NROW(bed6)){
-    if(bed6[i,6]=="-") {
-      bed6[i,3] <- AT[i,3] + up_dist
-      bed6[i,2] <- AT[i,3] - dist}
-    else
-    {bed6[i,2] <- AT[i,2] - up_dist
-    bed6[i,3] <- AT[i,2] + dist
-    }
-  }
-  
-  AT$start.steps <- up_dist%/%step+1
-  AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-  bin_number <- (up_dist + dist)/step
-}
-  
+
   if (map5){
     for (i in 1:NROW(bed6)){
       if(bed6[i,6]=="-") {
@@ -302,11 +287,8 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   hmat.mat <-hmat.pat 
   
 
-  
-  
   hmat.high <- hmat.mat
   hmat.low <- hmat.mat
-  
   
   if (navg > 1){
     hmat.low <- avgMat(hmat.low, navg = navg)
@@ -416,25 +398,8 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
   bed6 <- AT
-  
-  ###
-  if(0){
-    for (i in 1:NROW(bed6)){
-      if(bed6[i,6]=="-") {
-        bed6[i,3] <- AT[i,3] + up_dist
-        bed6[i,2] <- AT[i,3] - dist}
-      else
-      {bed6[i,2] <- AT[i,2] - up_dist
-      bed6[i,3] <- AT[i,2] + dist
-      }
-    }
-    
-    AT$start.steps <- up_dist%/%step+1
-    AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
-    bin_number <- (up_dist + dist)/step
-  }  
-  
-  if (map5){
+
+    if (map5){
     for (i in 1:NROW(bed6)){
       if(bed6[i,6]=="-") {
         bed6[i,3] <- AT[i,3] + up_dist
