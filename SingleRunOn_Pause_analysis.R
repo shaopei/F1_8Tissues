@@ -117,12 +117,12 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
   # - strand, V3=short, V2=long
   for (i in 1:NROW(AT)){
     if(AT[i,6]=="-") {
-      AT$V2[i] <- AT$V3[i] - AT$long.pause[i] * step 
-      AT$V3[i] <- AT$V3[i] - AT$short.pause[i] * step
+      AT$V2[i] <- AT$V3[i] - (AT$long.pause[i]) * step 
+      AT$V3[i] <- AT$V3[i] - (AT$short.pause[i] -1)* step
     }
     else{
-      AT$V2[i] <- AT$V2[i] + AT$short.pause[i] * step
-      AT$V3[i] <- AT$V2[i] + AT$long.pause[i] * step
+      AT$V2[i] <- AT$V2[i] + (AT$short.pause[i] -1) * step
+      AT$V3[i] <- AT$V2[i] + ((AT$long.pause[i]) * step)
     }
   }
   
@@ -495,10 +495,10 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
     for (i in 1:NROW(bed6)){
       if(bed6[i,6]=="-") {
         bed6[i,3] <- AT[i,3] + up_dist
-        bed6[i,2] <- AT[i,3] - dist}
+        bed6[i,2] <- AT[i,3]-1 - dist} #BED file is 0-based, left open coordinates. eg: [0,5) = {0,1,2,3,4} include 0, exclude 5
       else
       {bed6[i,2] <- AT[i,2] - up_dist
-      bed6[i,3] <- AT[i,2] + dist
+      bed6[i,3] <- AT[i,2]+1 + dist  #BED file is 0-based, left open coordinates. eg: [0,5) = {0,1,2,3,4} include 0, exclude 5
       }
     }
     AT$start.steps <- up_dist%/%step+1
@@ -507,10 +507,10 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   }else{
     for (i in 1:NROW(bed6)){
       if(bed6[i,6]=="-") {
-        bed6[i,3] <- AT[i,2] + up_dist
+        bed6[i,3] <- AT[i,2]+1 + up_dist  #BED file is 0-based, left open coordinates. eg: [0,5) = {0,1,2,3,4} include 0, exclude 5
         bed6[i,2] <- AT[i,2] - dist}
       else
-      {bed6[i,2] <- AT[i,3] - up_dist
+      {bed6[i,2] <- AT[i,3]-1 - up_dist  #BED file is 0-based, left open coordinates. eg: [0,5) = {0,1,2,3,4} include 0, exclude 5
       bed6[i,3] <- AT[i,3] + dist
       }
     }
@@ -654,6 +654,7 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
 
 
 t="HT"
+step=2
 for(t in c("HT", "SK", "KD")){
 show.window=50
 #end=".rpm.bw"; times=10
@@ -675,13 +676,13 @@ show.window=50
   t0=t
   t=paste(t0,"_fdr0.1",sep = "")
   a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
-                                dist=200, step=2, up_dist =100, 
+                                dist=200, step=step, up_dist =100, 
                                 file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                 metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
                                 breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
   t=paste(t0,"_fdr0.1",sep = "")
   a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
-                                        dist=200, step=2, up_dist =100, 
+                                        dist=200, step=step, up_dist =100, 
                                         file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                         metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
                                         breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
@@ -704,13 +705,13 @@ abline(v=0,col="green")
 
 t=paste(t0,"_fdr0.1",sep = "")
 a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
-                                      dist=200, step=2, up_dist =100, 
+                                      dist=200, step=step, up_dist =100, 
                                       file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                       metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
                                       breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
 t=paste(t0,"_fdr0.1",sep = "")
 a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
-                                      dist=200, step=2, up_dist =100, 
+                                      dist=200, step=step, up_dist =100, 
                                       file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                       metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
                                       breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
