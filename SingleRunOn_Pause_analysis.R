@@ -186,7 +186,9 @@ if(metaplot){
   }
   show.window <- min(show.window, (up_dist+dist))
   pdf(metaplot.pdf, width=10, height = 10 )
-  
+  par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+  par(mgp=c(3,1,0))
+  par(cex.lab=2.2, cex.axis=2.2)
   plot(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.high[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
        main = "",
        ylab= "proseq signal",
@@ -362,6 +364,9 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
   }
   show.window <- min(show.window, (up_dist+dist))
   pdf(metaplot.pdf, width=10, height = 10 )
+  par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+  par(mgp=c(3,1,0))
+  par(cex.lab=2.2, cex.axis=2.2)
   
   plot(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.high[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
        main = "",
@@ -522,21 +527,39 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   hmat.low <- hmat.mat
   
   # metaplot
-  a = colSums(hmat.high)
+  if(0){
+  if(NROW(bed6)<100){
+    meta.hmat.high <- colMedians(hmat.high)
+    meta.hmat.low <- colMedians(hmat.low)
+  }else{
+    meta.hmat.high.temp <- subsampled.quantiles.metaprofile(hmat.high)
+    meta.hmat.high <- meta.hmat.high.temp$middle
+    meta.hmat.low.temp <- subsampled.quantiles.metaprofile(hmat.low)
+    meta.hmat.low <- meta.hmat.low.temp$middle
+  }
+  show.window <- min(show.window, (up_dist+dist))
+  a=meta.hmat.high
+  }
+  #a = colSums(hmat.high)
+  a = colMeans(hmat.high)
   show.window <- min(show.window, (up_dist+dist))
   pdf(metaplot.pdf, width=10, height = 10 )
+  par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+  par(mgp=c(3,1,0))
+  par(cex.lab=2.2, cex.axis=2.2)
   
   plot(seq(-1*(show.window)+step/2, show.window, step), a[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
        main = "",
-       ylab= "SNPs counts",
+       ylab= "SNPs counts median",
        type = "l", 
-       xlab="",
-       ylim = c(0,150)
+       xlab=""
+       #ylim = c(0,0.5)
   )
 
   dev.off()
   
   # heatmap
+  if(heatmap){
   if (navg > 1){
     hmat.low <- avgMat(hmat.low, navg = navg)
     hmat.high <- avgMat(hmat.high, navg = navg)
@@ -625,15 +648,97 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   ## draw colorScale for Heatmap
   draw_legend(bk.high, hmcols.high, use.log =  use.log  );
   dev.off()
+  }
+  return (list(seq(-1*(show.window)+step/2, show.window, step), a[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ]))
 }
-
-
-
 
 
 t="HT"
 for(t in c("HT", "SK", "KD")){
+show.window=50
+#end=".rpm.bw"; times=10
+  end=".bw"; times=1
+  #HT.mat.map2ref.1bp_plus.bw
+  file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
+  file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+  file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+  SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+  
+  pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+  pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
+  pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+  pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
+  #AT <- AT[AT$V1 != 'chrX',]
+  t0=t
+  t=paste(t0,"_fdr0.1",sep = "")
+  a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
+                                dist=200, step=2, up_dist =100, 
+                                file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
+  t=paste(t0,"_fdr0.1",sep = "")
+  a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
+                                        dist=200, step=2, up_dist =100, 
+                                        file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                        metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                        breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
+  
+#dev.off()
+pdf(paste("SNP_fdr0.1N0.9_compare_",t0,".pdf",sep = ""))
+par(mfcol=c(3,2))
+plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center short pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
+abline(h=1,col="green")
+abline(v=0,col="green")
+plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center short pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
+points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
+abline(v=0,col="green")
+legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
+       col=c("red", "blue"), bty = "n", lty=1, pch=1)
+plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center short pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
+abline(h=0, col="green")
+abline(v=0,col="green")
+#dev.off()
+
+t=paste(t0,"_fdr0.1",sep = "")
+a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
+                                      dist=200, step=2, up_dist =100, 
+                                      file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                      metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                      breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
+t=paste(t0,"_fdr0.1",sep = "")
+a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
+                                      dist=200, step=2, up_dist =100, 
+                                      file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                      metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                      breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
+
+#dev.off()
+#pdf(paste("SNP_fdr0.1N0.9_compare_longPause_",t0,".pdf",sep = ""))
+#par(mfrow=c(3,1))
+plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center long pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
+abline(h=1,col="green")
+abline(v=0,col="green")
+plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center long pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
+points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
+abline(v=0,col="green")
+legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
+       col=c("red", "blue"), bty = "n", lty=1, pch=1)
+plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center long pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
+abline(h=0, col="green")
+abline(v=0,col="green")
+dev.off()
+}
+
+
+
+t="HT"
+show.window=100
+for(t in c("HT", "SK", "KD")){
 pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+#pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
 pause_window <- pause_window[pause_window$V1 != 'chrX',]
 #AT <- AT[AT$V1 != 'chrX',]
 end=".rpm.bw"; times=10
@@ -647,7 +752,7 @@ file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",
 file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
 SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
 
-t="t"
+t=paste(t,"_fdr0.1",sep = "")
 heatmap.SNPsLocation.inPause (pause_window, SNP.bw, file.plus.bw, file.minus.bw ,
                               dist=200, step=2, up_dist =100, 
                               file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
