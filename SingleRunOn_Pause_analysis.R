@@ -481,12 +481,10 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
                                         dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf", metaplot.pdf="metaplot.pdf",
                                         bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1,
                                         map5 =TRUE,
-                                        heatmap=TRUE, metaplot=TRUE) {
+                                        heatmap=TRUE, metaplot=TRUE, use.sum=FALSE) {
   AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, heatmap=FALSE,  metaplot=FALSE)
   
-  
-  
-  # make all beds the same length
+   # make all beds the same length
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
   bed6 <- AT
@@ -540,9 +538,14 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   show.window <- min(show.window, (up_dist+dist))
   a=meta.hmat.high
   }
-  #a = colSums(hmat.high)
-  a = colMeans(hmat.high)
-  show.window <- min(show.window, (up_dist+dist))
+  
+  if (use.sum){
+    a = colSums(hmat.high)
+  }else{
+    a = colMeans(hmat.high)
+  }
+
+    show.window <- min(show.window, (up_dist+dist))
   pdf(metaplot.pdf, width=10, height = 10 )
   par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   par(mgp=c(3,1,0))
@@ -687,51 +690,107 @@ show.window=50
                                         metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
                                         breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
   
-#dev.off()
-pdf(paste("SNP_fdr0.1N0.9_compare_",t0,".pdf",sep = ""))
-par(mfcol=c(3,2))
-plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center short pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
-abline(h=1,col="green")
-abline(v=0,col="green")
-plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center short pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
-points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
-abline(v=0,col="green")
-legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
-       col=c("red", "blue"), bty = "n", lty=1, pch=1)
-plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center short pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
-abline(h=0, col="green")
-abline(v=0,col="green")
-#dev.off()
-
-t=paste(t0,"_fdr0.1",sep = "")
-a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
-                                      dist=200, step=step, up_dist =100, 
-                                      file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
-                                      metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
-                                      breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
-t=paste(t0,"_fdr0.1",sep = "")
-a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
-                                      dist=200, step=step, up_dist =100, 
-                                      file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
-                                      metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
-                                      breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
-
-#dev.off()
-#pdf(paste("SNP_fdr0.1N0.9_compare_longPause_",t0,".pdf",sep = ""))
-#par(mfrow=c(3,1))
-plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center long pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
-abline(h=1,col="green")
-abline(v=0,col="green")
-plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center long pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
-points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
-abline(v=0,col="green")
-legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
-       col=c("red", "blue"), bty = "n", lty=1, pch=1)
-plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center long pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
-abline(h=0, col="green")
-abline(v=0,col="green")
-dev.off()
+  #dev.off()
+  pdf(paste("SNP_fdr0.1N0.9_compare_",t0,".pdf",sep = ""))
+  par(mfcol=c(3,2))
+  plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center short pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
+  abline(h=1,col="green")
+  abline(v=3,col="green")
+  abline(v=-3,col="green")
+  abline(v=-20,col="green")
+  plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center short pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
+  points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
+  abline(v=3,col="green")
+  abline(v=-3,col="green")
+  abline(v=-20,col="green")
+  legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
+         col=c("red", "blue"), bty = "n", lty=1, pch=1)
+  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center short pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
+  abline(h=0, col="green")
+  abline(v=3,col="green")
+  abline(v=-3,col="green")
+  abline(v=-20,col="green")
+  #dev.off()
+  
+  t=paste(t0,"_fdr0.1",sep = "")
+  a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
+                                        dist=200, step=step, up_dist =100, 
+                                        file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                        metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                        breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
+  t=paste(t0,"_fdr0.1",sep = "")
+  a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
+                                        dist=200, step=step, up_dist =100, 
+                                        file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                        metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                        breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
+  
+  #dev.off()
+  #pdf(paste("SNP_fdr0.1N0.9_compare_longPause_",t0,".pdf",sep = ""))
+  #par(mfrow=c(3,1))
+  plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center long pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
+  abline(h=1,col="green")
+  abline(v=3,col="green")
+  abline(v=-3,col="green")
+  abline(v=-20,col="green")
+  plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center long pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
+  points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
+  abline(v=3,col="green")
+  abline(v=-3,col="green")
+  abline(v=-20,col="green")
+  legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
+         col=c("red", "blue"), bty = "n", lty=1, pch=1)
+  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center long pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
+  abline(h=0, col="green")
+  abline(v=3,col="green")
+  abline(v=-3,col="green")
+  abline(v=-20,col="green")
+  dev.off()
 }
+  # fisher's exact test
+  # short pause sites
+step=2
+p.value <- NULL
+for(t in c("HT", "SK", "KD")){
+  show.window=50
+  #end=".rpm.bw"; times=10
+  end=".bw"; times=1
+  #HT.mat.map2ref.1bp_plus.bw
+  file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
+  file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+  file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+  SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+  
+  pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+  pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
+  pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+  pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
+  t0=t
+  t=paste(t0,"_fdr0.1",sep = "")
+  a_0.1 = heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
+                                        dist=200, step=step, up_dist =100, 
+                                        file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                        metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                        breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE, use.sum = TRUE)
+  t=paste(t0,"_fdr0.1",sep = "")
+  a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
+                                        dist=200, step=step, up_dist =100, 
+                                        file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                                        metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                                        breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE, use.sum = TRUE)
+  inside = which(a_0.1[[1]] >= -3 & a_0.1[[1]]<=3 )
+  outside = which(a_0.1[[1]] >= -20 & a_0.1[[1]] < -3)
+  
+  testor = rbind(c(sum(a_0.1[[2]][inside]),sum(a_0.1[[2]][outside])),
+              + c(sum(a_0.9[[2]][inside]),sum(a_0.9[[2]][outside])) ); testor
+  f = fisher.test(testor); 
+  p.value= c(p.value, f$p.value)
+  
+  }
+p.adjust(p.value, method="BH")
 
 
 
