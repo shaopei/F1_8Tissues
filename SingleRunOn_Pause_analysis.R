@@ -53,41 +53,10 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
   return(hmat);    
 }
 
-metaplot.pause <- function(bed6, name="", metaplot.pdf="metaplot.pdf", 
-                       show.window=100, 
-                       xlab="", ylab= "proseq signal"){
-  
-  if(NROW(bed6)<100){
-    meta.hmat.high <- colMedians(hmat.high)
-    meta.hmat.low <- colMedians(hmat.low)
-  }else{
-    meta.hmat.high.temp <- subsampled.quantiles.metaprofile(hmat.high)
-    meta.hmat.high <- meta.hmat.high.temp$middle
-    meta.hmat.low.temp <- subsampled.quantiles.metaprofile(hmat.low)
-    meta.hmat.low <- meta.hmat.low.temp$middle
-  }
-  show.window <- min(show.window, (up_dist+dist))
-  pdf(metaplot.pdf, width=10, height = 10 )
-  
-  plot(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.high[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
-       main = name,
-       ylab= ylab,
-       type = "l", 
-       #ylim = ylim,
-       xlab=xlab
-  )
-  lines(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.low[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="blue")
-  legend("topright", legend=c("long", "short"),
-         col=c("red", "blue"), bty = "n", lty=1)
-  dev.off()
-  
-}
-
-
 
 heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,
                          dist=200, step=2, up_dist =20, file.pdf="heatmap.pdf", map5=TRUE, metaplot.pdf="metaplot.pdf",
-                         heatmap=TRUE, metaplot=TRUE,
+                         heatmap=TRUE, metaplot=TRUE, metaplot.ylim=c(0,20),
                          bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=FALSE, navg = 1, use.log=FALSE, times=1){
   # AT here is the window of pause, dREG sites
   AT <- AT[,1:6] 
@@ -115,14 +84,16 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
   # new AT is the the wondow between short and long pause
   # + strand, V2=short, V3=long
   # - strand, V3=short, V2=long
+  AT$old.V2 = AT$V2
+  AT$old.V3 = AT$V3
   for (i in 1:NROW(AT)){
     if(AT[i,6]=="-") {
-      AT$V2[i] <- AT$V3[i] - (AT$long.pause[i]) * step 
-      AT$V3[i] <- AT$V3[i] - (AT$short.pause[i] -1)* step
+      AT$V2[i] <- AT$old.V3[i] - (AT$long.pause[i]) * step 
+      AT$V3[i] <- AT$old.V3[i] - (AT$short.pause[i] -1)* step
     }
     else{
-      AT$V3[i] <- AT$V2[i] + ((AT$long.pause[i]) * step)
-      AT$V2[i] <- AT$V2[i] + (AT$short.pause[i] -1) * step
+      AT$V3[i] <- AT$old.V2[i] + ((AT$long.pause[i]) * step)
+      AT$V2[i] <- AT$old.V2[i] + (AT$short.pause[i] -1) * step
       
     }
   }
@@ -186,7 +157,7 @@ if(metaplot){
     meta.hmat.low <- meta.hmat.low.temp$middle
   }
   show.window <- min(show.window, (up_dist+dist))
-  pdf(metaplot.pdf, width=10, height = 10 )
+  pdf(metaplot.pdf, width=6, height = 6)
   par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   par(mgp=c(3,1,0))
   par(cex.lab=2.2, cex.axis=2.2)
@@ -195,10 +166,11 @@ if(metaplot){
        ylab= "proseq signal",
        type = "l", 
        xlab="",
-       ylim=c(0,20)
+       ylim=metaplot.ylim,
+       las=1
   )
   lines(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.low[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="blue")
-  legend("topright", legend=c("long", "short"),
+  legend("topright", legend=c("late", "early"),
          col=c("red", "blue"), bty = "n", lty=1)
   dev.off()
 }
@@ -303,10 +275,10 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
                                   dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf", metaplot.pdf="metaplot.pdf", 
                                   allelic.heatmap.pdf="allelic.heatmap.pdf", allelic.metaplot.pdf="allelic.metaplot.pdf",
                                   bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1, 
-                                  heatmap=TRUE, metaplot=TRUE, map5=TRUE){
+                                  heatmap=TRUE, metaplot=TRUE, map5=TRUE, metaplot.ylim=c(0,30)){
   AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
                   breaks=breaks, show.AT.line=FALSE,  navg = navg, times=times, map5=map5,
-                  dist=dist, step=step, up_dist =up_dist , 
+                  dist=dist, step=step, up_dist =up_dist , metaplot.ylim = metaplot.ylim,
                   file.pdf= allelic.heatmap.pdf, metaplot.pdf= allelic.metaplot.pdf)
 
   
@@ -364,21 +336,23 @@ heatmap.Pause_allreads <-function(AT, file.plus.bw, file.minus.bw ,
     meta.hmat.low <- meta.hmat.low.temp$middle
   }
   show.window <- min(show.window, (up_dist+dist))
-  pdf(metaplot.pdf, width=10, height = 10 )
+  pdf(metaplot.pdf, width=6, height = 6)
   par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   par(mgp=c(3,1,0))
   par(cex.lab=2.2, cex.axis=2.2)
   
-  plot(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.high[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
+  plot(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.high[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="purple", 
        main = "",
        ylab= "proseq signal",
        type = "l", 
        xlab="",
-       ylim=c(0,20)
+       ylim=metaplot.ylim,
+       las=1
+      
   )
-  lines(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.low[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="blue")
-  legend("topright", legend=c("long", "short"),
-         col=c("red", "blue"), bty = "n", lty=1)
+#  lines(seq(-1*(show.window)+step/2, show.window, step), meta.hmat.low[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="blue")
+#  legend("topright", legend=c("late", "early"),
+#         col=c("red", "blue"), bty = "n", lty=1)
   dev.off()
   #
   
@@ -482,17 +456,9 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
                                         dist=200, step=2, up_dist =50, file.pdf="heatmap.pdf", metaplot.pdf="metaplot.pdf",
                                         bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 1, use.log=FALSE, times=1,
                                         map5 =TRUE,
-                                        heatmap=TRUE, metaplot=TRUE, use.sum=FALSE, short.pause=FALSE, long.pause=FALSE) {
+                                        heatmap=TRUE, metaplot=TRUE, use.sum=FALSE) {
   AT <- heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat, heatmap=FALSE,  metaplot=FALSE)
   
-  if(0){
-  if (short.pause){
-    #AT = AT[AT$V3-AT$V2 >= 30,]
-  }
-  if (long.pause){
-    
-  }
-}
    # make all beds the same length
   # plus strand chromEnd = chromStart + dist
   # minus strand chromStart = chromEnd - dist
@@ -555,7 +521,7 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   }
 
     show.window <- min(show.window, (up_dist+dist))
-  pdf(metaplot.pdf, width=10, height = 10 )
+  pdf(metaplot.pdf, width=6, height = 6)
   par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   par(mgp=c(3,1,0))
   par(cex.lab=2.2, cex.axis=2.2)
@@ -564,7 +530,8 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
        main = "",
        ylab= "SNPs counts median",
        type = "l", 
-       xlab=""
+       xlab="",
+       las=1
        #ylim = c(0,0.5)
   )
 
@@ -665,7 +632,6 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
 }
 
 
-t="HT"
 step=2
 for(t in c("HT", "SK", "KD")){
 show.window=50
@@ -760,6 +726,7 @@ show.window=50
   # short pause sites
 step=2
 p.value <- NULL
+odds.ratio <- NULL
 for(t in c("HT", "SK", "KD")){
   show.window=50
   #end=".rpm.bw"; times=10
@@ -797,9 +764,13 @@ for(t in c("HT", "SK", "KD")){
               + c(sum(a_0.9[[2]][inside]),sum(a_0.9[[2]][outside])) ); testor
   f = fisher.test(testor); 
   p.value= c(p.value, f$p.value)
-  
-  }
-p.adjust(p.value, method="BH")
+  odds.ratio = c(odds.ratio, f$estimate)
+}
+options(scipen = 1)
+options(digits = 2)
+p.value
+odds.ratio
+p.adjust(p.value, method="bonferroni")
 
 # long pause sites
 step=2
@@ -842,9 +813,13 @@ for(t in c("HT", "SK", "KD")){
                  + c(sum(a_0.9[[2]][inside]),sum(a_0.9[[2]][outside])) ); testor
   f = fisher.test(testor); f
   p.value= c(p.value, f$p.value)
-  
+  odds.ratio = c(odds.ratio, f$estimate)
 }
-p.adjust(p.value, method="BH")
+p.value
+odds.ratio
+p.adjust(p.value, method="bonferroni")
+
+# use heatmap to examine the proseq signal
 
 t="HT"
 show.window=100
@@ -852,24 +827,89 @@ for(t in c("HT", "SK", "KD")){
 pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
 #pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
 pause_window <- pause_window[pause_window$V1 != 'chrX',]
+
+pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
+pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
+
 #AT <- AT[AT$V1 != 'chrX',]
 end=".rpm.bw"; times=10
-end=".bw"; times=1
+#end=".bw"; times=1
 #HT.mat.map2ref.1bp_plus.bw
+# allelic reads
 file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
 file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
 file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
 file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
+# all reads
 file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
 file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
 SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
 
-t=paste(t,"_fdr0.1",sep = "")
-heatmap.SNPsLocation.inPause (pause_window, SNP.bw, file.plus.bw, file.minus.bw ,
+t0=t
+t=paste(t0,"_fdr0.1",sep = "")
+# ChRO-seq signal
+heatmap.Pause_allreads(pause_window_0.1, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =100, 
+                       file.pdf=paste(t,"_allreads_heatmap_step2_up100_dist200_map5.pdf",sep = ""),
+                       metaplot.pdf = paste(t,"_allreads_metaplot_step2_up100_dist200_map5.pdf",sep = ""),
+                       allelic.heatmap.pdf = paste(t,"_allelicReads_heatmap_step2_up100_dist200_map5.pdf",sep = ""),
+                       allelic.metaplot.pdf = paste(t,"_allelicReads__metaplot_step2_up100_dist200_map5.pdf",sep = ""),
+                       breaks=seq(0, 20, 0.001), times=times, map5=TRUE, metaplot.ylim = c(0,160))
+
+heatmap.Pause_allreads(pause_window_0.1, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =100, 
+                       file.pdf=paste(t,"_allreads_heatmap_step2_up100_dist200_map3.pdf",sep = ""),
+                       metaplot.pdf = paste(t,"_allreads_metaplot_step2_up100_dist200_map3.pdf",sep = ""),
+                       allelic.heatmap.pdf = paste(t,"_allelicReads_heatmap_step2_up100_dist200_map3.pdf",sep = ""),
+                       allelic.metaplot.pdf = paste(t,"_allelicReads__metaplot_step2_up100_dist200_map3.pdf",sep = ""),
+                       breaks=seq(0, 20, 0.001), times=times, heatmap = FALSE, map5=FALSE, metaplot.ylim = c(0,160))
+
+# SNPs
+heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
                               dist=200, step=2, up_dist =100, 
                               file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                               metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
                               breaks=seq(0, 1, 0.1), map5=TRUE)
+
+
+t=paste(t0,"_fdr0.9",sep = "")
+heatmap.Pause_allreads(pause_window_0.9, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =100, 
+                       file.pdf=paste(t,"_allreads_heatmap_step2_up100_dist200_map5.pdf",sep = ""),
+                       metaplot.pdf = paste(t,"_allreads_metaplot_step2_up100_dist200_map5.pdf",sep = ""),
+                       allelic.heatmap.pdf = paste(t,"_allelicReads_heatmap_step2_up100_dist200_map5.pdf",sep = ""),
+                       allelic.metaplot.pdf = paste(t,"_allelicReads__metaplot_step2_up100_dist200_map5.pdf",sep = ""),
+                       breaks=seq(0, 20, 0.001), times=times, map5=TRUE, metaplot.ylim = c(0,160))
+
+heatmap.Pause_allreads(pause_window_0.9, file.plus.bw, file.minus.bw ,
+                       dist=200, step=2, up_dist =100, 
+                       file.pdf=paste(t,"_allreads_heatmap_step2_up100_dist200_map3.pdf",sep = ""),
+                       metaplot.pdf = paste(t,"_allreads_metaplot_step2_up100_dist200_map3.pdf",sep = ""),
+                       allelic.heatmap.pdf = paste(t,"_allelicReads_heatmap_step2_up100_dist200_map3.pdf",sep = ""),
+                       allelic.metaplot.pdf = paste(t,"_allelicReads__metaplot_step2_up100_dist200_map3.pdf",sep = ""),
+                       breaks=seq(0, 20, 0.001), times=times, heatmap = FALSE, map5=FALSE, metaplot.ylim = c(0,160))
+
+heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=200, step=2, up_dist =100, 
+                              file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                              metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                              breaks=seq(0, 1, 0.1), map5=TRUE)
+}
+
+
+# old scripts, not using
+if(0){
+
+t=paste(t0,"_fdr0.1",sep = "")
+heatmap.SNPsLocation.inPause (pause_window_0.1, SNP.bw, file.plus.bw, file.minus.bw ,
+                              dist=200, step=2, up_dist =100, 
+                              file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
+                              metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
+                              breaks=seq(0, 1, 0.1), map5=TRUE)
+
+  # centher  at long pause (late)
 heatmap.SNPsLocation.inPause (pause_window, SNP.bw, file.plus.bw, file.minus.bw ,
                               dist=100, step=2, up_dist =200, 
                               file.pdf=paste(t,"_SNPs_heatmap_step2_up200_dist100_map3.pdf",sep=""),
@@ -877,7 +917,8 @@ heatmap.SNPsLocation.inPause (pause_window, SNP.bw, file.plus.bw, file.minus.bw 
                               breaks=seq(0, 1, 0.1), map5=FALSE)
 
 
-heatmap.Pause_allreads(pause_window, file.plus.bw, file.minus.bw ,
+t=paste(t0,"_fdr0.1",sep = "")
+heatmap.Pause_allreads(pause_window_0.1, file.plus.bw, file.minus.bw ,
                        dist=100, step=2, up_dist =200, 
                        file.pdf=paste(t,"_allreads_heatmap_step2_up200_dist100_map3.pdf",sep = ""),
                        metaplot.pdf = paste(t,"_allreads_metaplot_step2_up200_dist100_map3.pdf",sep = ""),
@@ -885,18 +926,6 @@ heatmap.Pause_allreads(pause_window, file.plus.bw, file.minus.bw ,
                        allelic.metaplot.pdf = paste(t,"_allelicReads__metaplot_step2_up200_dist100_map3.pdf",sep = ""),
                        breaks=seq(0, 20, 0.001), times=times, map5=FALSE)
 
-heatmap.Pause_allreads(pause_window, file.plus.bw, file.minus.bw ,
-                       dist=200, step=2, up_dist =100, 
-                       file.pdf=paste(t,"_allreads_heatmap_step2_up100_dist200_map5.pdf",sep = ""),
-                       metaplot.pdf = paste(t,"_allreads_metaplot_step2_up100_dist200_map5.pdf",sep = ""),
-                       allelic.heatmap.pdf = paste(t,"_allelicReads_heatmap_step2_up100_dist200_map5.pdf",sep = ""),
-                       allelic.metaplot.pdf = paste(t,"_allelicReads__metaplot_step2_up100_dist200_map5.pdf",sep = ""),
-                       breaks=seq(0, 20, 0.001), times=times, map5=TRUE)
-
-}
-
-
-if(0){
   heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
                 breaks=breaks)
 heatmap.Pause(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
@@ -947,6 +976,4 @@ heatmap.SNPsLocation.inPause (AT, SNP.bw, file.plus.bw, file.minus.bw ,
                               dist=200, step=2, up_dist =200, file.pdf="SNPs_heatmap_step2_up200_dist200_map3.pdf",
                               breaks=seq(0, 1, 0.1), map5=FALSE)
 }
-
-
 
