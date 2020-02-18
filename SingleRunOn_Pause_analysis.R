@@ -526,14 +526,23 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   par(mgp=c(3,1,0))
   par(cex.lab=2.2, cex.axis=2.2)
   
-  plot(seq(-1*(show.window)+step/2, show.window, step), a[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ], col="red", 
-       main = "",
-       ylab= "SNPs counts median",
-       type = "l", 
-       xlab="",
-       las=1
-       #ylim = c(0,0.5)
-  )
+  if (step >1){
+    x <- seq(-1*(show.window)+step/2, show.window, step)
+    y <- a[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ] 
+  }else{
+    x <- seq(-1*(show.window), show.window, step)
+    y <- a[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step +1) ]
+  }
+  
+    plot(x, y, col="red", 
+         main = "",
+         ylab= "SNPs counts median",
+         type = "l", 
+         xlab="",
+         las=1
+         #ylim = c(0,0.5)
+    )
+
 
   dev.off()
   
@@ -628,13 +637,13 @@ heatmap.SNPsLocation.inPause <-function(AT, SNP.bw, file.plus.bw, file.minus.bw 
   draw_legend(bk.high, hmcols.high, use.log =  use.log  );
   dev.off()
   }
-  return (list(seq(-1*(show.window)+step/2, show.window, step), a[((up_dist-show.window)%/% step +1) :((up_dist+show.window)%/% step) ]))
+  return (list(x, y))
 }
 
 
-step=2
+step=1
 for(t in c("HT", "SK", "KD")){
-show.window=50
+show.window=25
 #end=".rpm.bw"; times=10
   end=".bw"; times=1
   #HT.mat.map2ref.1bp_plus.bw
@@ -666,23 +675,33 @@ show.window=50
                                         breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
   
   #dev.off()
-  pdf(paste("SNP_fdr0.1N0.9_compare_",t0,".pdf",sep = ""))
-  par(mfcol=c(3,2))
-  plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center short pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
-  abline(h=1,col="green")
-  abline(v=4,col="green")
-  abline(v=-4,col="green")
-  abline(v=-20,col="green")
-  plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center short pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
+  pdf(paste("SNP_fdr0.1N0.9_compare_",t0,".pdf",sep = ""), width=8, height = 8)
+  par(mfcol=c(2,2))
+  par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+  par(mgp=c(3,1,0))
+  par(cex.lab=2.2, cex.axis=2.2)
+  
+
+  if(0){
+    plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center early pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
+    abline(h=1,col="green")
+    abline(v=4,col="green")
+    abline(v=0,col="blue")
+    abline(v=-4,col="green")
+    abline(v=-20,col="green")
+  }
+  plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center early pause", ylab="SNPs mean", main=t0, type="o", las=1, ylim=c(0,0.1))
   points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
   abline(v=4,col="green")
+  abline(v=0,col="orange")
   abline(v=-4,col="green")
   abline(v=-20,col="green")
   legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
          col=c("red", "blue"), bty = "n", lty=1, pch=1)
-  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center short pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
+  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center early pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", main="substract", las=1, ylim=c(-0.03,0.03))
   abline(h=0, col="green")
   abline(v=4,col="green")
+  abline(v=0,col="orange")
   abline(v=-4,col="green")
   abline(v=-20,col="green")
   #dev.off()
@@ -703,21 +722,26 @@ show.window=50
   #dev.off()
   #pdf(paste("SNP_fdr0.1N0.9_compare_longPause_",t0,".pdf",sep = ""))
   #par(mfrow=c(3,1))
-  plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center long pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
-  abline(h=1,col="green")
-  abline(v=4,col="green")
-  abline(v=-8,col="green")
-  abline(v=-20,col="green")
-  plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center long pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,max(a_0.9[[2]],a_0.1[[2]])), las=1)
+  if(0){
+    plot(a_0.1[[1]],a_0.1[[2]]/a_0.9[[2]], type="o", xlab="center late pause",ylab="fdr0.1 colMean(SNPs)/(fdr0.9 colMean(SNPs)", las=1, main="ratio")
+    abline(h=1,col="green")
+    abline(v=4,col="green")
+    abline(v=0,col="blue")
+    abline(v=-8,col="green")
+    abline(v=-20,col="green")
+  }
+  plot(a_0.9[[1]], a_0.9[[2]], col="blue", xlab="center late pause", ylab="SNPs mean", main=t0, type="o", ylim=c(0,0.1), las=1)
   points(a_0.1[[1]], a_0.1[[2]],col="red", type="o")
   abline(v=4,col="green")
+  abline(v=0,col="orange")
   abline(v=-8,col="green")
   abline(v=-20,col="green")
   legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
          col=c("red", "blue"), bty = "n", lty=1, pch=1)
-  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center long pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract")
+  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center late pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract", ylim=c(-0.03,0.03))
   abline(h=0, col="green")
   abline(v=4,col="green")
+  abline(v=0,col="orange")
   abline(v=-8,col="green")
   abline(v=-20,col="green")
   dev.off()
