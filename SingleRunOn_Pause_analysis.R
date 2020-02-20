@@ -698,8 +698,8 @@ show.window=25
   abline(v=-20,col="green")
   legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
          col=c("red", "blue"), bty = "n", lty=1, pch=1)
-  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center early pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", main="substract", las=1, ylim=c(-0.03,0.03))
-  abline(h=0, col="green")
+  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center early pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", main="substract", las=1, ylim=c(-0.04,0.04))
+  abline(h=0, col="orange")
   abline(v=4,col="green")
   abline(v=0,col="orange")
   abline(v=-4,col="green")
@@ -738,8 +738,8 @@ show.window=25
   abline(v=-20,col="green")
   legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
          col=c("red", "blue"), bty = "n", lty=1, pch=1)
-  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center late pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract", ylim=c(-0.03,0.03))
-  abline(h=0, col="green")
+  plot(a_0.1[[1]],a_0.1[[2]] - a_0.9[[2]], type="o", xlab="center late pause",ylab="(fdr0.1 colMean(SNPs)) - (fdr0.9 colMean(SNPs)", las=1, main="substract", ylim=c(-0.04,0.04))
+  abline(h=0, col="orange")
   abline(v=4,col="green")
   abline(v=0,col="orange")
   abline(v=-8,col="green")
