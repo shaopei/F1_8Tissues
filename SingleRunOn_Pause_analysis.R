@@ -1,6 +1,15 @@
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Kidney_and_SingleRunOn/Pause_manuscript")
 source("/Users/shaopei/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
 
+maxNth <- function(x, N=2){
+  len <- length(x)
+  if(N>len){
+    warning('N greater than length(x).  Setting N=length(x)')
+    N <- length(x)
+  }
+  sort(x,partial=len-N+1)[len-N+1]
+}
+
 
 draw_legend <- function(bk, hmcols, use.log=FALSE)
 {
@@ -55,6 +64,7 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
 
 
 heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,
+                         map5.file.plus.bw=NULL, map5.file.minus.bw=NULL,
                          dist=200, step=2, up_dist =20, file.pdf="heatmap.pdf", map5=TRUE, metaplot.pdf="metaplot.pdf",
                          heatmap=TRUE, metaplot=TRUE, metaplot.ylim=c(0,20),
                          bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=FALSE, navg = 1, use.log=FALSE, times=1){
@@ -65,18 +75,37 @@ heatmap.Pause <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.ma
   # determine the location of long pause and short pause
   hmat.pat.peak <- NULL
   hmat.mat.peak <- NULL
+  map5.proseq.peak <- NULL
   for (i in 1:NROW(AT)){
     hmat.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, AT[i,], step, times=times, use.log=use.log)
     hmat.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, AT[i,], step, times=times, use.log=use.log) 
+    map5.proseq <- read_read_mat_S (map5.file.plus.bw, map5.file.minus.bw, AT[i,], step, times=times, use.log=use.log) 
+    map3.proseq <- read_read_mat_S (file.plus.bw, file.minus.bw, AT[i,], step, times=times, use.log=use.log) 
     
     hmat.pat.peak[i] <- which(hmat.pat == max(hmat.pat))
     hmat.mat.peak[i] <- which(hmat.mat == max(hmat.mat))
+    
+    AT$map5.peak[i] <- which(map5.proseq == max(map5.proseq))
+    #map5.s = sort.int(map5.proseq, index.return = T, decreasing = T)
+    #AT$map5.max1[i] = map5.s$ix[1]
+    #AT$map5.max2[i] = map5.s$ix[2]
+    #AT$map5.max3[i] = map5.s$ix[3]
+    
+    AT$map3.peak[i] <- which(map3.proseq == max(map3.proseq))
     AT$short.pause[i] = min(hmat.pat.peak[i],  hmat.mat.peak[i]) 
     AT$long.pause[i] = max(hmat.pat.peak[i],  hmat.mat.peak[i]) 
   }
   
+  AT$l.map5.map3.allreads = AT$map3.peak - AT$map5.peak
+  AT$l.dreg.size = AT$V3 -AT$V2
+  AT$map5.early.pause.dist = AT$short.pause - AT$map5.peak
+  AT$map5.late.pause.dist = AT$long.pause - AT$map5.peak
+  AT$pause.dist = AT$long.pause - AT$short.pause
+  
+  a = AT[AT$map5.early.pause.dist<0,]
+  
   length_order  <- order(AT$long.pause - AT$short.pause, decreasing = T)
-  AT$l = AT$long.pause - AT$short.pause
+
   AT <- AT[length_order  ,]
   hmat.pat.peak <-  hmat.pat.peak[length_order]
   hmat.mat.peak <- hmat.mat.peak[length_order]
@@ -869,6 +898,8 @@ file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",
 # all reads
 file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
 file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+map5.file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
+map5.file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
 SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
 
 t0=t

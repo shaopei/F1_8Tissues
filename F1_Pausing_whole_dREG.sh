@@ -96,6 +96,11 @@ do
 done
 
 
+for Tissue in HT KD SK
+do
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 > 0.9){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.9.bed &
+done
+
 # merge bigwig files from mouse F5 and F6
 #cd map2ref_1bpbed
 #KD_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw  KD_PB6_F6_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted_plus.bw
@@ -121,11 +126,17 @@ for Tissue in HT KD SK
 do
   for strand in plus minus
   do
-    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}_PB6_F5N6_dedup_QC_end_${strand}.bw Myproseq2.0Output/${Tissue}_PB6_F5_dedup_QC_end_${strand}.bw  Myproseq2.0Output/${Tissue}_PB6_F6_dedup_QC_end_${strand}.bw"
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}_PB6_F5N6_dedup_QC_end_${strand}.bw Myproseq2.0Output-map3/${Tissue}_PB6_F5_dedup_QC_end_${strand}.bw  Myproseq2.0Output-map3/${Tissue}_PB6_F6_dedup_QC_end_${strand}.bw"
 done
 done
 
-
+for Tissue in HT KD SK
+do
+  for strand in plus minus
+  do
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}_PB6_F5N6_dedup_QC_end_map5_${strand}.bw Myproseq2.0Output-map5/${Tissue}_PB6_F5_dedup_QC_end.sort_${strand}.bw  Myproseq2.0Output-map5/${Tissue}_PB6_F6_dedup_QC_end.sort_${strand}.bw"
+done
+done
 
 ### furthur analysis in R
 # make heatmap of proseq reads in short and long pause using 
