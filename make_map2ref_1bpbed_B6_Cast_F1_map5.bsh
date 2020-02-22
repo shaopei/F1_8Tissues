@@ -1,0 +1,92 @@
+# this is for R1 sequence from 3 prime end of nascent RNA
+PREFIX=$1 #PREFIX=HT_MB6_all_R1
+WD=$2
+${WD:=/workdir/sc2457/F1_Tissues/SingleBaseRunOn/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX}}
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
+MATBOWTIE=${PREFIX}.mat.bowtie.gz
+PATBOWTIE=${PREFIX}.pat.bowtie.gz
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
+
+echo ${WD}
+cd ${WD}
+
+# remove AMB reads and sort by index
+ln -s 1-alignment-${PREFIX}/${MATBOWTIE} .
+ln -s 1-alignment-${PREFIX}/${PATBOWTIE} .
+
+mkdir toremove
+echo "python ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids "
+python ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${PATBOWTIE}_AMBremoved_sorted &
+python ${PL}/filter_reads_out.py ${MATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${MATBOWTIE}_AMBremoved_sorted &
+wait
+
+# seperate mat and pat reads from bowtie output
+# order matters! ${PATBOWTIE}_AMBremoved_sorted need to be in front of ${MATBOWTIE}_AMBremoved_sorted !!!
+echo "seperate mat and pat reads from bowtie output"
+python ${PL}/seperate_mat_pat_reads_withSNPs.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS}
+python ${PL}/seperate_mat_pat_reads_withSNPs_returnMatIdentical.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS}
+
+# make bed file from bowtie 
+# this is for R1 sequence from 3 prime end of nascent RNA
+# switch strand here
+for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+  do
+cat ${j}.bowtie| awk 'BEGIN{OFS="\t"; t=","} ($2=="+"){split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, "-"} ;($2=="-"){split($1,a,":"); print $3, $4, $4+length($5), a[1]t$5, 111, "+"}' |gzip > ${j}.bed.gz &
+done
+wait
+
+for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+  do
+  mv  ${j}.bowtie toremove/.
+done
+
+
+# map3
+# make 1bp bed file, use 3-prime of nascent RNA
+for j in ${MATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_specific ${PATBOWTIE}_AMBremoved_sorted_identical ${MATBOWTIE}_AMBremoved_sorted_identical
+do 
+zcat ${j}.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+") {print $1, $3-1, $3, $4, $5, $6}; ($6=="-") {print $1, $2, $2+1, $4, $5, $6}' > ${j}.1bp.bed &
+done
+wait 
+
+# liftOver to reference genome
+echo "liftOver to reference genome"
+# usage: liftOver oldFile map.chain newFile unMapped
+# rm pat2ref.chain mat2ref.chain
+ln -s 2-map.back.ref-${PREFIX}/pat2ref.chain .  #pat2ref.chain is from output of AlleleDB
+ln -s 2-map.back.ref-${PREFIX}/mat2ref.chain .
+#Use 1bp at the 5 prime end of the reads and see if there is less lost in pat(Cast) liftOver
+echo "liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log"
+liftOver ${MATBOWTIE}_AMBremoved_sorted_specific.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log &
+echo "liftOver ${PATBOWTIE}_AMBremoved_sorted_specific.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log"
+liftOver ${PATBOWTIE}_AMBremoved_sorted_specific.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_specific.unmap2ref.1bp.log &
+wait
+
+# Did NOT remove reads that DONOT overlape with a SNP in ${PATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed and  ${MATBOWTIE}_AMBremoved_sorted_specific.map2ref.sorted.bed 
+for f in *_specific.map2ref.1bp.bed 
+  do
+  j=`echo $f|rev |cut -d . -f 2-|rev`
+  echo $j
+  cat ${j}.bed | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |awk 'BEGIN {OFS="\t"} {print "chr"$1, $2, $3, $4,$5,$6}' |gzip  > ${j}.sorted.bed.gz &
+  done
+
+echo "liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log"
+liftOver ${MATBOWTIE}_AMBremoved_sorted_identical.1bp.bed mat2ref.chain  ${MATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${MATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log &
+echo "liftOver ${PATBOWTIE}_AMBremoved_sorted_identical.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log"
+liftOver ${PATBOWTIE}_AMBremoved_sorted_identical.1bp.bed pat2ref.chain  ${PATBOWTIE}_AMBremoved_sorted_identical.map2ref.1bp.bed ${PATBOWTIE}_AMBremoved_sorted_identical.unmap2ref.1bp.log &
+
+wait
+for f in *_identical.map2ref.1bp.bed 
+  do
+  j=`echo $f|rev |cut -d . -f 2-|rev`
+  echo $j
+  cat ${j}.bed | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |awk 'BEGIN {OFS="\t"} {print "chr"$1, $2, $3, $4,$5,$6}' |gzip  > ${j}.sorted.bed.gz &
+  done
+wait
+mv  *.map2ref.1bp.bed toremove/.
+
+echo "done!"
+
