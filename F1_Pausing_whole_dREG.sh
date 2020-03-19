@@ -121,6 +121,29 @@ done
 done
 done
 
+for Tissue in HT KD SK
+do
+  for parent in mat pat
+  do
+    for strand in plus minus
+    do
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}.${parent}.map5.map2ref.1bp_${strand}.bw map2ref_1bpbed_map5/${Tissue}_PB6_*_dedup_R1.${parent}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted_1bp_${strand}.bw" 
+done
+done
+done
+
+for Tissue in HT KD SK
+do
+  for parent in mat
+  do
+    for strand in plus minus
+    do
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}.identical.map5.map2ref.1bp_${strand}.bw map2ref_1bpbed_map5/${Tissue}_PB6_*_dedup_R1.${parent}.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp.sorted_1bp_${strand}.bw" 
+done
+done
+done
+
+
 #Myproseq2.0Output/KD_PB6_F5_dedup_QC_end_plus.bw  Myproseq2.0Output/KD_PB6_F6_dedup_QC_end_plus.bw
 for Tissue in HT KD SK
 do
