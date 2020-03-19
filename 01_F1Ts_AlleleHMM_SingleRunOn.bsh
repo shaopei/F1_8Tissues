@@ -147,6 +147,7 @@ wait_a_second() {
 
 
 ### use the bowtie output from AlleleDB to make allele-specific read mapping files (liftOver from personal genome to reference genome)
+# use the 3 prime of nascent RNA
 wd=/workdir/sc2457/F1_Tissues/SingleBaseRunOn
 for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   do #echo ${folder}
@@ -155,8 +156,69 @@ for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
   echo "bash make_map2ref_1bpbed_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_1bpbed_B6_Cast_F1_${PREFIX}.log 2>&1 &"
 done
 
+# use the 5 prime of the nascent RNA
+wd=/workdir/sc2457/F1_Tissues/SingleBaseRunOn
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash make_map2ref_1bpbed_B6_Cast_F1_map5.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_1bpbed_B6_Cast_F1_map5_${PREFIX}.log 2>&1 &"
+done
 
 #HERE
 
+# generate bigwig file from 1bp bed files
+# map3
+mkdir map2ref_1bpbed_map3
+cd map2ref_1bpbed_map3
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1/*_PB6_F*_dedup_R1.*at.bowtie.gz_AMBremoved_sorted_*.map2ref.1bp.sorted.bed.gz . #*/
+CHINFO=/local/storage/data/mm10/mm10.chromInfo
+mkdir toremove
 
+for f in *.map2ref.1bp.sorted.bed.gz
+  do
+#f=HT_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.1bp.sorted.bed.gz
+j=`echo $f |rev| cut -d . -f 3-|rev`
+
+## Convert to bedGraph ... 
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_plus.bedGraph &
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand - |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_minus.noinv.bedGraph &
+   wait
+## Invert minus strand.
+   cat  ${j}_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${j}_minus.bedGraph & ## Invert read counts on the minus strand.
+wait
+   ## Then to bigWig
+   bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_1bp_plus.bw &
+   bedGraphToBigWig $j\_minus.bedGraph ${CHINFO} $j\_1bp_minus.bw &
+wait
+mv ${j}_plus.bedGraph ${j}_minus.noinv.bedGraph ${j}_minus.bedGraph toremove/.
+done
+
+
+# map5
+mkdir map2ref_1bpbed_map5
+cd map2ref_1bpbed_map5
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/allelicbias-PersonalGenome_P.CAST_M.B6-*_R1/*_PB6_F*_dedup_R1.*at.bowtie.gz_AMBremoved_sorted_*.map2ref.map5.1bp.sorted.bed.gz . #*/
+CHINFO=/local/storage/data/mm10/mm10.chromInfo
+mkdir toremove
+
+for f in *.map2ref.map5.1bp.sorted.bed.gz
+  do
+#f=HT_PB6_F5_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.1bp.sorted.bed.gz
+j=`echo $f |rev| cut -d . -f 3-|rev`
+
+## Convert to bedGraph ... 
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_plus.bedGraph &
+   bedtools genomecov -bg -i ${j}.bed.gz -g ${CHINFO} -strand - |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_minus.noinv.bedGraph &
+   wait
+## Invert minus strand.
+   cat  ${j}_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > ${j}_minus.bedGraph & ## Invert read counts on the minus strand.
+wait
+   ## Then to bigWig
+   bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_1bp_plus.bw &
+   bedGraphToBigWig $j\_minus.bedGraph ${CHINFO} $j\_1bp_minus.bw &
+
+wait 
+mv ${j}_plus.bedGraph ${j}_minus.noinv.bedGraph ${j}_minus.bedGraph toremove/.
+done
 
