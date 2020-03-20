@@ -1,16 +1,21 @@
-cd /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate
-### identify trasncript annotation that have a dREG sites near the 5' 100bp regions
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/whole_dREG_try1
+
 studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
-ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed .
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map5 .
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map5 map2ref_1bpbed
 
 # Use dREG sites with  mat reads >=5 AND pat reads >=5 (not strand specific (NS))
 for Head in HT KD SK
 do
-#  bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
-  bedtools coverage   -a <(bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_NS_uniq.bed &
+  bedtools coverage   -a <(bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"}') -b <(zcat map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_NS_uniq.bed &
 done
 wait
+
+# wc *bed -l
+#    8207 HT_dREG_5mat5pat_NS_uniq.bed
+#    7699 KD_dREG_5mat5pat_NS_uniq.bed
+#    8113 SK_dREG_5mat5pat_NS_uniq.bed
 
 # label the dREG sites as in dREG100
 # output the whole dREG region with plus and minus strand (2 lines)
@@ -24,29 +29,58 @@ wait
 # one dREG can be plus only, minus only, or both plus and minus with  mat reads >=5 AND pat reads >=5
 for Head in HT KD SK
 do
-#  bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
-  bedtools coverage -s -a <(bedtools coverage -a ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5, $6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_uniq.bed &
+  bedtools coverage -s -a <(bedtools coverage -a ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5, $6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_uniq.bed &
 done
 wait
 
+# wc -l *bed
+#    8207 HT_dREG_5mat5pat_NS_uniq.bed # keep those with mat reads >=5 AND pat reads >=5 (NON-strand specific)
+#   16414 HT_dREG_5mat5pat_NS_uniq_labeled.bed  # twice of _NS_uniq.bed
+#    9255 HT_dREG_5mat5pat_uniq.bed # keep those with mat reads >=5 AND pat reads >=5 (strand specific)
+#    7699 KD_dREG_5mat5pat_NS_uniq.bed
+#   15398 KD_dREG_5mat5pat_NS_uniq_labeled.bed
+#    8454 KD_dREG_5mat5pat_uniq.bed
+#    8113 SK_dREG_5mat5pat_NS_uniq.bed
+#   16226 SK_dREG_5mat5pat_NS_uniq_labeled.bed
+#    9335 SK_dREG_5mat5pat_uniq.bed
 
 unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
 # generate a smaller SNP file for IGV, SNPs within 100bp of the dREG sites
 intersectBed -sorted -u -b <(zcat Browser/*.dREG.peak.score.bed.gz| awk '{OFS="\t"}{print $1, $2-100, $3+100}'|sort-bed -) -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed -) | gzip > SNP_in_dREG.bed.gz &
 
+# identify the abundance of PolII at each position
+# strand specific
+# use all reads (not just allelic reads)
+wait
+for Head in HT KD SK
+do
+  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}*.map5.1bp.sorted.bed.gz ) > ${Head}_allReads_temp0.bed &
+done
 
 # identify the abundance of PolII at each position
 # strand specific
-wait
+# use ONLY allelic reads
+
 for Head in HT KD SK
 do
   for allele in mat pat
   do
-  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp.bed &
+  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp0.bed &
 done
 done
 wait 
 
+# paste the all reads  and alleleic reads count into a table
+# only keep base with at least 2 all reads ($8 >1)
+for Head in HT KD SK
+do
+  for allele in mat pat
+  do
+    paste ${Head}_allReads_temp0.bed ${Head}_${allele}_temp0.bed | awk 'BEGIN{OFS="\t"} ($4==$12 && $8 >1 ) {print $0}' |cut -f 9- > ${Head}_${allele}_temp.bed &
+  done
+done
+
+wait
 # use python script to generaye input for KS test
 for Head in HT KD SK
 do
@@ -69,29 +103,44 @@ do
   #echo ${Head}_all.dREG.peak.score.bed.gz
 zcat Browser/${Head}_all.dREG.peak.score.bed.gz |wc -l
 done
+# 42670
+# 68655
+# 36395
 wait
 for Tissue in HT KD SK
 do
   wc -l ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed
 done
+# 9255 HT_dREG_5mat5pat_uniq_pValue.bed
+# 8454 KD_dREG_5mat5pat_uniq_pValue.bed
+# 9335 SK_dREG_5mat5pat_uniq_pValue.bed
 
 for Tissue in HT KD SK
 do
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($7 <= 0.05){print $0, $1c$2d$3 }' |wc -l
 done
+
+# 1574
+# 1177
+# 1443
+
 for Tissue in HT KD SK
 do
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }' |wc -l
 done
+# 946
+# 682
+# 821
 
 for Tissue in HT KD SK
 do
   echo ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed 
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }'  > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }'  > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.txt
 done
 
 for Tissue in HT KD SK
 do
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1_TSS.bed
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed
 done
 
@@ -100,6 +149,9 @@ for Tissue in HT KD SK
 do
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 > 0.9){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.9.bed &
 done
+
+
+#HERE
 
 # merge bigwig files from mouse F5 and F6
 #cd map2ref_1bpbed
