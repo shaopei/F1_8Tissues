@@ -1,4 +1,5 @@
 #R --vanilla --slave --args $(pwd) Tissue gencode.vM20.annotation_transcript_100bp_5mat5pat_uniq < KStest.R
+# only use bed regions with at least 5 VALID mat AND 5 pat VALID reads
 
 #arguments here
 args=(commandArgs(TRUE))
@@ -31,10 +32,20 @@ pat<-read.table(paste(Tissue, name_body, "pat.perBase.bed", sep = "_"))
 name <- read.table(paste(paste(Tissue, name_body, sep = "_"), "bed", sep ="."))
 
 for (i in 1:dim(mat)[1]){
-  m=as.numeric(strsplit(as.character(mat$V7[i]), ",")[[1]])
-  p=as.numeric(strsplit(as.character(pat$V7[i]), ",")[[1]])
-name$p.value[i] = ks.test(m,p) $ p.value
+  mat$read.count[i] = length(as.numeric(strsplit(as.character(mat$V7[i]), ",")[[1]]))
+  pat$read.count[i] = length(as.numeric(strsplit(as.character(pat$V7[i]), ",")[[1]]))
+  }
+
+new_mat = mat[(mat$read.count>=5 & pat$read.count>=5),]
+new_pat = pat[(mat$read.count>=5 & pat$read.count>=5),]
+name = name[(mat$read.count>=5 & pat$read.count>=5),]
+
+for (i in 1:dim(new_mat)[1]){
+  m=as.numeric(strsplit(as.character(new_mat$V7[i]), ",")[[1]])
+  p=as.numeric(strsplit(as.character(new_pat$V7[i]), ",")[[1]])
+  name$p.value[i] = ks.test(m,p) $ p.value
 }
+
 name$p.value.fdr = p.adjust(name$p.value, method = "fdr")
 
 name=name[order(name$p.value, decreasing = FALSE),]
