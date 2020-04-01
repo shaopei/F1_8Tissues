@@ -1,6 +1,18 @@
-# identify TSB within dREG sites
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS
 
+# make 1bp bed file using the 5 prime of the nascent RNA
+wd=/workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn
+cd ${wd}
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash make_map2ref_1bpbed_map5_MultiBaseRunOn_B6_Cast_F1.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} > make_map2ref_1bpbed_map5_MultiBaseRunOn_${PREFIX}.log 2>&1 &"
+done
+
+# HERE
+
+# identify TSB within dREG sites
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn
 studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
 ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map5 .
