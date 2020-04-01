@@ -1,3 +1,5 @@
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Kidney_and_SingleRunOn/Pause_manuscript")
+
 
 t="HT"
 show.window=100

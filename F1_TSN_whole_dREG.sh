@@ -135,6 +135,15 @@ done
 
 for Tissue in HT KD SK
 do
+  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 > 0.9){print $0, $1c$2d$3 }' |wc -l
+done
+# 3058
+# 3215
+# 3176
+
+
+for Tissue in HT KD SK
+do
   echo ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed 
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }'  > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.txt
 done
@@ -152,6 +161,10 @@ for Tissue in HT KD SK
 do
   cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 > 0.9){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.9.bed &
 done
+
+
+# get the fasta from dREG sites
+# fidn the maxTSN
 
 
 #HERE

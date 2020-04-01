@@ -19,6 +19,7 @@ do
   #bedtools coverage -d -s -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed_map5/${Head}*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz ) > ${Head}_allReads_temp0_pat.bed &
 done
 
+## identify TSN
 # only keep base with at least 2 all reads ($8 >1)
 wait
 for Head in HT KD SK
@@ -38,7 +39,7 @@ do
    # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least 2 reads), $6 strand of the TSS
 done
 
-## identify maxTSN with EACH TSS
+## identify maxTSNs with EACH TSS
 # use Proseq2.0, BWA mapping to mm10
 # output: "chr" "chrStart"  "chrEnd"  "TSNCount(ofTSS)"  "ReadsCount(sumOfQualifiedTSNReadsCount)"   "Strand"   "map5.peaks.posotion"   "maxReadCountOftheTSN"
 for Head in HT KD SK
