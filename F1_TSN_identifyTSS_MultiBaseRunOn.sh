@@ -32,7 +32,7 @@ done
 
 ## identify TSN
 # only keep base with at least 7 all reads ($8 >=b)
-b=2
+b=5
 wait
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
