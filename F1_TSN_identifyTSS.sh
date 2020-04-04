@@ -44,7 +44,13 @@ done
 # output: "chr" "chrStart"  "chrEnd"  "TSNCount(ofTSS)"  "ReadsCount(sumOfQualifiedTSNReadsCount)"   "Strand"   "map5.peaks.posotion"   "maxReadCountOftheTSN"
 for Head in HT KD SK
 do
-   R --vanilla --slave --args $(pwd) map5_bw/ ${Head} _allReads_TSS < getMaxTSN_cbsudanko.R &
+  rm ${Head}_allReads_TSS_maxTSNsCol7.bed
+   R --vanilla --slave --args $(pwd) ${Head} _allReads_TSS map5_bw/ < getMaxTSN_cbsudanko.R &
+done
+wait
+for Head in HT KD SK
+do
+   cat ${Head}_allReads_TSS_maxTSNsCol7.bed | awk '{OFS="\t"} ($6=="+"){print $1, $2+$7-1, $2+$7, $8, "111", $6} ($6=="-"){print $1, $3-$7, $3-$7+1, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs.bed &
 done
 
 ## use +1 10bp to identify seqlogo
@@ -54,7 +60,7 @@ d=10
 # col4 is ReadCountOftheTSN
 for Head in HT KD SK
 do
-   cat ${Head}_allReads_TSS_maxTSNs.bed | awk -v d=$d '{OFS="\t"} {print $1, $2+$7-1-d, $2+$7+d, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs+-${d}.bed &
+   cat ${Head}_allReads_TSS_maxTSNs.bed | awk -v d=$d '{OFS="\t"} {print $1, $2-d, $3+d, $4, $5, $6}' >  ${Head}_allReads_TSS_maxTSNs+-${d}.bed &
 done
 wait
 # get the sequence from fasta
@@ -63,6 +69,7 @@ for Head in HT KD SK
 do
  bedtools getfasta -s -fi mm10.fa -bed ${Head}_allReads_TSS_maxTSNs+-${d}.bed  | grep -v \> > ${Head}_allReads_TSS_maxTSNs+-${d}.txt &
 done
+wait
 # the the seqlogo
 for Head in HT KD SK
 do
