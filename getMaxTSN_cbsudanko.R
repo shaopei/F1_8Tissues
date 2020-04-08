@@ -1,12 +1,18 @@
-#R --vanilla --slave --args $(pwd) map5_bw/ HT _allReads_TSS < getMaxTSN_cbsudanko.R
+#R --vanilla --slave --args $(pwd) HT _allReads_TSS map5_bw/ _all_ < getMaxTSN_cbsudanko.R
 # only use bed regions with at least 5 VALID mat AND 5 pat VALID reads
 
 #arguments here
 args=(commandArgs(TRUE))
 setwd(args[1])
-map5_dir=args[2]
-Tissue=args[3]
-name_body=args[4]
+Tissue=args[2]
+name_body=args[3]
+map5_dir=args[4]
+if (is.na(args[5])){
+  map5_body="_PB6_F5N6_dedup_QC_end_map5_"
+}else{
+  map5_body=args[5]
+}
+
 
 t=Tissue
 #map5_dir="map5_bw/"
@@ -36,8 +42,8 @@ read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 2
 
 
 # all map5 reads
-map5.file.plus.bw <- paste(map5_dir,t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
-map5.file.minus.bw <- paste(map5_dir,t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
+map5.file.plus.bw <- paste(map5_dir, t, map5_body,"plus.bw", sep="")
+map5.file.minus.bw <- paste(map5_dir, t, map5_body, "minus.bw", sep="")
 
 TSS <- read.table(paste(tss_dir,t,name_body,".bed", sep =""), header = F)
 names(TSS)[4]="TSNCount"
@@ -61,7 +67,7 @@ for (i in 1:NROW(AT)){
     # only TSS with >0 read counts will stay
     for (j in 1:sum(map5.all == m)){
       a = cbind(AT[i,], map5.peaks=map5.peaks[j], maxReadCount = m )
-      write.table(a, file=paste(t,name_body,"_maxTSNs",".bed", sep = ""), append = T, quote=F, row.names=F, col.names=F, sep="\t")
+      write.table(a, file=paste(t,name_body,"_maxTSNsCol7",".bed", sep = ""), append = T, quote=F, row.names=F, col.names=F, sep="\t")
       #newAT <- rbind(newAT, a)
     }
   }

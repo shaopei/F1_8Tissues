@@ -18,7 +18,7 @@ studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
 ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
 
-## identify the abundance of PolII at each position
+## identify the abundance of PolII at each position of TID (dREG)
 # strand specific
 # use all reads (not just allelic reads), 
 # use mapping from bowtie mapping, pat is liftovered 
@@ -31,7 +31,7 @@ do
 done
 
 ## identify TSN
-# only keep base with at least 7 all reads ($8 >=b)
+# only keep base with at least b all reads ($8 >=b)
 b=5
 wait
 for Head in BN HT  SK  SP  KD  LV  GI  ST
@@ -63,19 +63,45 @@ do
    # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least 2 reads), $6 strand of the TSS
 done
 wait
+
 ## identify maxTSNs with EACH TSS
 # use Proseq2.0, BWA mapping to mm10
 # output: "chr" "chrStart"  "chrEnd"  "TSNCount(ofTSS)"  "ReadsCount(sumOfQualifiedTSNReadsCount)"   "Strand"   "map5.peaks.posotion"   "maxReadCountOftheTSN"
+#for Head in BN HT  SK  SP  KD  LV  GI  ST
+#do
+#	rm ${Head}_allReads_TSS_maxTSNsCol7.bed
+#    R --vanilla --slave --args $(pwd)  ${Head} _allReads_TSS bigWig/ _all_ < getMaxTSN_cbsudanko.R &
+#done
+wait
+
+## identify maxTSNs with EACH TSS
+# use mapped reads from AlleleDB (bowtie), including both mat, pat and identical reads
+
+# identify the abundance of PolII at each position of TSS
+# strand specific
+# use all reads (not just allelic reads), 
+# use mapping from bowtie mapping, pat is liftovered 
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
-	rm ${Head}_allReads_TSS_maxTSNsCol7.bed
-    R --vanilla --slave --args $(pwd)  ${Head} _allReads_TSS bigWig/ _all_ < getMaxTSN_cbsudanko.R &
-#R --vanilla --slave --args $(pwd)  ${Head} _allReads_TSS bigWig/ _MB6_all_R1.pat_1bp_ < getMaxTSN_cbsudanko.R &
+  bedtools coverage -sorted -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_TSStemp1.bed &
+  #bedtools coverage -sorted -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*_identical.map2ref.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_TSStemp1_ide.bed &
+  #bedtools coverage -sorted -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_TSStemp1_mat.bed &
+  #bedtools coverage -sorted -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_TSStemp1_pat.bed &
 done
 wait
+
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
-   cat ${Head}_allReads_TSS_maxTSNsCol7.bed | awk '{OFS="\t"} ($6=="+"){print $1, $2+$7-1, $2+$7, $8, "111", $6} ($6=="-"){print $1, $3-$7, $3-$7+1, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs.bed &
+   python getMaxTSNs_frombedtools_coverage_strandSpecific.py ${Head}_allReads_TSStemp1.bed ${Head}_allReads_TSS_maxTSNsCol7_minusStrandSameDirection.bed &
+done
+wait
+
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+   #cat ${Head}_allReads_TSS_maxTSNsCol7.bed | awk '{OFS="\t"} ($6=="+"){print $1, $2+$7-1, $2+$7, $8, "111", $6} ($6=="-"){print $1, $3-$7, $3-$7+1, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs.bed &
+   cat ${Head}_allReads_TSS_maxTSNsCol7_minusStrandSameDirection.bed | awk '{OFS="\t"} {print $1, $2+$7-1, $2+$7, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs.bed &
+
 done
 
 ## use +1 10bp to identify seqlogo
@@ -104,11 +130,46 @@ done
 
 
 
+### identify maxTSN tagged with SNPS
+# Identify maxTSNs with SNPs within 20bp, downstream only
+unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
+cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed - |gzip > unfiltered_snp.sorted.bed.gz
+
+# examine the distance distribution of closest donwstream SNP to maxTSNs
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+ bedtools closest -iu -D a -a <(sort-bed ${Head}_allReads_TSS_maxTSNs.bed) -b <(zcat unfiltered_snp.sorted.bed.gz) > ${Head}_allReads_TSS_maxTSNs_DistToDownstreamSNP.bed &
+done
 
 
+# examine the distance distribution of closest donwstream SNP to maxTSNs
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+ R --vanilla --slave --args $(pwd) ${Head}_allReads_TSS_maxTSNs_DistToDownstreamSNP.bed 11 100 < getHistFromCol.R &
+done
 
 
+### what is the distribution of allelic read length?
+cd /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/mappedReadLength
+for f in *_AMBremoved_sorted_specific.bed.gz
+do
+zcat $f | awk '{OFS="\t"} {print $0, $3-$2}' > ${f}_temp2  &
+done
+wait
+for f in *_AMBremoved_sorted_specific.bed.gz
+do
+R --vanilla --slave --args $(pwd) ${f}_temp2 7 100 < getHistFromCol.R &
+done
 
+for f in *_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.bed.gz
+do
+zcat $f | awk '{OFS="\t"} {print $0, $3-$2}' > ${f}_temp2  &
+done
+wait
+for f in *_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.bed.gz
+do
+R --vanilla --slave --args $(pwd) ${f}_temp2 7 100 < getHistFromCol.R &
+done
 
 
 
