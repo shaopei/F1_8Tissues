@@ -141,6 +141,12 @@ do
  bedtools closest -iu -D a -a <(sort-bed ${Head}_allReads_TSS_maxTSNs.bed) -b <(zcat unfiltered_snp.sorted.bed.gz) > ${Head}_allReads_TSS_maxTSNs_DistToDownstreamSNP.bed &
 done
 
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+ do 
+cat ${Head}_allReads_TSS_maxTSNs_DistToDownstreamSNP.bed | awk '{OFS="\t"} ($11-0 <= 20 && $11 != -1){print $0}' | cut -f 1-6 > ${Head}_allReads_TSS_maxTSNs_SNPs20bp.bed &
+done
+
+
 
 # examine the distance distribution of closest donwstream SNP to maxTSNs
 for Head in BN HT  SK  SP  KD  LV  GI  ST
