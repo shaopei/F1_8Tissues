@@ -72,7 +72,7 @@ wait
 #	rm ${Head}_allReads_TSS_maxTSNsCol7.bed
 #    R --vanilla --slave --args $(pwd)  ${Head} _allReads_TSS bigWig/ _all_ < getMaxTSN_cbsudanko.R &
 #done
-wait
+
 
 ## identify maxTSNs with EACH TSS
 # use mapped reads from AlleleDB (bowtie), including both mat, pat and identical reads
@@ -81,6 +81,7 @@ wait
 # strand specific
 # use all reads (not just allelic reads), 
 # use mapping from bowtie mapping, pat is liftovered 
+wait
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
   bedtools coverage -sorted -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_TSStemp1.bed &
@@ -143,7 +144,7 @@ done
 
 for Head in BN HT  SK  SP  KD  LV  GI  ST
  do 
-cat ${Head}_allReads_TSS_maxTSNs_DistToDownstreamSNP.bed | awk '{OFS="\t"} ($11-0 <= 20 && $11 != -1){print $0}' | cut -f 1-6 > ${Head}_allReads_TSS_maxTSNs_SNPs20bp.bed &
+cat ${Head}_allReads_TSS_maxTSNs_DistToDownstreamSNP.bed | awk '{OFS="\t"} ($11-0==$11 && $11-0 <= 20 && $11 != -1){print $0}' | cut -f 1-6 > ${Head}_allReads_TSS_maxTSNs_SNPs20bp.bed &
 done
 
 
@@ -178,15 +179,19 @@ R --vanilla --slave --args $(pwd) ${f}_temp2 7 100 < getHistFromCol.R &
 done
 
 
-
-
-# identify the abundance of PolII at each position of TSS
-# strand specific
-# use all reads (not just allelic reads), 
-# use mapping from bowtie mapping, pat is liftovered 
-for Head in BN HT  SK  SP  KD  LV  GI  ST
-do
-  bedtools coverage -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.map5.1bp.sorted.bed.gz ) > ${Head}_allReads_TSS_PosAllReadCounts.bed &
+# use allelic reads that are at least lbp (>=l)
+l=20
+wd=/workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn
+cd ${wd}
+echo "keep read length >= ${l}"
+for folder in allelicbias-PersonalGenome_P.CAST_M.B6-*_R1
+  do #echo ${folder}
+  PREFIX=`echo ${folder}|rev |cut -d - -f 1 |rev`
+  #echo ${PREFIX}
+  echo "bash make_map2ref_1bpbed_map5_ReadLengthFiltered.bsh ${PREFIX} ${wd}/allelicbias-PersonalGenome_P.CAST_M.B6-${PREFIX} ${l} > make_map2ref_1bpbed_map5_ReadLengthFiltered_${PREFIX}.log 2>&1 &"
 done
 
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
 
