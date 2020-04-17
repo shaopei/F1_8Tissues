@@ -34,9 +34,10 @@ with open(outfp, "w") as out:
             outside = np.invert(inside)
             subdata = data[inside,:]
             subdata_np = np.array(subdata)
+            readCount = subdata_np[:,7].astype(int)
             data = data[outside,:]
-            maxReadCounts= max(subdata_np[:,7])
-            maxTSNs=subdata[subdata_np[:,7]==maxReadCounts]
+            #maxReadCounts= max(readCount)
+            maxTSNs=subdata[readCount==max(readCount)]
             if len(maxTSNs) > 0 :
                 for s in maxTSNs:
                     out.write("\t".join(s))
