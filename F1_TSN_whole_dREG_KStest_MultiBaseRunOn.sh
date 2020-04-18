@@ -121,6 +121,16 @@ wait
 for Head in BN HT  SK  SP  KD  LV  GI  ST 
 do
 R --vanilla --slave --args $(pwd) ${Head} ${studyBed}_5mat5pat_uniq < KStest_flexible_length.R &
+# output ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed bed6, col7 p.value, col8 fdr
+done
+
+# exmaine TID in IGV
+f=0.1
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_fdr${f}.bed
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f && $6 =="+"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_fdr${f}_plus.bed
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f && $6 =="-"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_fdr${f}_minus.bed
 done
 
 #HERE
@@ -151,24 +161,24 @@ done
 
 
 
-for Tissue in HT KD SK
+for Tissue in BN HT  SK  SP  KD  LV  GI  ST
 do
-  echo ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed 
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }'  > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.txt
+  echo ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed 
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0, $1c$2d$3 }'  > ${Head}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.txt
 done
 
 for Tissue in HT KD SK
 do
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1_TSS.bed
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($6 =="+"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_TSS_plus.bed
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($6 =="-"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_TSS_minus.bed
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' |sort-bed - > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1_TSS.bed
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($6 =="+"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_pValue_TSS_plus.bed
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($6 =="-"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_pValue_TSS_minus.bed
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 <= 0.1){print $0}' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_pValue_fdr0.1.bed
 done
 
 
 for Tissue in HT KD SK
 do
-  cat ${Tissue}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 > 0.9){print $0}' > ${Tissue}_${studyBed}_5mat5pat_uniq_pValue_fdr0.9.bed &
+  cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk 'BEGIN{OFS="\t"; c=":"; d="-"} ($8 > 0.9){print $0}' > ${Head}_${studyBed}_5mat5pat_uniq_pValue_fdr0.9.bed &
 done
 
 
