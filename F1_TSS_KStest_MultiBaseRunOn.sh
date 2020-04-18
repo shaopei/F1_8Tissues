@@ -1,77 +1,41 @@
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TID.dREG_KStest_MultiBaseRunOn
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSS_KStest_MultiBaseRunOn
 
-studyBed=dREG
-ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
+# TSS identify see https://github.com/shaopei/F1_8Tissues/blob/master/F1_TSN_identifyTSS_MultiBaseRunOn.sh
+# TSS are strand-specific
+ln -s ../identifyTSS_MultiBaseRunOn/*_allReads_TSS.bed .
+studyBed=allReads_TSS
+
+# Use TSS sites with  mat reads >=5 AND pat reads >=5 (strand specific) 
+# remove TSS in chrX
 ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
-ln -s ../Fake_Find_span_between_max_read_spots_reportWholedREG.py .
-ln -s ../Generate_vector_input_for_KStest_NodupPlusMinus.py .
-ln -s ../KStest_flexible_length.R .
-
-# Use dREG sites with  mat reads >=5 AND pat reads >=5 (not strand specific (NS))
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
-  bedtools coverage   -a <(bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"}') -b <(zcat map2ref_1bpbed_map5/${Head}_*.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed_map5/${Head}_*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_NS_uniq.bed &
+  bedtools coverage -sorted -s -a <(bedtools coverage -sorted -a <(grep -v chrX ${Head}_${studyBed}.bed) -b <(zcat map2ref_1bpbed_map5/${Head}_*.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz | sort-bed - --max-mem 10G ) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') \
+   -b <(zcat map2ref_1bpbed_map5/${Head}_*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz | sort-bed - --max-mem 10G ) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5, $6}'\
+   | sort-bed - --max-mem 10G |uniq > ${Head}_${studyBed}_5mat5pat_uniq.bed &
 done
 wait
 
-[sc2457@cbsudanko TID.dREG_KStest_MultiBaseRunOn]$ wc *bed -l
-  21420 BN_dREG_5mat5pat_NS_uniq.bed
-  16950 GI_dREG_5mat5pat_NS_uniq.bed
-  11426 HT_dREG_5mat5pat_NS_uniq.bed
-  16600 KD_dREG_5mat5pat_NS_uniq.bed
-  26743 LV_dREG_5mat5pat_NS_uniq.bed
-  10271 SK_dREG_5mat5pat_NS_uniq.bed
-  16807 SP_dREG_5mat5pat_NS_uniq.bed
-   9311 ST_dREG_5mat5pat_NS_uniq.bed
- 129528 total
-
-# label the dREG sites as in dREG100
-# output the whole dREG region with plus and minus strand (2 lines)
-for Head in BN HT  SK  SP  KD  LV  GI  ST
-do
-  python Fake_Find_span_between_max_read_spots_reportWholedREG.py ${Head}_${studyBed}_5mat5pat_NS_uniq.bed ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed & 
-done
-wait
-
-# Use dREG sites with  mat reads >=5 AND pat reads >=5 (strand specific) (above was non-strand specific, here furthur restrict 5 mat reads AND 5 pat reads per strand)
-# one dREG can be plus only, minus only, or both plus and minus with  mat reads >=5 AND pat reads >=5
-for Head in BN HT  SK  SP  KD  LV  GI  ST
-do
-  bedtools coverage -s -a <(bedtools coverage -a ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed -b <(zcat map2ref_1bpbed_map5/${Head}_*.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed_map5/${Head}_*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5, $6}'| sort-bed - |uniq > ${Head}_${studyBed}_5mat5pat_uniq.bed &
-done
-wait
-
-[sc2457@cbsudanko TID.dREG_KStest_MultiBaseRunOn]$ wc -l *bed
-   21420 BN_dREG_5mat5pat_NS_uniq.bed # keep those with mat reads >=5 AND pat reads >=5 (NON-strand specific)
-   42840 BN_dREG_5mat5pat_NS_uniq_labeled.bed # twice(+ and - strand) of _NS_uniq.bed
-   25437 BN_dREG_5mat5pat_uniq.bed  # keep those with mat reads >=5 AND pat reads >=5 (strand specific)
-   16950 GI_dREG_5mat5pat_NS_uniq.bed
-   33900 GI_dREG_5mat5pat_NS_uniq_labeled.bed
-   19840 GI_dREG_5mat5pat_uniq.bed
-   11426 HT_dREG_5mat5pat_NS_uniq.bed
-   22852 HT_dREG_5mat5pat_NS_uniq_labeled.bed
-   13359 HT_dREG_5mat5pat_uniq.bed
-   16600 KD_dREG_5mat5pat_NS_uniq.bed
-   33200 KD_dREG_5mat5pat_NS_uniq_labeled.bed
-   19333 KD_dREG_5mat5pat_uniq.bed
-   26743 LV_dREG_5mat5pat_NS_uniq.bed
-   53486 LV_dREG_5mat5pat_NS_uniq_labeled.bed
-   33956 LV_dREG_5mat5pat_uniq.bed
-   10271 SK_dREG_5mat5pat_NS_uniq.bed
-   20542 SK_dREG_5mat5pat_NS_uniq_labeled.bed
-   12160 SK_dREG_5mat5pat_uniq.bed
-   16807 SP_dREG_5mat5pat_NS_uniq.bed
-   33614 SP_dREG_5mat5pat_NS_uniq_labeled.bed
-   20516 SP_dREG_5mat5pat_uniq.bed
-    9311 ST_dREG_5mat5pat_NS_uniq.bed
-   18622 ST_dREG_5mat5pat_NS_uniq_labeled.bed
-   10731 ST_dREG_5mat5pat_uniq.bed
-  543916 total
+[sc2457@cbsudanko TSS_KStest_MultiBaseRunOn]$ wc -l *bed
+   78652 BN_allReads_TSS.bed
+   10991 BN_allReads_TSS_5mat5pat_uniq.bed
+   41125 GI_allReads_TSS.bed
+    7180 GI_allReads_TSS_5mat5pat_uniq.bed
+   42521 HT_allReads_TSS.bed
+    6747 HT_allReads_TSS_5mat5pat_uniq.bed
+   39004 KD_allReads_TSS.bed
+    6662 KD_allReads_TSS_5mat5pat_uniq.bed
+   91606 LV_allReads_TSS.bed
+   17595 LV_allReads_TSS_5mat5pat_uniq.bed
+   32363 SK_allReads_TSS.bed
+    4568 SK_allReads_TSS_5mat5pat_uniq.bed
+   53686 SP_allReads_TSS.bed
+    9280 SP_allReads_TSS_5mat5pat_uniq.bed
+   34172 ST_allReads_TSS.bed
+    5223 ST_allReads_TSS_5mat5pat_uniq.bed
+  481375 total
 
 
-unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
-# generate a smaller SNP file for IGV, SNPs within 100bp of the dREG sites
-intersectBed -sorted -u -b <(zcat Browser/*.dREG.peak.score.bed.gz| awk '{OFS="\t"}{print $1, $2-100, $3+100}'|sort-bed -) -a <(cat ${unfiltered_snp} |awk '{OFS="\t"}{print "chr"$1, $2-1, $2, $6 }' |sort-bed -) | gzip > SNP_in_dREG.bed.gz &
 
 # identify the abundance of PolII at each position
 # strand specific
@@ -79,18 +43,17 @@ intersectBed -sorted -u -b <(zcat Browser/*.dREG.peak.score.bed.gz| awk '{OFS="\
 wait
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
-  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.map5.1bp.sorted.bed.gz ) > ${Head}_allReads_temp0.bed &
+  bedtools coverage -sorted -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.map5.1bp.sorted.bed.gz |sort-bed - --max-mem 10G  ) > ${Head}_allReads_temp0.bed &
 done
 
 # identify the abundance of PolII at each position
 # strand specific
 # use ONLY allelic reads
-
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
   for allele in mat pat
   do
-  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed_map5/${Head}_*_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz ) > ${Head}_${allele}_temp0.bed &
+  bedtools coverage -sorted -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed_map5/${Head}_*_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz |sort-bed - --max-mem 10G) > ${Head}_${allele}_temp0.bed &
 done
 done
 wait 
@@ -102,11 +65,13 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
   for allele in mat pat
   do
-    paste ${Head}_allReads_temp0.bed ${Head}_${allele}_temp0.bed | awk -v b=$b 'BEGIN{OFS="\t"} ($4==$12 && $8 >= b ) {print $0}' |cut -f 9- > ${Head}_${allele}_temp.bed &
+    paste ${Head}_allReads_temp0.bed ${Head}_${allele}_temp0.bed | awk -v b=$b 'BEGIN{OFS="\t"} ($2==$10 && $3==$11 && $8+0 >= b ) {print $0}' |cut -f 9- > ${Head}_${allele}_temp.bed &
   done
 done
 
 wait
+ln -s ../Generate_vector_input_for_KStest_NodupPlusMinus.py .
+ln -s ../KStest_flexible_length.R .
 # use python script to generaye input for KS test
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
@@ -124,7 +89,7 @@ R --vanilla --slave --args $(pwd) ${Head} ${studyBed}_5mat5pat_uniq < KStest_fle
 # output ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed bed6, col7 p.value, col8 fdr
 done
 
-# exmaine TID in IGV
+# exmaine TSS in IGV
 f=0.1
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
