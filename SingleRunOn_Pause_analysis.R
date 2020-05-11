@@ -758,13 +758,13 @@ show.window=25
                                 dist=200, step=step, up_dist =100, 
                                 file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                 metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
-                                breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
+                                breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE, center.at.TSN = FALSE)
   t=paste(t0,"_fdr0.1",sep = "")
   a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
                                         dist=200, step=step, up_dist =100, 
                                         file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                         metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
-                                        breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE)
+                                        breaks=seq(0, 1, 0.1), map5=TRUE,heatmap=FALSE, center.at.TSN = FALSE)
   
   #dev.off()
   pdf(paste("SNP_fdr0.1N0.9_compare_",t0,".pdf",sep = ""), width=8, height = 8)
@@ -803,13 +803,13 @@ show.window=25
                                         dist=200, step=step, up_dist =100, 
                                         file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                         metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
-                                        breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
+                                        breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE, center.at.TSN = FALSE)
   t=paste(t0,"_fdr0.1",sep = "")
   a_0.9 = heatmap.SNPsLocation.inPause (pause_window_0.9, SNP.bw, file.plus.bw, file.minus.bw ,
                                         dist=200, step=step, up_dist =100, 
                                         file.pdf=paste(t,"_SNPs_heatmap_step2_up100_dist200_map5.pdf",sep=""),
                                         metaplot.pdf=paste(t,"_SNPs_sum_step2_up100_dist200_map5.pdf",sep=""),
-                                        breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE)
+                                        breaks=seq(0, 1, 0.1), map5=FALSE,heatmap=FALSE, center.at.TSN = FALSE)
   
   #dev.off()
   #pdf(paste("SNP_fdr0.1N0.9_compare_longPause_",t0,".pdf",sep = ""))
