@@ -98,6 +98,33 @@ do
   cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f && $6 =="-"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_fdr${f}_minus.bed
 done
 
+# merge mat, pat, iden to all reads bigwig track
+export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+
+for Head in  BN HT  SK  SP  KD  LV  GI  ST
+do
+# Convert to bedGraph ... 
+j=${Head}_map2ref_1bpbed_map5
+bedtools genomecov -bg -i <(zcat ${Head}_*.map2ref.map5.1bp.sorted.bed.gz |LC_COLLATE=C sort -k 1,1) -g ${mouse_chinfo} -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_plus.bedGraph &
+bedtools genomecov -bg -i <(zcat ${Head}_*.map2ref.map5.1bp.sorted.bed.gz |LC_COLLATE=C sort -k 1,1) -g ${mouse_chinfo} -strand - |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_minus.bedGraph &
+done
+wait
+# Then to bigWig
+for Head in  BN HT  SK  SP  KD  LV  GI  ST
+do
+  j=${Head}_map2ref_1bpbed_map5
+  cat $j\_minus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' >  $j\_minus.inv.bedGraph 
+  bedGraphToBigWig $j\_minus.inv.bedGraph ${mouse_chinfo} $j\_minus.bw &
+  bedGraphToBigWig $j\_plus.bedGraph ${mouse_chinfo} $j\_plus.bw &
+
+done
+
+
+###
+
+
+
 #HERE
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
