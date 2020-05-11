@@ -198,12 +198,6 @@ ln -s ../allelicbias-PersonalGenome_P.CAST_M.B6-*/*map2ref.map5.1bp.R20bp.sorted
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn
 ln -s ${wd}/map2ref_1bpbed_map5_FromMappedReadAtLeast20bpLong .
 
-for Head in BN HT  SK  SP  KD  LV  GI  ST
-do
-
-
-
-
 PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
 MAPS=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/%s_P.CAST.EiJ_M.C57BL.6J.map
 FDR_SIMS=10
@@ -250,6 +244,7 @@ BinomialTest_TSN(){
   python ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}_binomtest.bed
   R --vanilla --slave --args $(pwd) ${j}_binomtest.bed 9 0.1 ${j}_binomtest_Rfdr0.1.bed < getCorrectedPValue.R &
   R --vanilla --slave --args $(pwd) ${j}_binomtest.bed 9 0.2 ${j}_binomtest_Rfdr0.2.bed < getCorrectedPValue.R &
+  R --vanilla --slave --args $(pwd) ${j}_binomtest.bed 9 1 ${j}_binomtest_Rfdr1.bed < getCorrectedPValue.R &
   python ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt 
   awk 'NR==1 { print $0 } NR>1 && ($9+0) <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_binomtest_interestingHets.bed
   mv ${j}.mat_cov.bed ${j}.pat_cov.bed ${j}.merged_cov.bed toremove
@@ -288,6 +283,68 @@ j=${Head}_allReads_TSS_maxTSNs_SNPs20bp
 cat ${j}_binomtest.bed                 | awk 'BEGIN{OFS="\t"} NR>1 {print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_IGV.bed
 cat ${j}_binomtest_interestingHets.bed | awk 'BEGIN{OFS="\t"} NR>1 {print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_interestingHets_IGV.bed
 cat ${j}_binomtest_Rfdr0.1.bed         | awk 'BEGIN{OFS="\t"} NR>1 {print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_Rfdr0.1_IGV.bed  
+cat ${j}_binomtest_Rfdr1.bed           | awk 'BEGIN{OFS="\t"} (NR>1 && $11+0 >0.9){print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_Rfdr0.9_IGV.bed 
 cat ${j}_binomtest_Rfdr0.2.bed         | awk 'BEGIN{OFS="\t"} NR>1 {print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_Rfdr0.2_IGV.bed  
 done
 
+### seperate allelic different maxTSN into two groups: one inside allelic shape different TSS, one ouside
+# use ${j}_binomtest_Rfdr0.1.bed  
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/maxTSN_TSS_TID_combine_analysis_MultiBaseRunOn
+ln -s ../TSS_KStest_MultiBaseRunOn/*_allReads_TSS_5mat5pat_uniq_fdr0.1.bed .
+ln -s ../identifyTSS_maxTSNs_MultiBaseRunOn/*_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1_IGV.bed .
+ln -s ../TID.dREG_KStest_MultiBaseRunOn/*_dREG_5mat5pat_uniq_fdr0.1.bed .
+
+# examine if as.maxTSN is inside asTSS or asTID, strand specific
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  bedtools coverage -sorted -s -a ${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1_IGV.bed -b ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed > ${Head}_maxTSN_AS.TSS_temp &
+  bedtools coverage -sorted -s -a ${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1_IGV.bed -b ${Head}_dREG_5mat5pat_uniq_fdr0.1.bed > ${Head}_maxTSN_AS.TID_temp &
+done
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+paste ${Head}_maxTSN_AS.TSS_temp  ${Head}_maxTSN_AS.TID_temp | awk '{OFS="\t"} ($2==$12) {print $1,$2,$3,$4,$5,$6, $7, $17}' > ${Head}_maxTSN_AsTSS_AsTID.bed
+mv ${Head}_maxTSN_AS.TSS_temp  ${Head}_maxTSN_AS.TID_temp toremove/.
+done
+
+echo -e "Organ\tmaxTSN\tmaxTSN_asTSS_only\tmaxTSN_asTID_only\tmaxTSN_asTSS_AND_asTID" > maxTSN_AsTSS_AsTID_summary.txt
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  # maxTSN, maxTSN_asTSS_only, maxTSN_asTID_only, maxTSN_asTSS_AND_asTID
+  echo ${Head} > temp
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | wc -l  >> temp
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t"} ($7==1 && $8==0){print $0}' |wc -l >> temp
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t"} ($8==1 && $7==0){print $0}' |wc -l >> temp
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t"} ($7+$8==2){print $0}' |wc -l >> temp
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t"} ($7+$8==1){print $0}' |wc -l >> temp
+
+  paste temp -s >> maxTSN_AsTSS_AsTID_summary.txt
+done
+
+# uniq TID (not just allelic different one) that tagged with as.maxTSN
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  bedtools coverage -sorted -s -a ${Head}_dREG_5mat5pat_uniq.bed -b ${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1_IGV.bed \
+  | awk '{OFS="\t"} ($7>=1){print $0}' | cut -f 1-6 |sort-bed - |uniq
+done
+# the subset of uniq TID with 2+ TSS(that tagged with SNPs)
+# the asTID that
+
+
+# check some exmaples at IGV
+Head=BN
+#maxTSN_with_asTSS_only (no asTID)
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t";m=":"; d="-"} ($7==1 && $8==0){print $0, $1m$2d$3}'
+  #maxTSN_with_asTID_only (no asTSS)
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t";m=":"; d="-"}  ($8==1 && $7==0){print $0, $1m$2d$3}'
+  #maxTSN with Both asTID and asTSS
+  cat ${Head}_maxTSN_AsTSS_AsTID.bed | awk '{OFS="\t";m=":"; d="-"}  ($8==1 && $7==1){print $0, $1m$2d$3}'
+
+# asTID with at least 2 asTSS (not check maxTSN, the only 1 of the output contains maxTSN in brain)
+echo -e "Organ\tasTIDwith2+asTSS_Count" > AsTID_w2+asTSS_summary.txt
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  echo ${Head} > temp
+bedtools coverage -sorted -a ${Head}_dREG_5mat5pat_uniq_fdr0.1.bed   -b ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed | awk '{OFS="\t";m=":"; d="-"} ($7 >= 2) {print $0, $1m$2d$3}' |cut -f 1-3 |uniq |wc -l >> temp
+paste temp -s >> AsTID_w2+asTSS_summary.txt
+done
