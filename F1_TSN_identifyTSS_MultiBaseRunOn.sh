@@ -287,6 +287,10 @@ cat ${j}_binomtest_Rfdr1.bed           | awk 'BEGIN{OFS="\t"} (NR>1 && $11+0 >0.
 cat ${j}_binomtest_Rfdr0.2.bed         | awk 'BEGIN{OFS="\t"} NR>1 {print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_Rfdr0.2_IGV.bed  
 done
 
+# examine the distribution of SNPs near maxTSN.
+# Compare as.maxTSN (R, fdr<=0.1) vs non.as.maxTSN (R, fdr>= 0.9)
+Rscript getSNPsAbundance.R
+
 ### seperate allelic different maxTSN into two groups: one inside allelic shape different TSS, one ouside
 # use ${j}_binomtest_Rfdr0.1.bed  
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/maxTSN_TSS_TID_combine_analysis_MultiBaseRunOn
