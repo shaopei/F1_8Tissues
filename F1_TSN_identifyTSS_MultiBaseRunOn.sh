@@ -105,7 +105,7 @@ do
 
 done
 
-## use +1 10bp to identify seqlogo
+## use +- 10bp to identify seqlogo
 wait
 d=10
 # get the bed geions 
@@ -352,3 +352,67 @@ do
 bedtools coverage -sorted -a ${Head}_dREG_5mat5pat_uniq_fdr0.1.bed   -b ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed | awk '{OFS="\t";m=":"; d="-"} ($7 >= 2) {print $0, $1m$2d$3}' |cut -f 1-3 |uniq |wc -l >> temp
 paste temp -s >> AsTID_w2+asTSS_summary.txt
 done
+
+
+### calculate Tm around maxTSN. High allele and low allele
+# generate maternal and paternal genome to get the sequence 
+cd /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam
+rm P.CAST.EiJ_M.C57BL.6J_paternal_all.fa
+for f in *_P.CAST.EiJ_M.C57BL.6J_paternal.fa
+do cat $f >> P.CAST.EiJ_M.C57BL.6J_paternal_all.fa
+done
+
+cd /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam
+rm P.CAST.EiJ_M.C57BL.6J_maternal_all.fa
+for f in *_P.CAST.EiJ_M.C57BL.6J_maternal.fa
+do cat $f >> P.CAST.EiJ_M.C57BL.6J_maternal_all.fa
+done
+
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn
+ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_paternal_all.fa .
+ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_maternal_all.fa .
+ 
+## use +- d bp to identify seq
+wait
+d=20
+# get the bed geions 
+# col4 and col5 is win_pareant,mat_read_count,pat_read_count (col5 is S if not significantly allelic biased)
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  j=${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1
+   cat ${j}.bed | awk -v d=$d '{OFS="\t"} NR>1 {print $1, $2-d, $3+d, $4, $5, $10}' >  ${j}_+-${d}.bed &
+done
+
+wait
+# get the sequence from fasta
+# -s  Force strandedness. If the feature occupies the antisense strand, the sequence will be reverse complemented. Default: strand information is ignored.
+
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  j=${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1
+ #bedtools getfasta -s -fi mm10.fa -bed ${j}_+-${d}.bed  | grep -v \> > ${j}_mm10.txt &
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}_+-${d}.bed |awk '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2,$3,$4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}_+-${d}.bed |awk '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2,$3,$4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+done
+wait
+
+# examine if the result is the same as using mm10
+# diff -i  BN_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1_mm10.txt BN_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1_P.CAST.EiJ_M.C57BL.6J_maternal.txt
+# YES!
+
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  j=${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr0.1
+  paste ${j}_+-${d}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+  cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($4,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8} (substr($4,1,1)=="P") {print $1,$2,$3,$4,$5, $6, $8, $7}' > ${j}_+-${d}_High_LowAlleleSeq.bed 
+done
+
+Rscript getGC_content_HighLowAllele.R
+
+
+
+
+

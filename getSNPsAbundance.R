@@ -4,11 +4,11 @@ require(bigWig)
 
 
 ### SNP locations
-#setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation")
+#setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/SNPs_distribution")
 #source("/Users/shaopei/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
 
-SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
-#SNP.bw <- "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+#SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+SNP.bw <- "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
 
 read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.log=FALSE)
 {
@@ -73,7 +73,7 @@ show.window <- d
   points(x, a,col="red", type="o")
   legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
          col=c("red", "blue"), bty = "n", lty=1, pch=1)
-  plot(x,a-b, type="o", xlab="distance to maxSNP",ylab="substract", las=1, main="substract")#, ylim=c(0,max(a,b)))
+  plot(x,a-b, type="o", xlab="distance to maxSNP",ylab="substract", las=1, main="substract", ylim=c(-0.05,0.15))
   dev.off()
 
 }
