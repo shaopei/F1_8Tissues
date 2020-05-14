@@ -1,3 +1,7 @@
+### used for single base runon ChRO-seq
+
+
+
 # identify TSB within dREG sites
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS
 
@@ -39,19 +43,26 @@ do
    # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least 2 reads), $6 strand of the TSS
 done
 
-## identify maxTSNs with EACH TSS
-# use Proseq2.0, BWA mapping to mm10
-# output: "chr" "chrStart"  "chrEnd"  "TSNCount(ofTSS)"  "ReadsCount(sumOfQualifiedTSNReadsCount)"   "Strand"   "map5.peaks.posotion"   "maxReadCountOftheTSN"
-for Head in HT KD SK
-do
-  rm ${Head}_allReads_TSS_maxTSNsCol7.bed
-   R --vanilla --slave --args $(pwd) ${Head} _allReads_TSS map5_bw/ < getMaxTSN_cbsudanko.R &
-done
-wait
-for Head in HT KD SK
-do
+USE_mm10=FALSE
+if [ "$USE_mm10" == "TRUE" ]
+  then
+  echo "use mapped reads to mm10: $USE_mm10"
+
+  ## identify maxTSNs with EACH TSS
+  # use Proseq2.0, BWA mapping to mm10
+  # output: "chr" "chrStart"  "chrEnd"  "TSNCount(ofTSS)"  "ReadsCount(sumOfQualifiedTSNReadsCount)"   "Strand"   "map5.peaks.posotion"   "maxReadCountOftheTSN"
+  for Head in HT KD SK
+  do
+    rm ${Head}_allReads_TSS_maxTSNsCol7.bed
+    R --vanilla --slave --args $(pwd) ${Head} _allReads_TSS map5_bw/ < getMaxTSN_cbsudanko.R &
+  done
+  wait
+  for Head in HT KD SK
+  do
    cat ${Head}_allReads_TSS_maxTSNsCol7.bed | awk '{OFS="\t"} ($6=="+"){print $1, $2+$7-1, $2+$7, $8, "111", $6} ($6=="-"){print $1, $3-$7, $3-$7+1, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs.bed &
-done
+  done
+fi
+
 
 ## use +1 10bp to identify seqlogo
 wait
