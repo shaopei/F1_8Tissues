@@ -415,4 +415,3 @@ Rscript getGC_content_HighLowAllele.R
 
 
 
-
