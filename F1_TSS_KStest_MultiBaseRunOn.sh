@@ -250,18 +250,33 @@ do
   cat ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_masked_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($6 =="-"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_masked_pValue_IGV_minus.bed
 done
 
-# how many noAs.TSS.with_as.maxTSN became as.TSS after mask?
+# make a table to comapre masked and unmasked p-value and fdr
 ln -s ../TSS_KStest_MultiBaseRunOn/*_${studyBed}_5mat5pat_uniq_pValue.bed .
 # -a masked -b umasked
-bedtools intersect -wb -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_masked_pValue.bed -b ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"} {print $9,$10,$11,$12,$13,$14,$7,$8,$15,$16}'> ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed 
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+bedtools intersect -wb -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_masked_pValue.bed \
+-b ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"} {print $9,$10,$11,$12,$13,$14,$7,$8,$15,$16}' \
+> ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed 
 # output is bed6, col7 maksed pavlue,col 8 masked fdr,col 9 unmaksed pvalue, col 10 unmaked fdr
-BN_allReads_TSS_5mat5pat_uniq_pValue.bed
+
+# as.TSS driven by muliple base (p-value <= cut off) cut off determine by the p-value of the unmaksed KS test (fdr<=0.1)
+f=0.1
+cat ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"} ($10+0 <= f){print $0}' > ${Head}.temp2
+P_cutoff=`R --vanilla --slave --args ${Head}.temp2 9 < getColMax.R`
+cat ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed | awk -v p=$P_cutoff 'BEGIN{OFS="\t"} ($7+0 <= p){print $0}' > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValueLessThanCutOff${P_cutoff}.bed 
 
 
+### examine SNPs distribution in asTSS: driven by single base VS driven by multiple base
+#bed6, col7 maksed pavlue,col 8 masked fdr,col 9 unmaksed pvalue, col 10 unmaked fdr 
+#${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed 
 
-
-
-
+# label the location of maxTSS
+ ln -s ../identifyTSS_maxTSNs_MultiBaseRunOn/*_allReads_TSS_maxTSNs.bed .
+ bedtools intersect -wo -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed -b ${Head}_allReads_TSS_maxTSNs.bed > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue_maxTSNs.bed 
+# distribuiton of SNPs in TSS as comparation
+ bedtools intersect -wo -s -a <(cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed |awk '{OFS="\t"} {print $1, $2,$3,$4, $5,$6, "NA", "NA", $7,$8 }' ) -b ${Head}_allReads_TSS_maxTSNs.bed > ${Head}_${studyBed}_5mat5pat_uniq_pValue_maxTSNs.bed 
+Rscript getSNPsAbundance.R
 
 
 
