@@ -257,8 +257,9 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
 bedtools intersect -wb -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_masked_pValue.bed \
 -b ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"} {print $9,$10,$11,$12,$13,$14,$7,$8,$15,$16}' \
-> ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed 
+> ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed  &
 # output is bed6, col7 maksed pavlue,col 8 masked fdr,col 9 unmaksed pvalue, col 10 unmaked fdr
+done
 
 # as.TSS driven by muliple base (p-value <= cut off) cut off determine by the p-value of the unmaksed KS test (fdr<=0.1)
 f=0.1
@@ -273,60 +274,44 @@ cat ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmas
 
 # label the location of maxTSS
  ln -s ../identifyTSS_maxTSNs_MultiBaseRunOn/*_allReads_TSS_maxTSNs.bed .
- bedtools intersect -wo -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed -b ${Head}_allReads_TSS_maxTSNs.bed > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue_maxTSNs.bed 
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+ bedtools intersect -wao -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed -b ${Head}_allReads_TSS_maxTSNs.bed > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue_maxTSNs.bed &
 # distribuiton of SNPs in TSS as comparation
- bedtools intersect -wo -s -a <(cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed |awk '{OFS="\t"} {print $1, $2,$3,$4, $5,$6, "NA", "NA", $7,$8 }' ) -b ${Head}_allReads_TSS_maxTSNs.bed > ${Head}_${studyBed}_5mat5pat_uniq_pValue_maxTSNs.bed 
+ bedtools intersect -wao -s -a <(cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed |awk '{OFS="\t"} {print $1, $2,$3,$4, $5,$6, "NA", "NA", $7,$8 }' ) -b ${Head}_allReads_TSS_maxTSNs.bed > ${Head}_${studyBed}_5mat5pat_uniq_pValue_maxTSNs.bed &
+done
 Rscript getSNPsAbundance.R
 
 
-
-
-
-
-
-
-
-
-
-
-
-#### remove below later
-### use ${Head}_${studyBed}_5mat5pat_uniq.bed as input, not ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1.bed 
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSS_KStest_MultiBaseRunOn
-# mask the TSN with biggest difference between the two alleles
-ln -s ../MaskTSNwithMaxAllelicDifference.py .
+# how many single base driven asTSS contains as.maxTSN?
+# how many multiple base driven asTSS contains as.maxTSN?
+ ln -s ../identifyTSS_maxTSNs_MultiBaseRunOn/*_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr1.bed .
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
-paste ${Head}_mat_temp.bed ${Head}_pat_temp.bed  | awk -v b=$b 'BEGIN{OFS="\t"} ($2==$10 && $3==$11 && $7 == $15 ) {print $0}'> ${Head}_mat_pat_temp.bed 
-python MaskTSNwithMaxAllelicDifference.py ${Head}_mat_pat_temp.bed ${Head}_mat_pat_temp_masked.bed 
-cat ${Head}_mat_pat_temp_masked.bed | cut -f 1-8 > ${Head}_mat_temp_masked.bed
-cat ${Head}_mat_pat_temp_masked.bed | cut -f 9-16 > ${Head}_pat_temp_masked.bed
+ bedtools intersect -wao -s -a ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed \
+ -b <(cat ${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr1.bed| awk '{OFS="\t"} NR>1 {print $1,$2,$3,$9,$11,$10}') \
+  > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue_As.maxTSNs.bed &
+# col 14 bimonial test p value for maxTSN
+# col 15 fdr from R
 done
+#Rscript getSNPsAbundance.R
+#((# of as.maxTSN in single base driven asTSS) / (# of single base driven asTSS))/ ((# of as.maxTSN in multiple base driven asTSS) / (# of multiple base driven asTSS))
+cat(sum(s$chrmStart != -1 & s$BinoP_Rfdr <= 0.1) / dim(s)[1])/(sum(m$chrmStart != -1 & m$BinoP_Rfdr <= 0.1) / dim(m)[1]), "\n")
+BN
+0.9875109
+LV
+0.7492129
+HT
+0.8075789
+SK
+0.7980105
+KD
+0.5261127
+SP
+0.6926174
+GI
+1.259533
+ST
+0.796875
 
-wait
-ln -s ../Generate_vector_input_for_KStest_NodupPlusMinus.py .
-ln -s ../KStest_flexible_length.R .
-# use python script to generaye input for KS test
-for Head in BN HT  SK  SP  KD  LV  GI  ST
-do
-  for allele in mat pat
-  do
-python Generate_vector_input_for_KStest_NodupPlusMinus.py ${Head}_${allele}_temp_masked.bed ${Head}_${studyBed}_5mat5pat_uniq_masked_${allele}.perBase.bed &
-done
-done
-wait
 
-# get p-value for KS test in R
-for Head in BN HT  SK  SP  KD  LV  GI  ST 
-do
-  ln -s  ${Head}_${studyBed}_5mat5pat_uniq.bed ${Head}_${studyBed}_5mat5pat_uniq_masked.bed
-R --vanilla --slave --args $(pwd) ${Head} ${studyBed}_5mat5pat_uniq_masked < KStest_flexible_length.R &
-# output ${Head}_${studyBed}_5mat5pat_uniq_masked_pValue.bed bed6, col7 p.value, col8 fdr
-done
-
-# exmaine TSS in IGV
-f=0.1
-for Head in BN HT  SK  SP  KD  LV  GI  ST
-do
-  cat ${Head}_${studyBed}_5mat5pat_uniq_masked_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f){print $0 }' | wc -l
-done
