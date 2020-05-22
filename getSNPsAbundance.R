@@ -69,11 +69,11 @@ show.window <- d
   #par(mgp=c(3,1,0))
   #par(cex.lab=2.2, cex.axis=2.2)  
   
-  plot(x, b, col="blue", xlab="distance to maxSNP", ylab="SNPs mean", main=name, type="o", ylim=c(0,max(a,b)), las=1)
+  plot(x, b, col="blue", xlab="distance to maxTSN", ylab="SNPs mean", main=name, type="o", ylim=c(0,max(a,b)), las=1)
   points(x, a,col="red", type="o")
   legend("topright", legend=c("fdr<=0.1", "fdr>0.9"),
          col=c("red", "blue"), bty = "n", lty=1, pch=1)
-  plot(x,a-b, type="o", xlab="distance to maxSNP",ylab="substract", las=1, main="substract", ylim=c(-0.05,0.15))
+  plot(x,a-b, type="o", xlab="distance to maxTSN",ylab="substract", las=1, main="substract", ylim=c(-0.05,0.15))
   dev.off()
 
 }
@@ -171,49 +171,49 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
     #par(mgp=c(3,1,0))
     #par(cex.lab=2.2, cex.axis=2.2)  
     
-    plot(x, b, col="black", xlab="distance to maxSNP", ylab="SNPs mean", main=paste(name, "all TSS d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
+    plot(x, b, col="black", xlab="distance to maxTSN", ylab="SNPs mean", main=paste(name, "all TSS d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
     points(x, a,col="purple", type="o")
     legend("topleft", legend=c(paste("fdr<=0.1, n=", dim(g1)[1]), paste("fdr>0.9, n=", dim(g9)[1])),
            col=c("purple", "black"), bty = "n", lty=1, pch=1)
     
-    plot(x,a-b, type="o", xlab="distance to maxSNP",ylab="substract", las=1, main="fdr0.1 - fdr0.9")#, ylim=c(-0.05,0.05))
+    plot(x,a-b, type="o", xlab="distance to maxTSN",ylab="substract", las=1, main="fdr0.1 - fdr0.9")#, ylim=c(-0.05,0.05))
     abline(h=0, col="green")
     
-    plot(x,s_plot-m_plot, type="o", xlab="distance to maxSNP",ylab="single - multiple", las=1, main="single - multiple")#, ylim=c(-0.05,0.05))
+    plot(x,s_plot-m_plot, type="o", xlab="distance to maxTSN",ylab="single - multiple", las=1, main="single - multiple")#, ylim=c(-0.05,0.05))
     abline(h=0, col="green")
     abline(v=-5, col="orange")
     abline(v=5, col="orange")
     abline(v=35, col="orange")
     
-    plot(x, m_plot, col="blue", xlab="distance to maxSNP", ylab="SNPs mean", main="FDR<=0.1 TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
+    plot(x, m_plot, col="blue", xlab="distance to maxTSN", ylab="SNPs mean", main="FDR<=0.1 TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
     points(x, s_plot,col="red", type="o")
     legend("topleft", legend=c(paste("Single base, n=", dim(s)[1],sep=""), paste("Multiple base, n=", dim(m)[1],sep="")),
            col=c("red", "blue"), bty = "n", lty=1, pch=1)
     
 
     
-    plot(x, b,col="black",  xlab="distance to maxSNP", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
+    plot(x, b,col="black",  xlab="distance to maxTSN", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
     points(x, s_plot, col="red", type="o")
     
     legend("topleft", legend=c(paste("Single base, n=", dim(s)[1],sep=""), paste("fdr>0.9, n=", dim(g9)[1])),
            col=c("red", "black"), bty = "n", lty=1, pch=1)
     
-    plot(x, m_plot, col="blue", xlab="distance to maxSNP", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
+    plot(x, m_plot, col="blue", xlab="distance to maxTSN", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
     points(x, b,col="black", type="o")
     
     legend("topleft", legend=c(paste("Multiple base, n=", dim(m)[1],sep=""), paste("fdr>0.9, n=", dim(g9)[1])),
            col=c("blue", "black"), bty = "n", lty=1, pch=1)
     
-    plot(x, s_plot - b,col="red", pch=19,  xlab="distance to maxSNP", ylab="SNPs mean", main="fdr 0.1 - fdr0.9 TSS", type="o", las=1)
+    plot(x, s_plot - b,col="red", pch=19,  xlab="distance to maxTSN", ylab="SNPs mean", main="fdr 0.1 - fdr0.9 TSS", type="o", las=1)
     points(x, m_plot - b,col="blue", pch=19, type="o")
     abline(h=0, col="green") 
     legend("topleft", legend=c(paste("Single base, n=", dim(s)[1],sep=""), paste("Multiple base, n=", dim(m)[1],sep="")),
            col=c("red", "blue"), bty = "n", lty=1, pch=19)
     
-    plot(x, s_plot - b,col="red", pch=19, xlab="distance to maxSNP", ylab="SNPs mean", main="fdr 0.1 Single - fdr0.9 TSS", type="o", las=1)
+    plot(x, s_plot - b,col="red", pch=19, xlab="distance to maxTSN", ylab="SNPs mean", main="fdr 0.1 Single - fdr0.9 TSS", type="o", las=1)
     abline(h=0, col="green")
     
-    plot(x, m_plot - b,col="blue", pch=19,  xlab="distance to maxSNP", ylab="SNPs mean", main="fdr 0.1 multiple - fdr0.9 TSS", type="o", las=1)
+    plot(x, m_plot - b,col="blue", pch=19,  xlab="distance to maxTSN", ylab="SNPs mean", main="fdr 0.1 multiple - fdr0.9 TSS", type="o", las=1)
     abline(h=0, col="green")  
     dev.off()
     
@@ -452,7 +452,7 @@ SNPsAbundanceAroundAsMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE,
     #par(mgp=c(3,1,0))
     #par(cex.lab=2.2, cex.axis=2.2)  
 
-    plot(x, AsmaxTSN_plot,col="green", xlab="distance to ASmaxSNP", ylab="SNPs mean", main=paste(name, "all TSS d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+    plot(x, AsmaxTSN_plot,col="green", xlab="distance to ASmaxTSN", ylab="SNPs mean", main=paste(name, "all TSS d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, nonAsTSS_plot,col="black", type="o", pch=19)
     points(x, inAsTSS_plot,col="purple", type="o", pch=19) #,bg="black")
     points(x, withoutTSSAStest_plot,col="brown", type="o")
@@ -469,16 +469,16 @@ SNPsAbundanceAroundAsMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE,
     pdf(paste(name,"_AsMaxTSN_TSS_SNPs_d=",d,"_step=",step,".pdf",sep=""), width=10, height = 10)
     par(mfrow=c(4,2))
     
-    plot(x, AsmaxTSN_plot,col="green", xlab="distance to maxSNP", ylab="SNPs mean", main=paste(name, "all maxTSN_20bp d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+    plot(x, AsmaxTSN_plot,col="green", xlab="distance to maxTSN", ylab="SNPs mean", main=paste(name, "all maxTSN_20bp d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, NonAsmaxTSN_plot,col="black", type="o", pch=17, bg="black")    
     legend("topleft", legend=c(paste("As.maxTSN (fdr<=0.1), n=", dim(AsmaxTSN)[1]), 
                                paste("Non.As.maxTSN (fdr>0.9), n=", dim(NonAsmaxTSN)[1])), 
            col=c("green", "black"), bty = "n", lty=1, pch=c(1,17))
     
-    plot(x,AsmaxTSN_plot - NonAsmaxTSN_plot, type="o", xlab="distance to maxSNP",ylab="substract", las=1, main="asMaxTSN(fdr0.1) - non.as.MaxTSN(fdr0.9)")#, ylim=c(-0.05,0.05))
+    plot(x,AsmaxTSN_plot - NonAsmaxTSN_plot, type="o", xlab="distance to maxTSN",ylab="substract", las=1, main="asMaxTSN(fdr0.1) - non.as.MaxTSN(fdr0.9)")#, ylim=c(-0.05,0.05))
     abline(h=0, col="green")
     
-    plot(x, AsmaxTSN_plot,col="green", xlab="distance to ASmaxSNP", ylab="SNPs mean", main=paste(name, "all AsMaxTSN d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+    plot(x, AsmaxTSN_plot,col="green", xlab="distance to ASmaxTSN", ylab="SNPs mean", main=paste(name, "all AsMaxTSN d=",d," step=",step, sep=" "), type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, nonAsTSS_plot,col="black", type="o", pch=19)
     points(x, inAsTSS_plot,col="purple", type="o", pch=19) #,bg="black")
     points(x, withoutTSSAStest_plot,col="brown", type="o")
@@ -490,22 +490,22 @@ SNPsAbundanceAroundAsMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE,
                                paste("As.maxTSN in TSS without AS test, n=", dim(withoutTSSAStest)[1])),
            col=c("green", "purple","black", "brown"), bty = "n", lty=1, pch=c(1,19,19,1))
     
-    plot(x,inAsTSS_plot- nonAsTSS_plot, type="o", xlab="distance to ASmaxSNP",ylab="substract", las=1, main="asMaxTSN in asTSS(fdr0.1) - asMaxTSN in nonasTSS(fdr0.9)")#, ylim=c(-0.05,0.05))
+    plot(x,inAsTSS_plot- nonAsTSS_plot, type="o", xlab="distance to ASmaxTSN",ylab="substract", las=1, main="asMaxTSN in asTSS(fdr0.1) - asMaxTSN in nonasTSS(fdr0.9)")#, ylim=c(-0.05,0.05))
     abline(h=0, col="green")
     
-    plot(x, m_plot,col="blue", xlab="distance to ASmaxSNP", ylab="SNPs mean", main="asMaxTSN in asTSS(fdr<=0.1)", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+    plot(x, m_plot,col="blue", xlab="distance to ASmaxTSN", ylab="SNPs mean", main="asMaxTSN in asTSS(fdr<=0.1)", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, s_plot,col="red", type="o")
     legend("topleft", legend=c(paste("AsMaxTSN in Single base, n=", dim(s)[1],sep=""), paste("AsMaxTSN in Multiple base, n=", dim(m)[1],sep="")),
            col=c("red", "blue"), bty = "n", lty=1, pch=1)
     
-    plot(x,s_plot-m_plot, type="o", xlab="distance to ASmaxSNP",ylab="single - multiple", las=1, main="single - multiple")#, ylim=c(-0.05,0.05))
+    plot(x,s_plot-m_plot, type="o", xlab="distance to ASmaxTSN",ylab="single - multiple", las=1, main="single - multiple")#, ylim=c(-0.05,0.05))
     abline(h=0, col="green")
     abline(v=-5, col="orange")
     abline(v=5, col="orange")
     abline(v=35, col="orange")
     
     if(0){
-    plot(x, inAsTSS_plot, pch=19, col="purple",  xlab="distance to ASmaxSNP", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+    plot(x, inAsTSS_plot, pch=19, col="purple",  xlab="distance to ASmaxTSN", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, s_plot, col="red", type="o")
     points(x, m_plot, col="blue", type="o")
     
@@ -514,14 +514,14 @@ SNPsAbundanceAroundAsMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE,
     }
 
     plot(x, nonAsTSS_plot,col="black",  pch=19,
-         xlab="distance to ASmaxSNP", ylab="SNPs mean", main="AsMaxTSN in TSS", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+         xlab="distance to ASmaxTSN", ylab="SNPs mean", main="AsMaxTSN in TSS", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, s_plot, col="red", type="o")
     legend("topleft", legend=c(paste("AsMaxTSN in SingleD AsTSS , n=", dim(s)[1],sep=""), paste("AsMaxTSN in nonAs TSS fdr>0.9, n=", dim(nonAsTSS)[1])),
            col=c("red", "black"), bty = "n", lty=1, pch=c(1,19))
     
    
     plot(x, nonAsTSS_plot,col="black",  pch=19,
-         xlab="distance to ASmaxSNP", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
+         xlab="distance to ASmaxTSN", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(AsmaxTSN_plot,inAsTSS_plot,s_plot,m_plot)), las=1)
     points(x, m_plot, col="blue", type="o")
     legend("topleft", legend=c(paste("AsMaxTSN in MultipleD AsTSS, n=", dim(m)[1],sep=""), paste("AsMaxTSN in nonAs TSS fdr>0.9, n=", dim(nonAsTSS)[1])),
            col=c("blue", "black"), bty = "n", lty=1, pch=c(1,19))
