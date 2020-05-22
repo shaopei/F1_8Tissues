@@ -294,6 +294,16 @@ do
 # col 14 bimonial test p value for maxTSN
 # col 15 fdr from R
 done
+
+
+# how many as.maxTSN in  single base driven asTSS, multiple base driven asTSS, or non.asTSS
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+ bedtools intersect -wao -s -a <(cat ${Head}_allReads_TSS_maxTSNs_SNPs20bp_binomtest_Rfdr1.bed| awk '{OFS="\t"} NR>1 {print $1,$2,$3,$9,$11,$10}') \
+ -b ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue.bed \
+  > ${Head}_${studyBed}_5mat5pat_uniq_WithAsMaxTSNunionAsTSSfdr0.1_maskedVSunmasked_pValue_As.maxTSNs_ba.bed &
+done
+
 #Rscript getSNPsAbundance.R
 #((# of as.maxTSN in single base driven asTSS) / (# of single base driven asTSS))/ ((# of as.maxTSN in multiple base driven asTSS) / (# of multiple base driven asTSS))
 cat(sum(s$chrmStart != -1 & s$BinoP_Rfdr <= 0.1) / dim(s)[1])/(sum(m$chrmStart != -1 & m$BinoP_Rfdr <= 0.1) / dim(m)[1]), "\n")
