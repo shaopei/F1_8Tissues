@@ -609,11 +609,46 @@ done
 done
 
 
+GC_content_TSS(){
+ Head=$1
+ j=$2
+ d=$3
+ step=$4
 
+ if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($13,4)p, $14-d, $15+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($13,4)p, $14-d, $15+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($11,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9, $10, substr($11,1,1),$11, $12, $13, $14, $16, $17} 
+ (substr($11,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $8, $9, $10, substr($11,1,1), $11, $12, $13, $14, $17, $16}' > ${j}_+-${d}_High_LowAlleleSeq.bed 
+fi
 
+R --vanilla --slave --args ${j}_+-${d}_High_LowAlleleSeq.bed  ${Head} ${step} ${d} < getGC_content_HighLowAllele.R 
+}
 
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+d=200
+step=4
+GC_content_TSS ${Head} ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs $d ${step} &
+done
 
+for Head in BN LV HT   SP # KD   SK  GI  ST
+do
+d=35
+for step in 3 4 5 6
+  do 
+GC_content_TSS ${Head} ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs $d ${step} &
+done
 
+d=202
+for step in  5 9
+  do 
+GC_content_TSS ${Head} ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs $d ${step} &
+done
 
 
 
