@@ -115,6 +115,7 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
   }
   
   if(draw_plot){
+    if(0){
     pdf(paste(name,"_AsTSS_SNPs_d=",d,"_step=",step,".pdf",sep=""), width=15, height = 10)
     par(mfcol=c(3,3))
     #par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -139,21 +140,30 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
     points(x, s_plot,col="red", type="o")
     legend("topleft", legend=c(paste("Single base, n=", dim(s)[1],sep=""), paste("Multiple base, n=", dim(m)[1],sep="")),
            col=c("red", "blue"), bty = "n", lty=1, pch=1)
+    }
+    pdf(paste(name,"_AsTSS_SNPs_d=",d,"_step=",step,"-S.pdf",sep=""), width=9.23, height = 6.52)
+    par(mfcol=c(2,1))
+    par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+    par(mgp=c(3,1,0))
+    par(cex.lab=2.2, cex.axis=2.2)
+    #par(cex=1.5)
+    pch_u=15
+    plot(x, b,col="black",  xlab="distance to maxTSN", ylab="SNPs mean", 
+         main=name, type="o", ylim=c(0,max(a,b,s_plot,m_plot)), pch=pch_u, las=1, frame=FALSE)
+    points(x, s_plot, col="red", type="o", pch=pch_u)
     
-
+    legend("topleft", legend=c(paste("Single, n=", dim(s)[1],sep=""), paste("NS, n=", dim(g9)[1])),
+           col=c("red", "black"), bty = "n", lty=1, pch=pch_u)
     
-    plot(x, b,col="black",  xlab="distance to maxTSN", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
-    points(x, s_plot, col="red", type="o")
+    plot(x, m_plot, col="blue", xlab="distance to maxTSN", ylab="SNPs mean", main="", type="o", 
+         ylim=c(0,max(a,b,s_plot,m_plot)), las=1, pch=pch_u, frame=FALSE)
+    points(x, b,col="black", type="o", pch=pch_u)
     
-    legend("topleft", legend=c(paste("Single base, n=", dim(s)[1],sep=""), paste("fdr>0.9, n=", dim(g9)[1])),
-           col=c("red", "black"), bty = "n", lty=1, pch=1)
+    legend("topleft", legend=c(paste("Multiple, n=", dim(m)[1],sep=""), paste("NS, n=", dim(g9)[1])),
+           col=c("blue", "black"), bty = "n", lty=1, pch=pch_u) #, cex=2)
     
-    plot(x, m_plot, col="blue", xlab="distance to maxTSN", ylab="SNPs mean", main="TSS", type="o", ylim=c(0,max(a,b,s_plot,m_plot)), las=1)
-    points(x, b,col="black", type="o")
-    
-    legend("topleft", legend=c(paste("Multiple base, n=", dim(m)[1],sep=""), paste("fdr>0.9, n=", dim(g9)[1])),
-           col=c("blue", "black"), bty = "n", lty=1, pch=1)
-    
+    dev.off()
+    if(0){
     plot(x, s_plot - b,col="red", pch=19,  xlab="distance to maxTSN", ylab="SNPs mean", main="fdr 0.1 - fdr0.9 TSS", type="o", las=1)
     points(x, m_plot - b,col="blue", pch=19, type="o")
     abline(h=0, col="black") 
@@ -167,14 +177,14 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
     plot(x, m_plot - b,col="blue", pch=19,  xlab="distance to maxTSN", ylab="SNPs mean", main="fdr 0.1 multiple - fdr0.9 TSS", type="o", las=1)
     abline(h=0, col="green")  
     dev.off()
-    
+    }
     
   }
   return (list(x,s_plot, m_plot, dim(s), dim(m)))
   
 }
 
-Organ=c("BN","LV","HT", "SK", "KD", "SP", "GI", "ST")
+Organ=c("BN","LV","HT", "SP", "GI", "ST")
 s_count <- NULL
 m_count <- NULL
 for(t in Organ){
@@ -194,13 +204,32 @@ save.image("TSS_SingleAndMultiple.RData")
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/SNPs_distribution")
 load("TSS_SingleAndMultiple.RData")
 df$s_ratio= df$s_count/(df$s_count+df$m_count)
+df = df[df$Organ != "KD",]
+df = df[df$Organ != "SK",]
 
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
-boxplot(x = df$s_ratio, ylab="Proportion of Allelic different TSS driven by single base",
-        las=2
+# boxplot(x = df$s_ratio, ylab="Proportion of Allelic different TSS driven by single base",
+#         las=2,
+#         frame = FALSE,
+#         ylim=c(0,1))
+barplot(mean(df$s_ratio), ylab="Proportion of Allelic different TSS driven by single base",
+        ylim=c(0,1), col="red", las=2)
         
-        #ylim=c(0,1)
-        )
-stripchart(df$s_ratio, vertical = TRUE, add = TRUE, method = "jitter", pch=19, col="red",jitter = 0.1, offset = 0, cex=2)
+stripchart(df$s_ratio, vertical = TRUE, add = TRUE, method = "jitter", pch=19, col="black",jitter = 0.1, offset = 0, cex=2)
+
+legend("topright", 
+       legend=c("Multiple", "Single"),
+       #pch=c(15,15),
+       cex=2, 
+       lty=0,
+       #bty="n",
+       lwd=1.5, 
+       #density=25,angle=45,
+       fill=c("blue", "red")
+       , bty = "n"
+)
+
+
+
