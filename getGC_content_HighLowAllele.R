@@ -232,7 +232,7 @@ for(organ in c("BN","LV","HT", "SK", "KD", "SP", "GI", "ST")){
 
 #for(organ in c("BN","LV","HT", "SK", "KD", "SP", "GI", "ST")){
   name=organ
-  #df=read.table(file =paste(organ,"_allReads_TSS_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs_+-200_High_LowAlleleSeq.bed", sep=""))
+  #df=read.table(file =paste(organ,"_allReads_TSS_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs_+-35_High_LowAlleleSeq.bed", sep=""))
   #
   
 
