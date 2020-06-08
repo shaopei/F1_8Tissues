@@ -32,7 +32,10 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
 }
 
 
-SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, use.sum=FALSE, name="", OnlyAsTSS= FALSE, OnlynonAsTSSwithAsMaxTSN= FALSE, p_value_cut=NULL , draw_plot=TRUE){ 
+SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, use.sum=FALSE, name="", 
+                                          OnlyAsTSS= FALSE, OnlynonAsTSSwithAsMaxTSN= FALSE, p_value_cut=NULL ,
+                                          draw_plot=TRUE,
+                                          s_l=NULL, m_l=NULL){ 
   #d=202
   AllTSS_maxTSN = read.table(paste(name,"_allReads_TSS_5mat5pat_uniq_pValue_maxTSNs.bed",sep=""), header = F)
   colnames(AllTSS_maxTSN)[7:10]=c("masked_p_value","masked_fdr", "unmasked_p_value","unmasked_fdr")
@@ -152,12 +155,28 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
          main=name, type="o", ylim=c(0,max(a,b,s_plot,m_plot)), pch=pch_u, las=1, frame=FALSE)
     points(x, s_plot, col="red", type="o", pch=pch_u)
     
+    if (! is.null(s_l)){
+      for (l in s_l){
+        abline(v=l-5, col="green")
+        abline(v=l+4, col="orange")
+      }
+    }
+    
     legend("topleft", legend=c(paste("Single, n=", dim(s)[1],sep=""), paste("NS, n=", dim(g9)[1])),
            col=c("red", "black"), bty = "n", lty=1, pch=pch_u)
     
     plot(x, m_plot, col="blue", xlab="distance to maxTSN", ylab="SNPs mean", main="", type="o", 
          ylim=c(0,max(a,b,s_plot,m_plot)), las=1, pch=pch_u, frame=FALSE)
     points(x, b,col="black", type="o", pch=pch_u)
+   
+    if (! is.null(m_l)){
+      for (l in m_l){
+        abline(v=l-5, col="green")
+        abline(v=l+4, col="orange")
+      }
+    }
+    
+    
     
     legend("topleft", legend=c(paste("Multiple, n=", dim(m)[1],sep=""), paste("NS, n=", dim(g9)[1])),
            col=c("blue", "black"), bty = "n", lty=1, pch=pch_u) #, cex=2)
@@ -232,6 +251,7 @@ legend("topright",
 )
 
 # SNPs fisher's exact test
+# test if single base driven as.TSS are more likeliy to contain SNPs (have 1 or more than 1) comapred to N.S. ASS (fdr>0.9)
 presentByBin <- function(x, bin=5){
   # the last bin will be removed
   output_bin<- NULL
@@ -245,7 +265,7 @@ TSSwithSNPsAroundMaxTSN <-function(d=50, bin=5,times=1, use.log=FALSE, use.sum=F
   #d=202
   step=1
   AllTSS_maxTSN = read.table(paste(name,"_allReads_TSS_5mat5pat_uniq_pValue_maxTSNs.bed",sep=""), header = F)
-  getcolnames(AllTSS_maxTSN)[7:10]=c("masked_p_value","masked_fdr", "unmasked_p_value","unmasked_fdr")
+  colnames(AllTSS_maxTSN)[7:10]=c("masked_p_value","masked_fdr", "unmasked_p_value","unmasked_fdr")
   colnames(AllTSS_maxTSN)[11:13]=c("chrm","chrmStart", "chrmEnd")
   # TSS not allelic different (fdr>0.9)
   g1 =  AllTSS_maxTSN[AllTSS_maxTSN$unmasked_fdr <= 0.1,c(11:16,9)]
@@ -360,14 +380,10 @@ TSSwithSNPsAroundMaxTSN <-function(d=50, bin=5,times=1, use.log=FALSE, use.sum=F
 }
 
 
-Organ=c("BN","LV","HT", "SP", "GI", "ST")
-g9_SNP_sum_count <- NULL
-s_SNP_sum_count <- NULL
-m_SNP_sum_count <- NULL
-#for(t in Organ){
 
+fdr_cutoff=0.05
 for (t in c("BN", "LV")){
-  bin=5
+  bin=10
   temp = TSSwithSNPsAroundMaxTSN(maxTSN, d=202, bin=bin,times=1, use.log=FALSE, use.sum=TRUE, name=t, OnlyAsTSS= TRUE)
   # return (list(x,s_plot, m_plot, dim(s), dim(m), b, dim(g9)))   
   s_TSSCountWithSNPs = temp[[2]]
@@ -388,7 +404,7 @@ for (t in c("BN", "LV")){
                       dimnames = list(TSS = c("With SNPs", "Without"),
                                       KS.Test = c("Single", "NS"))); testor
     
-    f = fisher.test(testor); f
+    f = fisher.test(testor, alternative = "greater" ); f
     p.value= c(p.value, f$p.value)
     odds.ratio = c(odds.ratio, f$estimate)
   }
@@ -396,11 +412,14 @@ for (t in c("BN", "LV")){
   #par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
   #par(mgp=c(3,1,0))
   #par(cex.lab=2.2, cex.axis=2.2)
-  pdf(paste(t,"_AsTSS_SNPsPresense_d=",d,"_bin=",bin,".pdf",sep=""), width=5.3, height = 7.5)
+  pdf(paste(t,"_AsTSS_SNPsPresense_d=",d,"_bin=",bin,"_fdrcutoff=",fdr_cutoff,".pdf",sep=""), width=5.3, height = 7.5)
   par(mfrow=c(4,1))
   adjust.p = p.adjust(p.value, method="fdr")
   plot(temp[[1]],-1*log10(adjust.p), type="o" , xlab="dist to maxTSN", main=paste(t,"_SingleBaseTSS_SNPs_bin=",bin, sep=""), las=1, col="red")
-  abline(h=-1*log10(0.05),col="gray")
+  abline(h=-1*log10(fdr_cutoff),col="gray")
+  #text(temp[[1]][which(adjust.p<=0.1)]+1,-1*log10(adjust.p[which(adjust.p<=0.1)]), label=paste(temp[[1]][which(adjust.p<=0.1)], sep=" "))
+  text(temp[[1]][which(adjust.p<=fdr_cutoff)],1, label=paste(temp[[1]][which(adjust.p<=fdr_cutoff)], sep=" "))
+  s_l=temp[[1]][which(adjust.p<=fdr_cutoff)]
   #plot(temp[[1]],-1*log10(adjust.p), type="o" , xlab="dist to maxTSN", main=paste(t,"_SingleBaseTSS_SNPs", sep=""))
   plot(temp[[1]],odds.ratio, type="o" , xlab="dist to maxTSN", main=paste(t,"_SingleBaseTSS_SNPs", sep=""), las=1)
   abline(h=1, col="gray")
@@ -424,9 +443,15 @@ for (t in c("BN", "LV")){
   adjust.p = p.adjust(p.value, method="fdr")
   plot(temp[[1]],-1*log10(adjust.p), type="o" , xlab="dist to maxTSN", main=paste(t,"_multipleBaseTSS_SNPs_bin=",bin, sep="")
        , las=1, col="blue")
-  abline(h=-1*log10(0.05),col="gray")
-  #plot(temp[[1]],-1*log10(adjust.p), type="o" , xlab="dist to maxTSN", main=paste(t,"_multipleBaseTSS_SNPs", sep=""))
+  abline(h=-1*log10(fdr_cutoff),col="gray")
+  text(temp[[1]][which(adjust.p<=fdr_cutoff)],1, label=paste(temp[[1]][which(adjust.p<=fdr_cutoff)], sep=" "))
+  m_l=temp[[1]][which(adjust.p<=fdr_cutoff)]
+    #plot(temp[[1]],-1*log10(adjust.p), type="o" , xlab="dist to maxTSN", main=paste(t,"_multipleBaseTSS_SNPs", sep=""))
   plot(temp[[1]],odds.ratio, type="o" , xlab="dist to maxTSN", main=paste(t,"_multipleBaseTSS_SNPs", sep=""), las=1)
   abline(h=1, col="gray")
   dev.off()
+  
+  # plot SNPs abundance with the interval showing where adjust.p <=0.05
+  SNPsAbundanceAroundMaxTSNInTSS(d=202, step=5,times=1, use.log=FALSE, use.sum=FALSE, name=t, OnlyAsTSS= TRUE, 
+                                 s_l=s_l, m_l=m_l)
 }
