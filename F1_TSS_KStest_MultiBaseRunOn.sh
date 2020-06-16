@@ -636,7 +636,7 @@ step=4
 GC_content_TSS ${Head} ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs $d ${step} &
 done
 
-for Head in BN LV HT   SP # KD   SK  GI  ST
+for Head in BN LV HT   SP  GI  ST# KD   SK  
 do
 d=35
 for step in 3 4 5 6

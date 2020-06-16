@@ -18,6 +18,7 @@ studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
 ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
 
+
 ## identify the abundance of PolII at each position of TID (dREG)
 # strand specific
 # use all reads (not just allelic reads), 
