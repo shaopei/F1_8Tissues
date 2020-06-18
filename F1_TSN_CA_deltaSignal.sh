@@ -6,6 +6,7 @@ b=5
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSN${b}+_IGV.bed .
 ln -s ../identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
 
+
 Head=BN
 
 #bedtools intersect -sorted -a ${Head}_allReads_TSN${b}+_IGV.bed -b unfiltered_snp.sorted.bed.gz > ${Head}_allReads_TSN${b}+_SNP.bed
@@ -15,11 +16,13 @@ wc -l ${Head}_allReads_TSN${b}+*
   #   2764 BN_allReads_TSN5+_SNP.bed
 
 
+
 bedtools closest -D a -id -a ${Head}_allReads_TSN${b}+_IGV.bed -b <(zcat unfiltered_snp.sorted.bed.gz) | awk 'BEGIN {OFS="\t"; t="_"} ($11==-1 || $11==0) {print $1, $2, $3, $4, $5, $6}'  > ${Head}_allReads_TSN${b}+_SNP.bed
 # -id	Ignore features in B that are downstream of features
 # wc -l ${Head}_allReads_TSN${b}+*
 #   473364 BN_allReads_TSN5+_IGV.bed
 #     4904 BN_allReads_TSN5+_SNP.bed
+
 
 mkdir toremove
 PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
@@ -118,4 +121,7 @@ do
 	d=50
 Seq_High_Low_TSN ${Head} ${Head}_allReads_TSN5+_SNP_binomtest_interestingHets $d
 Seq_High_Low_TSN ${Head} ${Head}_allReads_TSN5+_SNP_binomtest $d
+
+
+
 

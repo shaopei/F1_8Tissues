@@ -541,6 +541,7 @@ ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/Per
 ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_maternal_all.fa .
 ln -s ../TSS_KStest_MultiBaseRunOn/*_allReads_TSS_5mat5pat_uniq_maskedVSunmasked_pValue_maxTSNs.bed .
 
+# one TSS might contain more than 1 maxTSN
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 bedtools intersect -wo -s -a ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_pValue_maxTSNs.bed \

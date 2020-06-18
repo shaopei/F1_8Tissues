@@ -29,12 +29,20 @@ read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 2
   return(hmat);    
 }
 
-organ="BN"; d=50; name=organ
+organ="BN"; 
+asTSS = "SingleBaseDriven"# MultipleBaseDriven
+d=50; name=organ
 Dist <- NULL
 Delta_Signal <- NULL
 for (strand in c("+", "-")){
   #df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_interestingHets_+-",d,"_High_LowAlleleSeq.bed", sep=""))
-  df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
+  #df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
+  #df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
+  #df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_interestingHets_+-",d,"_High_LowAlleleSeq.bed", sep=""))
+
+  df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq_AsTSS",asTSS, ".bed", sep=""))
+  
+  
   colnames(df)[12:13] = c("HighAlleleSeq", "LowAlleleSeq")
   colnames(df)[9]="Bino_p_value"
   colnames(df)[11] = "winP"
@@ -51,6 +59,7 @@ for (strand in c("+", "-")){
   
   # keep rows with total allelic reads > 5
   df = df[df$V6+df$V7 >= 5,]
+  cat (dim(df), "\n")
   
   # make a matrix of dinucleotide. Sliding windows with overlaps
   h_m <- NULL
@@ -92,10 +101,10 @@ for (strand in c("+", "-")){
   
   step=1; times=1; use.log=FALSE
   
-  file.bw.plus.pat=paste(file_dir,"BN_map2ref_1bpbed_map5_CAST_plus.bw", sep="")
-  file.bw.minus.pat=paste(file_dir,"BN_map2ref_1bpbed_map5_CAST_minus.bw", sep="")
-  file.bw.plus.mat=paste(file_dir,"BN_map2ref_1bpbed_map5_B6_plus.bw", sep="")
-  file.bw.minus.mat=paste(file_dir,"BN_map2ref_1bpbed_map5_B6_minus.bw", sep="")
+  file.bw.plus.pat=paste(file_dir,organ, "_map2ref_1bpbed_map5_CAST_plus.bw", sep="")
+  file.bw.minus.pat=paste(file_dir,organ, "_map2ref_1bpbed_map5_CAST_minus.bw", sep="")
+  file.bw.plus.mat=paste(file_dir,organ, "_map2ref_1bpbed_map5_B6_plus.bw", sep="")
+  file.bw.minus.mat=paste(file_dir,organ, "_map2ref_1bpbed_map5_B6_minus.bw", sep="")
   readCount.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, TSS[,c(1:6)], step, times=times, use.log=use.log)
   readCount.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, TSS[,c(1:6)],  step, times=times, use.log=use.log) 
   readCount.combined <- readCount.pat + readCount.mat
@@ -126,6 +135,7 @@ for (strand in c("+", "-")){
   if (strand=="+"){
     plot(x_m[m], delta_reads[m], col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19, 
          #ylim=c(-100,100),
+         main=name,
          ylab = "log2(High Allele + 1 / Low Allele + 1)",
          xlab = "Distance to TSN with CA at High Allele")
     Dist <- c(Dist,x_m[m] )
@@ -138,19 +148,20 @@ for (strand in c("+", "-")){
   }
 }
 
+abline(h=0)
+
 out = data.frame(dist=Dist, y= Delta_Signal)
 out = out[out$dist!=-1,]
+#out = out[out$y<0 , ]
 signal.lo <-  loess(y ~ dist, out)
 x=seq(-d,d-1,1)
 p=predict(signal.lo, data.frame(dist = x), se = TRUE)
 plot(out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
      ylab = "log2(High Allele + 1 / Low Allele + 1)",
      xlab = "Distance to TSN with CA at High Allele")#, ylim=c(5,-5))
+abline(h=0)
 lines(x, p$fit, col="red" )
 plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele + 1)",
      xlab = "Distance to TSN with CA at High Allele")
 abline(h=0)
 
-  
-  plot(x_m, abs(readCount.pat-readCount.mat), col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.2), pch=19)#, ylim=c(0,150))
-  

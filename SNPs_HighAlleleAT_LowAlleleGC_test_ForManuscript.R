@@ -21,7 +21,10 @@ cat (dim(m), max(m$masked_p_value), min(m$masked_p_value), "\n")
 cat("  dim(s); max(s$masked_p_value); min(s$masked_p_value)", "\n")
 cat(dim(s), max(s$masked_p_value), min(s$masked_p_value), "\n")
 
-
+write.table(unique(m[,1:6]), file=paste(organ, "_allReads_TSS_5mat5pat_uniq_AsTSSMultipleBaseDriven.bed", sep=""), 
+            quote=F, sep="\t", row.names = F, col.names = F)
+write.table(unique(s[,1:6]), file=paste(organ, "_allReads_TSS_5mat5pat_uniq_AsTSSSingleBaseDriven.bed", sep=""), 
+            quote=F, sep="\t", row.names = F, col.names = F)
 
 
 AT2GC_SNP <- function(df, name="" ,step=5, excludeCA=FALSE){
