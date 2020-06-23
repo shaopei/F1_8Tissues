@@ -30,17 +30,20 @@ read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 2
 }
 
 organ="BN"; 
-asTSS = "SingleBaseDriven"# MultipleBaseDriven
-d=50; name=organ
+asTSS ="SingleBaseDriven" #  #
+asTSS="MultipleBaseDriven"
+asTSS=""
+d=50; name=paste(organ, asTSS, sep = " ")
 Dist <- NULL
 Delta_Signal <- NULL
+par(mfrow=c(3,1))
 for (strand in c("+", "-")){
   #df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_interestingHets_+-",d,"_High_LowAlleleSeq.bed", sep=""))
   #df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
-  #df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
+  df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
   #df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_interestingHets_+-",d,"_High_LowAlleleSeq.bed", sep=""))
 
-  df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq_AsTSS",asTSS, ".bed", sep=""))
+  #df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq_AsTSS",asTSS, ".bed", sep=""))
   
   
   colnames(df)[12:13] = c("HighAlleleSeq", "LowAlleleSeq")
@@ -157,11 +160,18 @@ signal.lo <-  loess(y ~ dist, out)
 x=seq(-d,d-1,1)
 p=predict(signal.lo, data.frame(dist = x), se = TRUE)
 plot(out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
+     main=name,
      ylab = "log2(High Allele + 1 / Low Allele + 1)",
-     xlab = "Distance to TSN with CA at High Allele")#, ylim=c(5,-5))
+     xlab = "Distance to TSN with CA at High Allele", 
+     #ylim=c(-4,4)
+     )
 abline(h=0)
 lines(x, p$fit, col="red" )
+abline(v=0)
 plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele + 1)",
+     main=name,
+     #ylim=c(-0.15, 0.01),
      xlab = "Distance to TSN with CA at High Allele")
 abline(h=0)
+abline(v=0)
 

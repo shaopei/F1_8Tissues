@@ -92,6 +92,7 @@ do
 done
 wait
 
+# report more than one maxTSN if multiple TSN share the same max read count
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
    python getMaxTSNs_frombedtools_coverage_strandSpecific.py ${Head}_allReads_TSStemp1.bed ${Head}_allReads_TSS_maxTSNsCol7_minusStrandSameDirection.bed &
