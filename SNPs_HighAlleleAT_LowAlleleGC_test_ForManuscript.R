@@ -72,7 +72,7 @@ AT2GC_SNP <- function(df, name="" ,step=5, excludeCA=FALSE){
 }
 
 
-d=35
+d=35; fdr_cutoff=0.05
 for (organ in c("LV", "BN")){
   name=organ
   df=read.table(paste(organ, "_allReads_TSS_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs_+-",d,"_High_LowAlleleSeq.bed", sep=""))
@@ -99,77 +99,6 @@ for (organ in c("LV", "BN")){
               quote=F, sep="\t", row.names = F, col.names = F)
   write.table(unique(s[,1:6]), file=paste(organ, "_allReads_TSS_5mat5pat_uniq_AsTSSSingleBaseDriven.bed", sep=""), 
               quote=F, sep="\t", row.names = F, col.names = F)
-  
-  
-  AT2GC_SNP <- function(df, name="" ,step=5, excludeCA=FALSE){
-    AT2GC_SNP=c("AG","AC","TG","TC")
-    TSS_with_AT2GC_SNP <- NULL
-    TSS_with_other_SNP <- NULL
-    TSS_without_SNP <- NULL
-    for (i in 1:NROW(df)){
-      i_TSS_with_AT2GC_SNP <- NULL
-      i_TSS_with_other_SNP <- NULL
-      i_TSS_without_SNP <- NULL
-      high_a=s2c(as.character(df$HighAlleleSeq[i]))
-      low_a=s2c(as.character(df$LowAlleleSeq[i]))
-      len_a = length(high_a)
-      d = (len_a-1)/2
-      
-      if (excludeCA){
-        #CA at a[d:(d+1)]
-        high_a = c(high_a[1:(d-1)] ,"N","N",high_a[(d+2):len_a])
-        low_a=c(low_a[1:(d-1)] ,"N","N",low_a[(d+2):len_a])
-      }
-      for (j in seq(1,(len_a-step), step)){
-        snp_a=FALSE
-        snp_o=FALSE
-        snp_n=FALSE
-        
-        sub_h=high_a[j:(j+step-1)] ; sub_l=low_a[j:(j+step-1)]
-        # if there is seq difference between high and low allele
-        if(sum(sub_h != sub_l)){  
-          #cat (i, j, "\n")
-          snp = which(sub_h != sub_l)
-          for (k in 1:length(snp)){
-            h2l_snp = c2s(c(sub_h[snp[k]], sub_l[snp[k]]))
-            if (h2l_snp %in% AT2GC_SNP){
-              # contain AT to GC snps
-              snp_a=TRUE
-            }
-          }
-          if (! snp_a){
-            # other snp
-            snp_o = TRUE
-          }
-        }else{
-          # no snp
-          snp_n=TRUE 
-        }
-        
-        i_TSS_with_AT2GC_SNP <- c(i_TSS_with_AT2GC_SNP, snp_a)
-        i_TSS_with_other_SNP <- c(i_TSS_with_other_SNP, snp_o)
-        i_TSS_without_SNP <- c(i_TSS_without_SNP, snp_n)
-      }
-      TSS_with_AT2GC_SNP <- rbind(i_TSS_with_AT2GC_SNP, TSS_with_AT2GC_SNP)
-      TSS_with_other_SNP <- rbind(i_TSS_with_other_SNP, TSS_with_other_SNP)
-      TSS_without_SNP <- rbind(i_TSS_without_SNP, TSS_without_SNP)
-    }
-    show.window = floor(len_a/2)
-    if (step >1){
-      x <- seq(-1*(show.window)+floor(step/2), show.window, step)
-    }else{
-      x <- seq(-1*(show.window), show.window, step)
-    }
-    x=x[1:length(colSums(TSS_with_other_SNP))]
-    plot(x, colSums(TSS_with_other_SNP), col="black", type="o", 
-         xlab="distance to maxTSN", main=name,
-         ylim = c(0,max(colSums(TSS_with_other_SNP),colSums(TSS_with_AT2GC_SNP))) )   
-    points(x, colSums(TSS_with_AT2GC_SNP), col="red", type="o")   
-    legend("topleft", legend=c("TSS_with_AT2GC_SNP", "TSS_with_other_SNP"),
-           col=c("red", "black"), bty = "n", lty=1, pch=1)
-    
-    return (list(x,colSums(TSS_with_AT2GC_SNP), colSums(TSS_with_other_SNP), colSums(TSS_without_SNP)))
-  }
   
   #dev.off()
   #pdf(paste(organ,"_AT2GC_SNPs.pdf", sep=""))
