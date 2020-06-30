@@ -87,6 +87,19 @@ cat ${t}_PB6_HMM_minus.bed ${t}_MB6_HMM_minus.bed |grep -v "#" |awk 'BEGIN{OFS="
 cat ${t}_PB6_HMM_plus.bed  ${t}_MB6_HMM_plus.bed  |grep -v "#" |awk 'BEGIN{OFS="\t"} {print $1,$2,$3,".",".","+"}'|LC_ALL=C sort -k1,1V -k2,2n |uniq  > combined_cross/${t}_HMM_plus.bed
 done
 
+for t in BN HT SK SP KD LV GI ST
+  do wc -l ${t}*.bed |paste - - - - - 
+done
+
+  1681 BN_HMM_minus.bed   1827 BN_HMM_plus.bed    3508 total
+  768 HT_HMM_minus.bed    791 HT_HMM_plus.bed    1559 total
+  1751 SK_HMM_minus.bed   1954 SK_HMM_plus.bed    3705 total
+  1763 SP_HMM_minus.bed   1875 SP_HMM_plus.bed    3638 total
+ 1436 KD_HMM_minus.bed   1579 KD_HMM_plus.bed    3015 total
+  2883 LV_HMM_minus.bed   3003 LV_HMM_plus.bed    5886 total
+ 1398 GI_HMM_minus.bed   1520 GI_HMM_plus.bed    2918 total
+  1660 ST_HMM_minus.bed   1753 ST_HMM_plus.bed    3413 total
+
 cd ..
 
 wait_a_second() {
@@ -211,6 +224,31 @@ wc -l *_ABconsistent* |paste - -
    1158 ST_PB6_combined_R1_HMM_minus_ABconsistent.bed      1070 ST_PB6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed
    1232 ST_PB6_combined_R1_HMM_plus_ABconsistent.bed       1131 ST_PB6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed
   68534 total
+
+for t in BN HT SK SP KD LV GI ST
+  do cat ${t}_*B6_combined_R1_HMM_plus_ABconsistent_FisherMethodP0.05.bed | awk '{OFS="\t"} NR>1 {print $1, $2, $3, "+"}' > ${t}_temp.txt
+cat ${t}_*B6_combined_R1_HMM_minus_ABconsistent_FisherMethodP0.05.bed | awk '{OFS="\t"} NR>1 {print $1, $2, $3, "-"}' >> ${t}_temp.txt
+echo "$t"
+sort ${t}_temp.txt | uniq |wc -l
+done
+# No dupicates, but the blocks might overlapped
+BN
+2956
+HT
+713
+SK
+1972
+SP
+3229
+KD
+2580
+LV
+5574
+GI
+2151
+ST
+2457
+
 # use sed to insert the first line
 sed  -i '1i #chrm\tchrmStart\tchrmEnd\twinP_count_all_samples\tp_value_all_samples\twinP\tp_value_Fisher\tp_value_individual_samples' *_ABconsistent*
 
