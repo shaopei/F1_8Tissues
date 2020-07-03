@@ -31,7 +31,7 @@ read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 2
 }
 
 
-getInr2N_Dist_Delta_Signal_aroundMaxTSN <- function(df, name, d, WithCAatHighAllele=TRUE, onlyWeakInr=FALSE, onlyCA=FALSE){
+getInr2N_Dist_Delta_Signal_aroundMaxTSN <- function(df, name, d, WithCAatHighAllele=TRUE, onlyWeakInr=FALSE, onlyCA=FALSE, plot=FALSE){
   if (onlyWeakInr & onlyCA) {
     stop("Invalid 'input' value")
     }
@@ -157,70 +157,14 @@ getInr2N_Dist_Delta_Signal_aroundMaxTSN <- function(df, name, d, WithCAatHighAll
   return (data.frame(dist=Dist, Delta_Signal= Delta_Signal))
 }
 
-organ="BN"; 
-#asTSS ="SingleBaseDriven" 
-#asTSS="MultipleBaseDriven"
-asTSS=""
-#SNP_orBackground=""
-SNP_orBackground="_SNP"
-d=50; name=paste(organ, asTSS, SNP_orBackground, sep = " ")
-
-
-
-
-# use all TSN with at least 5 reads (allelic or not)
-#df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_interestingHets_+-",d,"_High_LowAlleleSeq.bed", sep=""))
-#df=read.table(paste(organ, "_allReads_TSN5+_SNP_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
-
-# use maxTSNs only
-df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq.bed", sep=""))
-
-# use maxTSNs inside AsTSS, single or multiple base driven
-#df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_interestingHets_+-",d,"_High_LowAlleleSeq.bed", sep=""))
-#df=read.table(paste(organ, "_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq_AsTSS",asTSS, ".bed", sep=""))
-
-raw_out = getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
-
-par(mfrow=c(3,1))
-
-plot(raw_out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
-     main=name,
-     ylab = "log2(High Allele + 1 / Low Allele + 1)",
-     xlab = "Distance to TSN with CA at High Allele", 
-     #ylim=c(-4,4)
-)
-abline(h=0)
-#out = data.frame(dist=Dist, y= Delta_Signal)
-out = raw_out[raw_out $dist!=0,]
-#out = out[out$y<0 , ]
-signal.lo <-  loess(Delta_Signal ~ dist, out)
-x=seq(-d+1,d,1)
-p=predict(signal.lo, data.frame(dist = x), se = TRUE)
-plot(out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
-     main=name,
-     ylab = "log2(High Allele + 1 / Low Allele + 1)",
-     xlab = "Distance to TSN with CA at High Allele", 
-     #ylim=c(-4,4)
-     )
-abline(h=0)
-lines(x, p$fit, col="red" )
-abline(v=0)
-plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele + 1)",
-     main=name,
-     #ylim=c(-0.15, 0.01),
-     xlab = "Distance to TSN with CA at High Allele")
-abline(h=0)
-abline(v=0)
-
 ###
 library("vioplot")
 
 
 d=50
 v_list <- NULL
-#v_name_list <- NULL
-asTSS_list=c("_AsTSSSingleBaseDriven", "_AsTSSMultipleBaseDriven", "")
-asTSS_name_list=c("_Single", "_Multiple", "")
+asTSS_list=c("", "_AsTSSSingleBaseDriven", "_AsTSSMultipleBaseDriven")
+asTSS_name_list=c("","_Single", "_Multiple")
 uper_bound = 20
 lower_bound = -20
 for (organ in c("BN", "LV")){
@@ -232,45 +176,181 @@ for (organ in c("BN", "LV")){
       df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
       temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
       temp = temp[temp$dist!=0,]
-      v_list[[paste(name, "-20_",uper_bound, sep="")]] = temp$Delta_Signal[temp$dist >-20 & temp$dist<uper_bound ]
-      #v_name_list <- c(v_name_list, paste(name, "-20_0", sep="") )
-      # v_list[[paste(name, "0_20", sep="")]] = temp$Delta_Signal[temp$dist >0 & temp$dist<20 ]
-      # v_name_list <- c(v_name_list, paste(name, "0_20", sep="") )
-      
+      v_list[[paste(name, lower_bound, "_",uper_bound, sep="")]] = temp$Delta_Signal[temp$dist >lower_bound & temp$dist<uper_bound ]
+
       temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d, onlyWeakInr = TRUE)
       temp = temp[temp$dist!=0,]
-      v_list[[paste(name, "-20_",uper_bound,"_OnlyWeakInr", sep="")]] = temp$Delta_Signal[temp$dist >-20 & temp$dist<uper_bound ]
-      #v_name_list <- c(v_name_list, paste(name, "-20_0","_OnlyWeakInr", sep="") )
+      v_list[[paste(name, lower_bound,"_",uper_bound,"_OnlyWeakInr", sep="")]] = temp$Delta_Signal[temp$dist >lower_bound & temp$dist<uper_bound ]
       
       temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d, onlyCA = TRUE)
       temp = temp[temp$dist!=0,]
-      v_list[[paste(name, "-20_",uper_bound,"_OnlyCA", sep="")]] = temp$Delta_Signal[temp$dist >-20 & temp$dist<uper_bound ]
-      #v_name_list <- c(v_name_list, paste(name, "-20_0","_OnlyCA", sep="") )
-      
+      v_list[[paste(name, lower_bound, "_",uper_bound,"_OnlyCA", sep="")]] = temp$Delta_Signal[temp$dist >lower_bound & temp$dist<uper_bound ]
+
       str(v_list)
     }
   }
 }
 
-par(mar=c(16.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+
+SNP_orBackground=c("_SNP_", "_")
+SNP_orBackground_name =c("_SNP_","_BG_")
+v_list_withNewName <- NULL
+for (organ in c("BN", "LV")){
+  for (a in 1:3){
+    asTSS=asTSS_list[a]
+    asTSS_name = asTSS_name_list[a]
+    for (k in 1:2){
+      name=paste(organ, asTSS_name, sep = "")
+      v_list_withNewName[[paste(name,SNP_orBackground_name[k],"AllInr", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound, sep="")]] 
+      v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyWeakInr", sep="")]]=v_list[[paste(name,SNP_orBackground[k], lower_bound,"_",uper_bound,"_OnlyWeakInr", sep="")]]
+      v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyCA", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,"_OnlyCA", sep="")]] 
+    }
+  }
+}
+
+
+SNP_orBackground=c("_SNP_", "_")
+SNP_orBackground_name =c("_SNP_","_BG_")
+Inr_name=c("AllInr","OnlyWeakInr","OnlyCA")
+Inr=c("","_OnlyWeakInr","_OnlyCA")
+v_list_withNewName <- NULL
+
+for (i in 1:3){
+  for (a in 1:3){
+    for (organ in c("BN", "LV")){
+      asTSS=asTSS_list[a]
+      asTSS_name = asTSS_name_list[a]
+      for (k in 1:2){
+        name=paste(organ, asTSS_name, sep = "")
+        v_list_withNewName[[paste(name,SNP_orBackground_name[k],Inr_name[i], sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,Inr[i], sep="")]] 
+        #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"AllInr", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound, sep="")]] 
+        #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyWeakInr", sep="")]]=v_list[[paste(name,SNP_orBackground[k], lower_bound,"_",uper_bound,"_OnlyWeakInr", sep="")]]
+        #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyCA", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,"_OnlyCA", sep="")]] 
+      }
+    }
+  }
+}
+str(v_list_withNewName)
+# for sup figure
+pdf("ShootingGallery_Inr_comparison.pdf", width = 16, height = 8, useDingbats=FALSE)
+par(mar=c(13.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 #par(mgp=c(3,1,0))
-vioplot(v_list, las=2, 
-        ylim=c(-6,6),
+vioplot(v_list_withNewName, las=2, 
+        #ylim=c(-6,6),
         ylab = "log2(High Allele + 1 / Low Allele + 1)",
-        col=c("black", "blue", "orange"))
+        #col=c("black", "blue", "orange"), 
+        col=c("purple", "gray"),
+        #border=c(rep("purple",3) ,rep("gray",3)),
+        frame.plot=F)
+
+
+abline(h=0, lty=2)
+legend("topleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
+if(0){
 abline(h=0, col="gray")
+legend("topleft", legend=c("CA, CG, TA, TG", "CG, TA, TG", "CA only" ),
+       title = "Inr",
+       fill = c("black", "blue", "orange"),
+       bty = "n")
+}
+dev.off()
 
 
 
-v_list_1=v_list
-v_list_2=v_list
-v_list_3=v_list
-v_list_4=v_list
+# use part of the violin for main figures
+new_v_list <- NULL
+for (organ in c("BN", "LV")){
+  for (SNP_orBackground in c("_SNP_", "_")){
+    name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+    new_v_list[[paste(name, sep="")]]=v_list[[paste(name, lower_bound, "_",uper_bound, sep="")]]
+    }
+}
+str(new_v_list)
 
-vioplot(raw_out$Delta_Signal[raw_out$dist>=-20 & raw_out$dist<0], raw_out$Delta_Signal[raw_out$dist> 0 & raw_out$dist<=20],
-        names = c("BN -20-0", "BN 0-20"),      
+pdf("ShootingGallery.pdf", width = 5, height = 5, useDingbats=FALSE)
+par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+
+#par(mgp=c(3,1,0))
+vioplot(new_v_list, las=1, 
+        #ylim=c(-6,6),
         ylab = "log2(High Allele + 1 / Low Allele + 1)",
-        names = tussue_list ,
-        ylab= "log10(AT length)",
-        ylim = c(0,7),
-        main=Tversion )
+        col=c("purple", "gray"),
+        frame.plot=F
+        )
+
+abline(h=0, lty=2)
+legend("topleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
+
+dev.off()
+
+
+
+# scatter plots of BN
+d=50
+asTSS = ""
+asTSS_name=asTSS
+organ="BN"
+SNP_orBackground ="_"
+
+name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
+
+SNP_orBackground ="_SNP_"
+
+name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+temp2=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
+out=temp2
+
+
+pdf("ShootingGallery_scatter_BN.pdf", width = 8, height = 8, useDingbats=FALSE)
+par(mfcol=c(3,2))
+
+#out=temp2
+name=""
+for (out in list(temp, temp2)){
+plot(out$dist, out$Delta_Signal, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
+     #ylim=c(-100,100),
+     main=name,
+     ylab = "log2(High Allele + 1 / Low Allele + 1)",
+     xlab = "Distance to maxTSN with CA at High Allele",
+     las=1,
+     frame.plot=F)
+
+
+out = out[out$dist!=0,]
+
+signal.lo <-  loess(Delta_Signal ~ dist, out)
+x=seq(-d+1,d,1)
+p=predict(signal.lo, data.frame(dist = x), se = TRUE)
+plot(out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
+     main=name,
+     ylab = "log2(High Allele + 1 / Low Allele + 1)",
+     xlab = "Distance to maxTSN with CA at High Allele", 
+     #ylim=c(-4,4)
+     las=1,
+     frame.plot=F)
+
+abline(h=0)
+lines(x, p$fit, col="red" )
+abline(v=0)
+plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele + 1)",
+     main=name,
+     ylim=c(-0.5,0.5),
+     xlab = "Distance to TSN with CA at High Allele",
+     las=1, type="l",
+     frame.plot=F, lwd=3)
+abline(h=0)
+abline(v=0)
+
+}
+
+
+dev.off()
