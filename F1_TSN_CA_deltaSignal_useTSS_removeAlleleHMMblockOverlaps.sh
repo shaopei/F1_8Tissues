@@ -102,7 +102,7 @@ wait
 # Perform BinomialTest one strand at a time, using pooled MB6 and PB6 reads 
 for Head in BN LV # HT  SK  SP  KD  LV  GI  ST
 do 
-for body in allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
 do
     MAT_READ_BED=${Head}_mat_temp.gz
     PAT_READ_BED=${Head}_pat_temp.gz
@@ -137,7 +137,7 @@ Seq_High_Low_TSN(){
 
 for Head in BN LV #HT  SK  SP  KD  GI  ST
 do
-  for body in allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP  allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
 do
 	d=50
   k=${Head}_${body}

@@ -214,7 +214,7 @@ SNP_orBackground_name =c("_SNP_","_BG_")
 Inr_name=c("AllInr","OnlyWeakInr","OnlyCA")
 Inr=c("","_OnlyWeakInr","_OnlyCA")
 v_list_withNewName <- NULL
-
+w_test <- NULL
 for (i in 1:3){
   for (a in 1:3){
     for (organ in c("BN", "LV")){
@@ -227,6 +227,7 @@ for (i in 1:3){
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyWeakInr", sep="")]]=v_list[[paste(name,SNP_orBackground[k], lower_bound,"_",uper_bound,"_OnlyWeakInr", sep="")]]
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyCA", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,"_OnlyCA", sep="")]] 
       }
+     # w_test = wilcox.test(v_list_withNewName[[paste(name,SNP_orBackground_name[1],Inr_name[i], sep="")]], v_list_withNewName[[paste(name,SNP_orBackground_name[2],Inr_name[i], sep="")]])
     }
   }
 }
@@ -262,6 +263,7 @@ dev.off()
 
 # use part of the violin for main figures
 new_v_list <- NULL
+asTSS_name=""
 for (organ in c("BN", "LV")){
   for (SNP_orBackground in c("_SNP_", "_")){
     name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
@@ -290,6 +292,14 @@ legend("topleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
 dev.off()
 
 
+# Wilcoxon Rank Sum and Signed Rank Tests
+
+wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_)
+wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_)
+
+wilcox.test(v_list_withNewName$BN_Single_SNP_AllInr, v_list_withNewName$BN_Single_BG_AllInr)
+
+
 
 # scatter plots of BN
 d=50
@@ -310,7 +320,7 @@ temp2=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
 out=temp2
 
 
-pdf("ShootingGallery_scatter_BN.pdf", width = 8, height = 8, useDingbats=FALSE)
+pdf("ShootingGallery_scatter_BN-2.pdf", width = 8, height = 8, useDingbats=FALSE)
 par(mfcol=c(3,2))
 
 #out=temp2
@@ -322,8 +332,11 @@ plot(out$dist, out$Delta_Signal, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.1
      ylab = "log2(High Allele + 1 / Low Allele + 1)",
      xlab = "Distance to maxTSN with CA at High Allele",
      las=1,
+     #ylim=c(-6,6),
      frame.plot=F)
-
+  abline(v=20, lty=2, col="blue")
+  abline(v=-20, lty=2, col="blue")
+  abline(h=0)
 
 out = out[out$dist!=0,]
 
@@ -332,15 +345,18 @@ x=seq(-d+1,d,1)
 p=predict(signal.lo, data.frame(dist = x), se = TRUE)
 plot(out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
      main=name,
+     #ylim=c(-5,5),
      ylab = "log2(High Allele + 1 / Low Allele + 1)",
      xlab = "Distance to maxTSN with CA at High Allele", 
      #ylim=c(-4,4)
      las=1,
      frame.plot=F)
 
+abline(v=20, lty=2, col="blue")
+abline(v=-20, lty=2, col="blue")
 abline(h=0)
 lines(x, p$fit, col="red" )
-abline(v=0)
+#abline(v=0)
 plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele + 1)",
      main=name,
      ylim=c(-0.5,0.5),
@@ -348,9 +364,119 @@ plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele +
      las=1, type="l",
      frame.plot=F, lwd=3)
 abline(h=0)
-abline(v=0)
+#abline(v=0)
+abline(v=20, lty=2, col="blue")
+abline(v=-20, lty=2, col="blue")
 
 }
 
 
 dev.off()
+
+
+d=50
+
+S_list <- NULL
+asTSS=""
+asTSS_name=""
+for (organ in c("BN", "LV")){
+  for (SNP_orBackground in c("_","_SNP_")){
+    
+    name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+    # exclude TSS overlap with AlleleHMM blocks
+    df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+    # include TSS overlap with AlleleHMM blocks
+    #df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+    temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
+    temp = temp[temp$dist!=0,]
+    S_list[[name]]=temp
+  }
+}
+str(S_list)
+organ="BN"
+organ="LV"
+b_list <- NULL
+step=5
+SNP_orBackground=c("_SNP_", "_")
+SNP_orBackground_name =c("_SNP_","_BG_")
+for (lower_bound in seq(-40,30,step)){
+  for (s in 1:2){
+      uper_bound = lower_bound + step
+      name=paste(organ, asTSS_name, SNP_orBackground[s], sep = "")
+      new_name = paste(organ, asTSS_name, SNP_orBackground_name[s], sep = "")
+      temp=S_list[[name]]
+      b_list[[paste(new_name, lower_bound, "_",uper_bound, sep="")]] = temp$Delta_Signal[temp$dist >= lower_bound & temp$dist < uper_bound ]
+      
+      
+      str(b_list)
+    }
+  }
+
+# combine BN and LV
+organ="BN+LV"
+
+b_list <- NULL
+step=5
+SNP_orBackground=c("_SNP_", "_")
+SNP_orBackground_name =c("_SNP_","_BG_")
+for (lower_bound in seq(-40,30,step)){
+  for (s in 1:2){
+    uper_bound = lower_bound + step
+    new_name = paste(organ, asTSS_name, SNP_orBackground_name[s], sep = "")
+    name1 = paste("BN", asTSS_name, SNP_orBackground[s], sep = "")
+    name2 = paste("LV", asTSS_name, SNP_orBackground[s], sep = "")
+    temp1=S_list[[name1]]
+    temp2=S_list[[name2]]
+    b_list[[paste(new_name, lower_bound, "_",uper_bound, sep="")]] = c(temp1$Delta_Signal[temp1$dist >= lower_bound & temp1$dist < uper_bound ],
+                                                                       temp2$Delta_Signal[temp2$dist >= lower_bound & temp2$dist < uper_bound ])
+    
+    
+    str(b_list)
+  }
+}
+
+
+
+
+
+
+par(mar=c(10.1, 4.1, 2.1, 2.1))
+at.x <- NULL # set here the X-axis positions
+x=1
+for (i in 1:(length(b_list)/2)){
+  at.x <- c(at.x,x)
+  x = x+1
+  at.x <- c(at.x,x)
+  x = x+1.5
+}
+
+boxplot(b_list, las=2, 
+        col=c("purple","gray"),
+        ylab = "log2(High Allele + 1 / Low Allele + 1)",
+        frame.plot=F,
+        outline=FALSE,
+        #space = rep(c(1,2),(length(b_list)/2))
+        at=at.x
+        )
+abline(h=0, lty=2)
+
+legend("bottomleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
+
+# Wilcoxon Rank Sum and Signed Rank Tests
+
+wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_)
+wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_)
+
+w_p_value <- NULL
+for (lower_bound in seq(-40,30,step)){
+  uper_bound = lower_bound + step
+  name1 = paste("BN+LV", asTSS_name, "_SNP_",lower_bound, "_",uper_bound, sep = "")
+  name2 = paste("BN+LV", asTSS_name, "_BG_",lower_bound, "_",uper_bound, sep = "")
+  w_p_value= c(w_p_value, wilcox.test(b_list[[name1]], b_list[[name2]])$p.value)
+#str(w)
+}
+
+p.adjust(w_p_value, method = "fdr")
