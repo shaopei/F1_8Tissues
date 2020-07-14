@@ -61,7 +61,7 @@ wait
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do
    bedtools merge -s -d 60 -c 4,5,6 -o count,sum,distinct -i ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrY > ${Head}_allReads_TSS.bed &
-   # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least 2 reads), $6 strand of the TSS
+   # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least b reads), $6 strand of the TSS
 done
 wait
 
@@ -413,6 +413,11 @@ do
 done
 
 Rscript getGC_content_HighLowAllele.R
+
+
+
+### plot the the scatter plot of TSN Count vs read count per TSS
+Rscript TSS_stats.R
 
 
 
