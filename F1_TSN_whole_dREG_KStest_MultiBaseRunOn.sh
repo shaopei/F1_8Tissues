@@ -117,10 +117,13 @@ done
 done
 wait
 
+
+
 # get p-value for KS test in R
 for Head in BN HT  SK  SP  KD  LV  GI  ST 
 do
-R --vanilla --slave --args $(pwd) ${Head} ${studyBed}_5mat5pat_uniq < KStest_flexible_length.R &
+cat ${Head}_${studyBed}_5mat5pat_uniq_mat.perBase.bed | cut -f 1-6 > ${Head}_${studyBed}_5mat5pat_uniq.bed 
+R --vanilla --slave --args $(pwd) ${Head} ${studyBed}_5mat5pat_uniq < KStest_flexible_length.R &  # something wrong here?
 # output ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed bed6, col7 p.value, col8 fdr
 done
 
@@ -132,6 +135,17 @@ do
   cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f && $6 =="+"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_fdr${f}_plus.bed
   cat ${Head}_${studyBed}_5mat5pat_uniq_pValue.bed | awk -v f=$f 'BEGIN{OFS="\t"; c=":"; d="-"} ($8+0 <= f && $6 =="-"){print $1, $2, $3, $4c$6c$8,$5,$6 }' |sort-bed - > ${Head}_${studyBed}_5mat5pat_uniq_fdr${f}_minus.bed
 done
+
+ wc -l *_dREG_5mat5pat_uniq_fdr0.1.bed
+  1453 BN_dREG_5mat5pat_uniq_fdr0.1.bed
+   749 GI_dREG_5mat5pat_uniq_fdr0.1.bed
+   688 HT_dREG_5mat5pat_uniq_fdr0.1.bed
+  1155 KD_dREG_5mat5pat_uniq_fdr0.1.bed
+  2023 LV_dREG_5mat5pat_uniq_fdr0.1.bed
+   930 SK_dREG_5mat5pat_uniq_fdr0.1.bed
+  1517 SP_dREG_5mat5pat_uniq_fdr0.1.bed
+   738 ST_dREG_5mat5pat_uniq_fdr0.1.bed
+  9253 total
 
 #HERE
 for Head in BN HT  SK  SP  KD  LV  GI  ST
