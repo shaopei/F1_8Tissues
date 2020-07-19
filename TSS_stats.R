@@ -19,13 +19,13 @@ myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
 myColor_scale_fill <- scale_fill_gradientn(colours = myColor, trans='log10')
 
 p <- ggplot(TSS, aes(x=log10(TSSReadsCount), y=TSNCount)) +
-  geom_bin2d(bins = 150) +  myColor_scale_fill + theme_bw() +
-  xlim(1, 4) + ylim(0,180) + labs(x="log10 (TSS Read Counts)")  + labs(y="TSN counts")
-p
-p +theme(axis.text=element_text(size=14),
+  geom_bin2d(bins = 100) +  myColor_scale_fill + theme_bw() +
+  xlim(1, 4) + ylim(0,120) + labs(x="log10 (TSS Read Counts)")  + labs(y="TSN counts") +
+ theme(axis.text=element_text(size=14),
           axis.title=element_text(size=20), #,face="bold"))
   legend.title = element_text(size = 20),
   legend.text = element_text(size = 14)
 )
+p
 
-ggsave('~/Desktop/temp.pdf', p, h=7, w=7)
+ggsave('TSS_ReadCounts_TSNCounts_scatterplot.pdf', p, h=7, w=7)
