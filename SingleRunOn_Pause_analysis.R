@@ -1,5 +1,6 @@
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Kidney_and_SingleRunOn/Pause_manuscript")
-source("/Users/shaopei/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
+source("~/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
+file_dir="~/Box Sync/KD_IGV/"
 
 maxNth <- function(x, N=2){
   # return the nth max value
@@ -739,17 +740,17 @@ show.window=25
 #end=".rpm.bw"; times=10
   end=".bw"; times=1
   #HT.mat.map2ref.1bp_plus.bw
-  file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
-  file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
-  file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
-  file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
-  SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+  file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+  file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+  file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+  SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
   
-  pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+  pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
   pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
-  pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+  pause_window_0.9 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
   pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
   #AT <- AT[AT$V1 != 'chrX',]
   t0=t
@@ -848,17 +849,17 @@ for(t in c("HT", "SK", "KD")){
   #end=".rpm.bw"; times=10
   end=".bw"; times=1
   #HT.mat.map2ref.1bp_plus.bw
-  file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
-  file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
-  file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
-  file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
-  SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+  file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+  file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+  file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+  SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
   
-  pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+  pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
   pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
-  pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+  pause_window_0.9 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
   pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
   t0=t
   t=paste(t0,"_fdr0.1",sep = "")
@@ -897,17 +898,17 @@ for(t in c("HT", "SK", "KD")){
   #end=".rpm.bw"; times=10
   end=".bw"; times=1
   #HT.mat.map2ref.1bp_plus.bw
-  file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
-  file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
-  file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
-  file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
-  SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+  file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+  file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+  file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+  SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
   
-  pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+  pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
   pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
-  pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+  pause_window_0.9 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
   pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
   t0=t
   t=paste(t0,"_fdr0.1",sep = "")
@@ -940,13 +941,13 @@ p.adjust(p.value, method="bonferroni")
 t="HT"
 show.window=100
 for(t in c("HT", "SK", "KD")){
-pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
-#pause_window <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+pause_window <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
+#pause_window <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
 pause_window <- pause_window[pause_window$V1 != 'chrX',]
 
-pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
 pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
-pause_window_0.9 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
+pause_window_0.9 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.9.bed", sep =""), header = F)
 pause_window_0.9 <- pause_window_0.9[pause_window_0.9$V1 != 'chrX',]
 
 #AT <- AT[AT$V1 != 'chrX',]
@@ -954,21 +955,21 @@ end=".rpm.bw"; times=10
 #end=".bw"; times=1
 #HT.mat.map2ref.1bp_plus.bw
 # allelic reads (map3)
-file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
-file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
-file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
-file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
-# allelic reads (map3) HT.mat.map5.map2ref.1bp_minus.bw
-map5.file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
-map5.file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
-map5.file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".mat.map5.map2ref.1bp_plus.bw", sep="")
-map5.file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".mat.map5.map2ref.1bp_minus.bw", sep="")
+file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
+file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
+file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
+file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+# allelic reads (map5) HT.mat.map5.map2ref.1bp_minus.bw
+map5.file.bw.plus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
+map5.file.bw.minus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
+map5.file.bw.plus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_plus.bw", sep="")
+map5.file.bw.minus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_minus.bw", sep="")
 # all reads
-file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
-file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
-map5.file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
-map5.file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
-SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+map5.file.plus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
+map5.file.minus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
+SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
 
 t0=t
 t=paste(t0,"_fdr0.1",sep = "")
