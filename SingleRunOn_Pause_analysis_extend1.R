@@ -1,28 +1,28 @@
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Kidney_and_SingleRunOn/Pause_manuscript")
-
+file_dir="~/Box Sync/KD_IGV/"
 
 t="HT"
 show.window=100
-pause_window_0.1 <- read.table(paste("/Volumes/SPC_SD/KD_IGV/",t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed.bed", sep =""), header = F)
+pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
 pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
 end=".rpm.bw"; times=10
 #end=".bw"; times=1
 # allelic reads (map3)
-file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_plus",end, sep="")
-file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".pat.map2ref.1bp_minus",end, sep="")
-file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_plus",end, sep="")
-file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/",t,".mat.map2ref.1bp_minus",end, sep="")
-# allelic reads (map3) HT.mat.map5.map2ref.1bp_minus.bw
-map5.file.bw.plus.pat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
-map5.file.bw.minus.pat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
-map5.file.bw.plus.mat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".mat.map5.map2ref.1bp_plus.bw", sep="")
-map5.file.bw.minus.mat <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,".mat.map5.map2ref.1bp_minus.bw", sep="")
+file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
+file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
+file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
+file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+# allelic reads (map5) HT.mat.map5.map2ref.1bp_minus.bw
+map5.file.bw.plus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
+map5.file.bw.minus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
+map5.file.bw.plus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_plus.bw", sep="")
+map5.file.bw.minus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_minus.bw", sep="")
 # all reads
-file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
-file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/",t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
-map5.file.plus.bw <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
-map5.file.minus.bw <- paste("/Volumes/SPC_SD/KD_IGV/map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
-SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
+file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+map5.file.plus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
+map5.file.minus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
+SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
 AT=pause_window_0.1
 # parameter setting 
 dist=200; step=1;file.pdf="heatmap.pdf"; map5=TRUE; metaplot.pdf="metaplot.pdf";
@@ -55,14 +55,14 @@ for (i in 1:NROW(AT)){
   map5.pat.peak[i] <- which(map5.pat == max(map5.pat))  # if two bases with same read count, output the 5 prime one (up stream)
   map5.mat.peak[i] <- which(map5.mat == max(map5.mat)) 
   
-  t=c(map5.pat.peak[i],   map5.mat.peak[i])   # the base with of max map5 reads 
+  map5.t=c(map5.pat.peak[i],   map5.mat.peak[i])   # the base with of max map5 reads 
   
   # determine which allele is early pause, which is late pause
   a=sort.int(c(hmat.pat.peak[i],  hmat.mat.peak[i]), index.return = TRUE )
   AT$early.pause[i] = a$x[1] 
   AT$late.pause[i] = a$x[2]
-  AT$TSN.early.pause[i] = t[a$ix[1]]  # from the same allele as early pause, which base has the max map5 reads
-  AT$TSN.late.pause[i] = t[a$ix[2]]   # from the same allele as late pause, which base has the max map5 reads,
+  AT$TSN.early.pause[i] = map5.t[a$ix[1]]  # from the same allele as early pause, which base has the max map5 reads
+  AT$TSN.late.pause[i] = map5.t[a$ix[2]]   # from the same allele as late pause, which base has the max map5 reads,
 }
 ### from heatmap.Pause function end ###
 
@@ -70,7 +70,14 @@ for (i in 1:NROW(AT)){
 # distribution of distance between early and late TSN
 AT$early.TSN.pause.dist = AT$early.pause - AT$TSN.early.pause
 AT$late.TSN.pause.dist = AT$late.pause - AT$TSN.late.pause
-AT$valid.pairs = AT$early.TSN.pause.dist > 0 & AT$late.TSN.pause.dist > 0
+
+
+
+
+
+AT$valid.pairs = AT$early.TSN.pause.dist > 10 & AT$late.TSN.pause.dist > 10 & AT$early.TSN.pause.dist <50 & AT$late.TSN.pause.dist <50
+subAT=AT[!AT$valid.pairs,]
+
 old_AT = AT
 AT = AT[AT$valid.pairs,]
 
@@ -92,11 +99,37 @@ sum(AT$pause.dist==0)
 sum(AT$pause.dist!=0)
 sum(AT$pause.dist> 10)
 
-plot(AT$TSN.dist, AT$pause.dist)
-plot(abs(AT$TSN.dist), AT$pause.dist, xlim=c(0,100), ylim=c(0,100), pch=19, col=rgb(0,0,0,alpha = 0.25))
+plot(AT$TSN.dist, AT$pause.dist, pch=19, col=rgb(0,0,0,alpha = 0.25))
+plot((AT$TSN.dist), AT$pause.dist, 
+     xlim=c(-20,100), 
+     ylim=c(0,100), pch=19, col=rgb(0,0,0,alpha = 0.25))
 abline(0,1, col="blue")
-plot(AT$TSN.dist, AT$pause.dist, xlim=c(0,50), ylim=c(0,50), pch=19, col=rgb(0,0,0,alpha = 0.125))
-abline(0,1)
+plot(AT$TSN.dist, AT$pause.dist, xlim=c(-20,50), ylim=c(0,50), pch=19, col=rgb(0,0,0,alpha = 0.125))
+abline(0,1, col="blue")
+
+hist(AT$pause.dist[AT$TSN.dist==0], breaks=seq(-0.5,35,1))
+hist(AT$pause.dist[AT$TSN.dist > 0] - AT$TSN.dist[AT$TSN.dist > 0]
+     , breaks=seq(-35.5,35,1)
+     )
+
+
+library("ggplot2")
+
+myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
+myColor_scale_fill <- scale_fill_gradientn(colours = myColor, trans='log10')
+
+p <- ggplot(AT, aes(x=TSN.dist, y=pause.dist)) +
+  geom_bin2d(bins = 70) +  myColor_scale_fill + theme_bw() +  
+  xlim(-20, 50) + ylim(0,50) + #labs(x="log10 (TSS Read Counts)")  + labs(y="TSN counts") +
+  theme(axis.text=element_text(size=14),
+        axis.title=element_text(size=20), #,face="bold"))
+        legend.title = element_text(size = 20),
+        legend.text = element_text(size = 14)
+  )
+p
+
+
+
 
 # modified "AT$valid.pairs" in heatmap.Pause function
 # AT$valid.pairs = (AT$early.TSN.pause.dist > 0) & (AT$late.TSN.pause.dist > 0)
