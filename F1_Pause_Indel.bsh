@@ -1,0 +1,15 @@
+# generate bed file to show the location of indel
+
+# from https://github.com/shaopei/mouse_AlleleDB/blob/7d97f2f86d09cca83fa431147e4f831256c1bfa9/make_diploid_genome_for_F1_mouse.bsh
+cd /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels
+zcat mgp.v5.merged.indels.dbSNP142.normed.vcf.gz | python2 ../make_vcf_for_vcf2diploid.py P.CAST_M.B6_F1hybrid.indels.forAlleleSeq.vcf 70 25 &
+cat P.CAST_M.B6_F1hybrid.indels.forAlleleSeq.vcf | awk 'BEGIN{OFS="\t"; c=";" } NR>70 {split($5,a,","); print "chr"$1, $2-1, $2-1+length($4), $4, a[substr($12,1,1)]}' \
+|awk 'BEGIN{OFS="\t"; c=","} {print $1,$2,$3,$4c$5}' |sort-bed - \
+> P.CAST_M.B6_F1hybrid.indels.bed
+
+
+cat P.CAST_M.B6_F1hybrid.snps.forAlleleSeq.vcf| awk 'BEGIN{OFS="\t"; c=";" } NR>104 {split($5,a,","); print "chr"$1, $2-1, $2-1+length($4), $4, a[substr($12,1,1)]}' \
+|awk 'BEGIN{OFS="\t"; c=""} {print $1,$2,$3,$4c$5}' |sort-bed - \
+> P.CAST_M.B6_F1hybrid.snps.bed
+
+
