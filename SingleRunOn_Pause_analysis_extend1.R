@@ -75,7 +75,7 @@ AT$late.TSN.pause.dist = AT$late.pause - AT$TSN.late.pause
 
 
 
-AT$valid.pairs = AT$early.TSN.pause.dist > 10 & AT$late.TSN.pause.dist > 10 & AT$early.TSN.pause.dist <50 & AT$late.TSN.pause.dist <50
+AT$valid.pairs = AT$early.TSN.pause.dist > 5 & AT$late.TSN.pause.dist > 5 & AT$early.TSN.pause.dist <100 & AT$late.TSN.pause.dist <100
 subAT=AT[!AT$valid.pairs,]
 
 old_AT = AT
@@ -101,17 +101,23 @@ sum(AT$pause.dist> 10)
 
 plot(AT$TSN.dist, AT$pause.dist, pch=19, col=rgb(0,0,0,alpha = 0.25))
 plot((AT$TSN.dist), AT$pause.dist, 
-     xlim=c(-20,100), 
-     ylim=c(0,100), pch=19, col=rgb(0,0,0,alpha = 0.25))
+     xlim=c(-20,200), 
+     ylim=c(0,200), pch=19, col=rgb(0,0,0,alpha = 0.25))
 abline(0,1, col="blue")
 plot(AT$TSN.dist, AT$pause.dist, xlim=c(-20,50), ylim=c(0,50), pch=19, col=rgb(0,0,0,alpha = 0.125))
-abline(0,1, col="blue")
+abline(10,1, col="blue")
+abline(-10,1, col="blue")
 
-hist(AT$pause.dist[AT$TSN.dist==0], breaks=seq(-0.5,35,1))
+hist(AT$pause.dist[AT$TSN.dist==0]
+     #, breaks=seq(-0.5,35,1)
+     )
 hist(AT$pause.dist[AT$TSN.dist > 0] - AT$TSN.dist[AT$TSN.dist > 0]
-     , breaks=seq(-35.5,35,1)
+#     , breaks=seq(-35.5,35,1)
      )
 
+subAT=AT[abs(AT$pause.dist - AT$TSN.dist) > 10,]
+subAT=subAT[subAT$TSN.dist==0,]
+subAT$deltaTsnPauseDist = subAT$pause.dist - subAT$TSN.dist
 
 library("ggplot2")
 

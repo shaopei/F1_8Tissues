@@ -112,6 +112,8 @@ done
 
 
 
+
+
 # maxTSN of allelic reads
 # report more than one maxTSN if multiple TSN share the same max read count
 for Head in HT KD SK
@@ -168,10 +170,129 @@ do
   for allele in mat pat
   do
     intersectBed -wb -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed -b <(zcat map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) \
-    >  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_reads.bed&
+    >  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed &
   done
 done
 
+
+for Head in HT KD SK
+do 
+  for allele in mat pat
+  do 
+    python2 Generate_vector_input_for_KStest_fromReadLength.py \
+    ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed \
+    ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_${allele}.ReadLength.bed 
+  done
+done
+
+for Head in HT KD SK
+do 
+  R --vanilla --slave --args $(pwd) ${Head} matReads_patReads_TSS_maxTSNs_ratio0.5-2 < KStest_flexible_length_ReadLength.R &
+done
+
+for Head in HT KD SK
+do 
+R --vanilla --slave --args $(pwd) ${Head} ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_mat.ReadLength.bed  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_pat.ReadLength.bed \
+ < getAllelicReadLengthDifference.R &
+done
+
+# mapped location of pause
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map3 .
+cd map2ref_1bpbed_map3
+for f in *AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz
+do j=`echo $f| rev|cut -d . -f 2-|rev` 
+echo $j
+  zcat $f > $j &
+done
+
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 60 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+for Head in HT KD SK
+do 
+  for allele in mat pat
+  do 
+    rm ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_temp -r
+    mkdir ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_temp
+    while read  chr start end strand r
+    do
+  #echo $chr $start $end $strand $r
+  nice grep $r map2ref_1bpbed_map3/${Head}_PB6_F*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed | cut -d ":" -f 2 \
+  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_temp/${chr}_${start}_${end}_${strand}_$r &
+  wait_a_second
+    done < <(cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed | cut -f 1-3,6,10)
+  done
+done
+
+
+for Head in HT KD SK
+do 
+  for allele in mat pat
+  do 
+    rm ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads -r 
+    mkdir ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads
+    while read  chr start end strand
+    do
+  #echo $chr $start $end $strand
+  cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_temp/${chr}_${start}_${end}_${strand}_* >> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/${chr}_${start}_${end}_${strand}
+done < <(cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed | cut -f 1-3,6 | uniq)
+done
+done
+
+for Head in HT KD SK
+do 
+  for allele in mat pat
+  do 
+    rm ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_DistanceTomaxTSN.temp
+    while read  chr start end  name1 name2 strand
+    do
+  # ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2refDistanceTomaxTSN/${chr}_${start}_${end}_${strand}
+  m=`bedtools closest -s -d -a <(sort-bed ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/${chr}_${start}_${end}_${strand}) -b <(echo  -e "$chr\t$start\t$end\t$name1\t$name2\t$strand")  | cut -f 13 `
+  if [[ "$m" == "" ]] ; then
+    echo  -e "$chr\t$start\t$end\t$name1\t$name2\t$strand\tNA" >> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_DistanceTomaxTSN.temp
+  else
+  echo  -e "$chr\t$start\t$end\t$name1\t$name2\t$strand\t"$m >> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_DistanceTomaxTSN.temp
+  fi
+done < <(cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed | cut -f 1-6 | uniq )
+
+sed 's/ /,/g' ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_DistanceTomaxTSN.temp > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_DistanceTomaxTSN.bed 
+done
+done
+
+
+for Head in HT KD SK
+do 
+R --vanilla --slave --args $(pwd) ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_map2ref_DistanceTomaxTSN.bed  ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_map2ref_DistanceTomaxTSN.bed \
+${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed  < KStest_flexible_length_mat_pat_output.R &
+
+done
+
+#HERE
+intersectBed -wo -a <(paste ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_mat.ReadLength.bed ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_pat.ReadLength.bed  | cut -f 1-7,14) -b ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed \
+
+
+intersectBed -wo -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue.bed -b ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed \
+|cut -f 1-8,15-17 > ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed
+
+
+cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0>0.1 && $11+0<0.1){print $0, $1m$2d$3}' | sort -k 8
+
+# make map3 IGC track with only reads from the shared maxTSNs
+for allele in mat pat
+  do 
+cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/* | sort-bed -  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed
+done
+
+cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0<0.1 && $11+0>0.1){print $0, $1m$2d$3}' | sort -k 11nr
+
+
+cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0<0.1 && $11+0<0.1){print $0, $1m$2d$3}' | sort -k 11nr
 
 
 

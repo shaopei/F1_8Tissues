@@ -1,11 +1,7 @@
 ### used for single base runon ChRO-seq
-
-
-
 # identify TSB within dREG sites
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS
 
-studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
 ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map5 .
 ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map5 map2ref_1bpbed
@@ -86,11 +82,6 @@ for Head in HT KD SK
 do
    R --vanilla --slave --args $(pwd) ${Head}_allReads_TSS_maxTSNs+-10.txt ${Head}_allReads_TSS_maxTSNs+-10_SeqLogo.pdf < getSeqLogo.R &
 done
-
-
-
-
-
 
 
 
