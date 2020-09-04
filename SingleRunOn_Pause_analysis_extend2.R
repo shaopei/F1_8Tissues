@@ -85,8 +85,8 @@ legend("topright",
        , bty = "n"
 )
 
-
-df=read.table("HT_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat.bed")
+Tissue="SK"
+df=read.table(paste(Tissue, "_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat_ClosetIndel.bed", sep = ""))
 #colnames(df)[7:10]=c("mat_RL", "pat_RL" , "mat_map3RefDist", "pat_map3RefDist" )
 View(df)
 for (i in 1:dim(df)[1]){
@@ -96,7 +96,176 @@ for (i in 1:dim(df)[1]){
   df$pat_maxPause_RL[i] = as.numeric(names(sort(table(unlist(strsplit(as.character(df$V8[i]), ","))),decreasing=TRUE)[1]))
   df$mat_maxPause_map3[i] = as.numeric(names(sort(table(unlist(strsplit(as.character(df$V9[i]), ","))),decreasing=TRUE)[1]))
   df$pat_maxPause_map3[i] = as.numeric(names(sort(table(unlist(strsplit(as.character(df$V10[i]), ","))),decreasing=TRUE)[1]))
-    }
+  df$mat_Idel_length[i]= length(unlist(strsplit(unlist(strsplit(as.character(df$V14[i]), ","))[1], "")))
+  df$pat_Idel_length[i]= length(unlist(strsplit(unlist(strsplit(as.character(df$V14[i]), ","))[2], "")))
+  df$maxPauseSite_map3[i] = max(df$mat_maxPause_map3[i],  df$pat_maxPause_map3[i])
+  df$maxPauseSite_RL[i] = max(df$mat_maxPause_RL[i],  df$pat_maxPause_RL[i])
+  }
+
+df$Indel_Len = df$mat_Idel_length - df$pat_Idel_length
+df$map3_diff = df$mat_maxPause_map3- df$pat_maxPause_map3
+View(df[df$V15 <= df$maxPauseSite_map3,c(1:6,24,25)])
+
+for (i in 1:dim(df)[1]){
+  m=as.numeric(unlist(strsplit(as.character(df$V7[i]), ",")))
+  p=as.numeric(unlist(strsplit(as.character(df$V8[i]), ",")))
+  df$RL.p.value[i] = ks.test(m,p) $ p.value
+}
+for (i in 1:dim(df)[1]){
+  m=as.numeric(unlist(strsplit(as.character(df$V9[i]), ",")))
+  p=as.numeric(unlist(strsplit(as.character(df$V10[i]), ",")))
+  df$map3.p.value[i] = ks.test(m,p) $ p.value
+}
+
+df$RL.p.value.fdr = p.adjust(df$RL.p.value, method = "fdr")
+df$map3.p.value.fdr = p.adjust(df$map3.p.value, method = "fdr")
+
+# indel length VS map3 position difference
+# V15 is the distance of the indel to maxTSN
+lim=40
+df$target=df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 )
+plot( (df$mat_maxPause_map3- df$pat_maxPause_map3)[df$V15 <= df$maxPauseSite_map3], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
+     xlim=c(-1*lim,lim), ylim=c(-1*lim,lim),
+     pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+
+points( (df$mat_maxPause_map3- df$pat_maxPause_map3)[df$target], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$target],
+      xlim=c(-1*lim,lim), ylim=c(-1*lim,lim), col="red")
+
+abline(a=5, b=-1)
+abline(a=0,b=-1)
+abline(a=-5, b=-1)
+abline(h=0)
+
+linearMod <- lm((df$mat_Idel_length - df$pat_Idel_length)[df$target] ~ (df$mat_maxPause_map3- df$pat_maxPause_map3)[df$target])
+summary(linearMod)
+plot( (df$mat_maxPause_map3- df$pat_maxPause_map3)[df$V15 <= df$maxPauseSite_map3], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
+      xlim=c(-20,20), ylim=c(-20,20),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+linearMod$coefficients
+i= linearMod$coefficients[1]
+s= linearMod$coefficients[2]
+abline(a=i , b=s, col="red")
+abline(a=i + 5 , b=s, col="red")
+abline(a=i - 5 , b=s, col="red")
+abline(a=i + 10 , b=s, col="green")
+abline(a=i - 10 , b=s, col="green")
+
+linearMod <- lm((df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3] ~ (df$mat_maxPause_map3- df$pat_maxPause_map3)[df$V15 <= df$maxPauseSite_map3])
+summary(linearMod)
+plot( (df$mat_maxPause_map3- df$pat_maxPause_map3)[df$V15 <= df$maxPauseSite_map3], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
+      xlim=c(-20,20), ylim=c(-20,20),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+linearMod$coefficients
+i= linearMod$coefficients[1]
+s= linearMod$coefficients[2]
+abline(a=i , b=s, col="blue")
+abline(a=i + 5 , b=s, col="blue")
+abline(a=i - 5 , b=s, col="blue")
+abline(a=i + 10 , b=s, col="green")
+abline(a=i - 10 , b=s, col="green")
+
+
+plot( abs(df$mat_maxPause_map3- df$pat_maxPause_map3)[df$V15 <= df$maxPauseSite_map3], 
+      abs(df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
+      #     xlim=c(-30,30), ylim=c(-30,30),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+linearMod <- lm(abs(df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3] ~ abs(df$mat_maxPause_map3- df$pat_maxPause_map3)[df$V15 <= df$maxPauseSite_map3])
+linearMod$coefficients
+summary(linearMod)
+linearMod$coefficients
+i= linearMod$coefficients[1]
+s= linearMod$coefficients[2]
+abline(a=i , b=s, col="blue")
+abline(a=i + 5 , b=s, col="blue")
+abline(a=i - 5 , b=s, col="blue")
+abline(a=i + 10 , b=s, col="green")
+abline(a=i - 10 , b=s, col="green")
+
+
+# indel length VS read length difference
+plot( (df$mat_maxPause_RL- df$pat_maxPause_RL)[df$V15 <= df$maxPauseSite_RL], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_RL],
+      xlim=c(-25,25), ylim=c(-25,25),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+
+
+linearMod <- lm((df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_RL] ~ (df$mat_maxPause_RL- df$pat_maxPause_RL)[df$V15 <= df$maxPauseSite_RL])
+linearMod$coefficients
+plot( (df$mat_maxPause_RL- df$pat_maxPause_RL)[df$V15 <= df$maxPauseSite_RL], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_RL],
+      #     xlim=c(-30,30), ylim=c(-30,30),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+i= linearMod$coefficients[1]
+s= linearMod$coefficients[2]
+abline(a=i , b=s, col="blue")
+abline(a=i + 5 , b=s, col="blue")
+abline(a=i - 5 , b=s, col="blue")
+abline(a=i + 10 , b=s, col="green")
+abline(a=i - 10 , b=s, col="green")
+
+
+
+plot( abs(df$mat_maxPause_RL- df$pat_maxPause_RL)[df$V15 <= df$maxPauseSite_RL], 
+      abs(df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_RL],
+      #     xlim=c(-30,30), ylim=c(-30,30),
+      pch=19, col=rgb(0,0,0,alpha = 0.125))
+linearMod <- lm(abs(df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_RL] ~ abs(df$mat_maxPause_RL- df$pat_maxPause_RL)[df$V15 <= df$maxPauseSite_RL])
+linearMod$coefficients
+summary(linearMod)
+i=1.9747552 
+s=0.2505087 
+abline(a=i , b=s, col="blue")
+abline(a=i + 5 , b=s, col="blue")
+abline(a=i - 5 , b=s, col="blue")
+abline(a=i + 10 , b=s, col="green")
+abline(a=i - 10 , b=s, col="green")
+
+
+
+## average
+for (i in 1:dim(df)[1]){
+  df$mat_AvePause_RL[i] = mean(as.numeric(unlist(strsplit(as.character(df$V7[i]), ","))))
+  df$pat_AvePause_RL[i] = mean(as.numeric(unlist(strsplit(as.character(df$V8[i]), ","))))
+  df$mat_AvePause_map3[i] = mean(as.numeric(unlist(strsplit(as.character(df$V9[i]), ","))))
+  df$pat_AvePause_map3[i] = mean(as.numeric(unlist(strsplit(as.character(df$V10[i]), ","))))
+}
+df$target=df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 )
+
+linearMod <- lm((df$mat_Idel_length - df$pat_Idel_length)[df$target] ~ (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target])
+summary(linearMod)
+plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$V15 <= df$maxPauseSite_map3], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
+      xlim=c(-20,20), ylim=c(-20,20),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+linearMod$coefficients
+i= linearMod$coefficients[1]
+s= linearMod$coefficients[2]
+abline(a=i , b=s, col="red")
+abline(a=i + 5 , b=s, col="red")
+abline(a=i - 5 , b=s, col="red")
+abline(a=i + 10 , b=s, col="green")
+abline(a=i - 10 , b=s, col="green")
+
+plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$V15 <= df$maxPauseSite_map3], 
+      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
+      xlim=c(-1*lim,lim), ylim=c(-1*lim,lim),
+      pch=21, bg=rgb(0,0,0,alpha = 0.125), main=Tissue)
+
+points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target], 
+        (df$mat_Idel_length - df$pat_Idel_length)[df$target],
+        xlim=c(-1*lim,lim), ylim=c(-1*lim,lim), col="red")
+
+
+abline(a=5, b=-1)
+abline(a=0,b=-1)
+abline(a=-5, b=-1)
+abline(h=0)
+
+##
 plot(df$mat_maxPause_RL- df$pat_maxPause_RL, df$mat_maxPause_map3- df$pat_maxPause_map3,
      xlim=c(-30,30), ylim=c(-30,30),
      pch=19, col=rgb(0,0,0,alpha = 0.125))
@@ -260,3 +429,62 @@ legend("topright",
        fill=c("blue","red")
        , bty = "n"
 )
+
+distance_of_interest = abs(df$mat_maxPause_map3 - df$pat_maxPause_map3)
+main="HT abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) "
+u=max(distance_of_interest+1)
+hist(distance_of_interest[df$RL.p.value.fdr >0.9]
+     ,breaks = seq(-0.5,u,1),
+     freq = F,
+     col = "blue",
+     main=main
+)
+hist(distance_of_interest[df$RL.p.value.fdr <=0.1] #  & combine$deltaDistMaxPause != 0], 
+     ,breaks = seq(-0.5,u,1),
+     freq = F,
+     density = 50, col="red",
+     add=T
+)
+legend("topright", 
+       legend = c("RL KS FDR > 0.9", "RL KS FDR <= 0.1"),
+       #pch=c(15,15),
+       #cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(10000,25),
+       angle=c(180,45),
+       #angle=45,
+       fill=c("blue","red")
+       , bty = "n"
+)
+hist(distance_of_interest[df$map3.p.value.fdr >0.9]
+     ,breaks = seq(-0.5,u,1),
+     freq = F,
+     col = "blue",
+     main=main
+)
+hist(distance_of_interest[df$map3.p.value.fdr <=0.1] #  & combine$deltaDistMaxPause != 0], 
+     ,breaks = seq(-0.5,u,1),
+     freq = F,
+     density = 50, col="red",
+     add=T
+)
+legend("topright", 
+       legend = c("map3TomaxTSNs KS FDR > 0.9", "map3TomaxTSNs KS FDR <= 0.1"),
+       #pch=c(15,15),
+       #cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(10000,25),
+       angle=c(180,45),
+       #angle=45,
+       fill=c("blue","red")
+       , bty = "n"
+)
+
+dim(df)[1]
+sum(df$map3.p.value.fdr <=0.1)
+sum(df$RL.p.value.fdr <=0.1)
+sum(df$RL.p.value.fdr <=0.1 & df$map3.p.value.fdr <=0.1)

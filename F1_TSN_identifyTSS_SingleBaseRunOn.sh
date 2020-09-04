@@ -144,7 +144,7 @@ done
 
 [sc2457@cbsudanko identifyTSS_SingleBaseRunOn]$ wc -l *atReads_TSS_maxTSNs.bed
    5202 HT_matReads_TSS_maxTSNs.bed
-   1976 HT_matReads_patReads_TSS_maxTSNs.bed
+   1976 HT_matReads_patReads_TSS_maxTSNs.bed  # shared maxTSNs between B6 and CAST allele
    5055 HT_patReads_TSS_maxTSNs.bed
    4474 KD_matReads_TSS_maxTSNs.bed
    1865 KD_matReads_patReads_TSS_maxTSNs.bed
@@ -169,7 +169,7 @@ for Head in HT KD SK
 do 
   for allele in mat pat
   do
-    intersectBed -wb -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed -b <(zcat map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) \
+    intersectBed -s -wb -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed -b <(zcat map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz) \
     >  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed &
   done
 done
@@ -204,10 +204,11 @@ do j=`echo $f| rev|cut -d . -f 2-|rev`
 echo $j
   zcat $f > $j &
 done
+cd .. 
 
 wait_a_second() {
   joblist=($(jobs -p))
-    while (( ${#joblist[*]} >= 60 ))
+    while (( ${#joblist[*]} >= 600 ))
       do
       sleep 1
       joblist=($(jobs -p))
@@ -230,6 +231,7 @@ do
   done
 done
 
+#HERE
 
 for Head in HT KD SK
 do 
@@ -265,7 +267,7 @@ sed 's/ /,/g' ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_D
 done
 done
 
-
+# HERE
 for Head in HT KD SK
 do 
 R --vanilla --slave --args $(pwd) ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_map2ref_DistanceTomaxTSN.bed  ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_map2ref_DistanceTomaxTSN.bed \
@@ -273,27 +275,191 @@ ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed  < KSte
 
 done
 
-#HERE
-intersectBed -wo -a <(paste ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_mat.ReadLength.bed ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_pat.ReadLength.bed  | cut -f 1-7,14) -b ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed \
-
-
-intersectBed -wo -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue.bed -b ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed \
-|cut -f 1-8,15-17 > ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed
-
-
-cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0>0.1 && $11+0<0.1){print $0, $1m$2d$3}' | sort -k 8
-
 # make map3 IGC track with only reads from the shared maxTSNs
 for allele in mat pat
   do 
 cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/* | sort-bed -  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed
 done
 
-cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0<0.1 && $11+0>0.1){print $0, $1m$2d$3}' | sort -k 11nr
+#HERE
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn
 
+for Head in HT KD SK
+do 
+# make a file with both ReadLength and map3TomaxTSNDistance exclude any region contain NA (KS test input)
+intersectBed -wo -a <(paste ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_mat.ReadLength.bed ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_pat.ReadLength.bed  | cut -f 1-7,14) \
+-b <(paste ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_map2ref_DistanceTomaxTSN.bed ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_map2ref_DistanceTomaxTSN.bed | cut -f 1-7,14) \
+|cut -f 1-8,15,16 | grep -v NA > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat.bed &
+done
+
+# make a file with indel length with  ${Head}_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat.bed
+ln -s /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/pause_Indel/P.CAST_M.B6_F1hybrid.indels.bed .
+for Head in HT KD SK
+do 
+bedtools closest -iu -D a -a <(sort -k1,1 -k2,2n ${Head}_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat.bed) -b P.CAST_M.B6_F1hybrid.indels.bed > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat_ClosetIndel.bed &
+done
+
+
+
+
+# make a file with both ReadLength and map3TomaxTSNDistance (p value)
+intersectBed -wo -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue.bed -b ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed \
+|cut -f 1-8,15-17 > ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed
+
+
+cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0>0.1 && $11+0<0.1){print $0, $1m$2d$3}' | sort -k 8
+
+cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0<0.1 && $11+0>0.1){print $0, $1m$2d$3}' | sort -k 11nr
 
 cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed | awk '{OFS="\t"; m=":"; d="-"} ($8+0<0.1 && $11+0<0.1){print $0, $1m$2d$3}' | sort -k 11nr
 
 
 
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn/Pasue_SNP_analysis
+ln -s ../*_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed  .  # shared maxTSNs between B6 and CAST allele with allelic read ratio between 0.5-2
+
+# identify maxPause using all reads from the maxTSNs
+# get the read (including idnetical reads in mat)
+for Head in HT KD SK
+do 
+  for allele in mat
+  do
+    intersectBed -s -wb -a ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed -b <(zcat ../map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp.sorted.bed.gz) \
+    >  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_IDEreads.bed &
+  done
+done
+
+for Head in HT KD SK
+do 
+  for allele in mat pat
+  do
+ln -s ../${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_${allele}reads.bed .
+  done
+done
+
+
+# get the map3 position for identical reads
+allele=mat
+
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 600 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+for Head in HT KD SK
+do 
+    rm ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_temp -r
+    mkdir ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_temp
+    while read  chr start end strand r
+    do
+  #echo $chr $start $end $strand $r
+  nice grep $r ../map2ref_1bpbed_map3/${Head}_PB6_F*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_identical.map2ref.1bp.sorted.bed | cut -d ":" -f 2 \
+  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_temp/${chr}_${start}_${end}_${strand}_$r &
+  wait_a_second
+    done < <(cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_IDEreads.bed | cut -f 1-3,6,10)
+  done
+
+allele=mat
+for Head in HT KD SK
+do 
+    rm ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads -r 
+    mkdir ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads
+    while read  chr start end strand
+    do
+  #echo $chr $start $end $strand
+  cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_temp/${chr}_${start}_${end}_${strand}_* >> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads/${chr}_${start}_${end}_${strand}
+done < <(cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_IDEreads.bed | cut -f 1-3,6 | uniq)
+done
+
+
+
+for Head in HT KD SK
+do 
+    rm ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.temp
+    while read  chr start end  name1 name2 strand
+    do
+  m=`bedtools closest -s -d -a <(sort-bed ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads/${chr}_${start}_${end}_${strand}) -b <(echo  -e "$chr\t$start\t$end\t$name1\t$name2\t$strand")  | cut -f 13 `
+  if [[ "$m" == "" ]] ; then
+    echo  -e "$chr\t$start\t$end\t$name1\t$name2\t$strand\tNA" >> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.temp
+  else
+  echo  -e "$chr\t$start\t$end\t$name1\t$name2\t$strand\t"$m >> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.temp
+  fi
+done < <(cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_IDEreads.bed | cut -f 1-6 | uniq )
+
+sed 's/ /,/g' ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.temp > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.bed 
+done
+
+
+for Head in HT KD SK
+do 
+  for allele in mat pat
+  do
+ln -s ../${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_DistanceTomaxTSN.bed  .
+  done
+done
+
+# examine if there is a error
+for Head in HT KD SK
+do 
+cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map5_*reads.bed | awk '{OFS="\t"} ($6 !=$12) {print $0}'
+done
+
+
+# merge mat, pat, ide into a table
+for Head in HT KD SK
+do 
+intersectBed -s -wao -a <(intersectBed -s -wao -a ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_map2ref_DistanceTomaxTSN.bed -b  ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_map2ref_DistanceTomaxTSN.bed \
+| cut -f 1-7,14) -b ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.bed  | awk '{OFS="\t"} ($16 !=0 ){print $1,$2,$3,$4,$5,$6,$7,$8, $15} ($16 ==0 ){print $1,$2,$3,$4,$5,$6,$7,$8, "NA"}'\
+> ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed
+done
+
+#ln -s /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/pause_Indel/P.CAST_M.B6_F1hybrid.snps.bed .
+ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/P.CAST.EiJ_M.C57BL.6J_*aternal_all.fa* .
+
+j=Tissues3_EarlyPause_1bpapart_KSfdr0.1
+d=10
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($7,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ (substr($7,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+
+j=Tissues3_LatePause_1bpapart_KSfdr0.1
+d=10
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($7,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ (substr($7,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+
+
+j=Tissues3_EarlyPause_BG
+d=10
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($7,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ (substr($7,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+
+j=combine_maxPause_noduplicate
+d=30
+ bedtools getfasta -s -fi mm10.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t"} {print $1, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_mm10.txt 
+ paste ${j}.bed  ${j}_mm10.txt > ${j}_+-${d}_mm10_Seq.bed 
+ 
 
