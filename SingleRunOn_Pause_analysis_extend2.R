@@ -32,12 +32,15 @@ for (i in 1:dim(mat)[1]){
 save.image("x.RData")
 setwd("~/Box Sync/KD_IGV/2020July/")
 load("x.RData")
+#HT_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxTSNPValue.bed
+#Only part of the reads, the allelic reads from the same maxTSN, with allelic read ratio 0.5-2
 readLength=c(mat_readLength, pat_readLength)
 hist(readLength, breaks = seq(-0.5,100,1))
 hist(mat_readLength, breaks = seq(-0.5,100,1))
 hist(pat_readLength, breaks = seq(-0.5,100,1))
 
 
+# identify allelic maxPause
 # if there is a tie, the shorter read length is reported
 for (i in 1:dim(mat)[1]){
   mat$maxPause_RL[i] = as.numeric(names(sort(table(unlist(strsplit(as.character(mat$V7[i]), ","))),decreasing=TRUE)[1]))
@@ -47,6 +50,7 @@ for (i in 1:dim(mat)[1]){
 combine = mat
 colnames(combine)[colnames(combine)=="maxPause_RL"] = "mat_maxPause_RL"
 combine$pat_maxPause_RL = pat$maxPause_RL[pat$V2 == combine$V2]
+combine=combine[colnames(combine)!="V7"] 
 
 for (i in 1:dim(mat)[1]){
   m=as.numeric(strsplit(as.character(mat$V7[i]), ",")[[1]])
@@ -85,7 +89,9 @@ legend("topright",
        , bty = "n"
 )
 
-Tissue="SK"
+
+# indel
+Tissue="HT"
 df=read.table(paste(Tissue, "_BothAlleleMaxTSNs_ratio0.5-2_RLmatpat_map3refTomaxTSNmatpat_ClosetIndel.bed", sep = ""))
 #colnames(df)[7:10]=c("mat_RL", "pat_RL" , "mat_map3RefDist", "pat_map3RefDist" )
 View(df)
@@ -488,3 +494,9 @@ dim(df)[1]
 sum(df$map3.p.value.fdr <=0.1)
 sum(df$RL.p.value.fdr <=0.1)
 sum(df$RL.p.value.fdr <=0.1 & df$map3.p.value.fdr <=0.1)
+
+
+
+### plot idenl length vs avePause, three tissues together, with different color
+# onlt show points with 
+
