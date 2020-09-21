@@ -101,21 +101,6 @@ for (i in 1:dim(df)[1]){
 
 df$map3.p.value.fdr = p.adjust(df$map3.p.value, method = "fdr")
 
-par(mfrow=c(2,2))
-step=1
-metaplot.SNPsLocation.aroundMaxPause(df[df$map3.p.value.fdr<=0.1,], name=paste("HSK, maxPause map position, step=", step, sep=""), col="red", step=step)
-abline(v=0, col="gray")
-
-#metaplot.SNPsLocation.aroundMaxPause(df[df$map3.p.value.fdr<=0.1,], name="HT, maxPause map position", col="black", step=5, add=TRUE)
-
-metaplot.SNPsLocation.aroundMaxPause(df[df$map3.p.value.fdr>0.9,], col="blue", step=step, add=TRUE)
-legend("topright", legend=c(paste("fdr <= 0.1, n= ", sum(df$map3.p.value.fdr<=0.1), sep=""), 
-                            paste("fdr >  0.9, n= ", sum(df$map3.p.value.fdr>0.9), sep="")),
-       col=c("red", "blue"), bty = "n", lty=1)
-
-sum(df$map3.p.value.fdr<=0.1)
-sum(df$map3.p.value.fdr>0.9)
-
 metaplot.SNPsLocation.aroundMaxPause <-function(df, name="", use.sum=FALSE, col="red", show.window = 49, step=1 ,add=FALSE, pch_u=19){
   bed6 <- df[,1:6]
   # maxPause location +- window
@@ -227,7 +212,7 @@ metaplot.SNPsLocation.aroundEarlyPause <-function(df, name="", use.sum=FALSE, co
          main = name,
          ylab= "SNPs counts mean",
          type = "o", 
-         xlab="",
+         xlab="distance to early pause",
          pch=pch_u,
          las=1
          #ylim = c(0,0.5)
@@ -297,14 +282,30 @@ metaplot.SNPsLocation.aroundLatePause <-function(df, name="", use.sum=FALSE, col
   return (list(x, y))
 }
 
+# around maxPause
+par(mfrow=c(2,2))
+step=1
+metaplot.SNPsLocation.aroundMaxPause(df[df$map3.p.value.fdr<=0.1,], name=paste("HSK, maxPause map position, step=", step, sep=""), col="red", step=step)
+abline(v=0, col="gray")
+
+#metaplot.SNPsLocation.aroundMaxPause(df[df$map3.p.value.fdr<=0.1,], name="HT, maxPause map position", col="black", step=5, add=TRUE)
+
+metaplot.SNPsLocation.aroundMaxPause(df[df$map3.p.value.fdr>0.9,], col="blue", step=step, add=TRUE)
+legend("topright", legend=c(paste("fdr <= 0.1, n= ", sum(df$map3.p.value.fdr<=0.1), sep=""), 
+                            paste("fdr >  0.9, n= ", sum(df$map3.p.value.fdr>0.9), sep="")),
+       col=c("red", "blue"), bty = "n", lty=1)
+
+sum(df$map3.p.value.fdr<=0.1)
+sum(df$map3.p.value.fdr>0.9)
+
 
 ### early pause with at least bp.apart bp difference
-tempFunc <-function(bp.apart=5, upto=10){
+tempFunc <-function(bp.apart=1, upto=100){
 step=1
 
-
+## SNPs around early pause
 metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto,], 
-                                       name=paste("HT, step=", step,", early and late at least ", bp.apart," bp apart, upto " ,upto, sep=""), col="red", step=step)
+                                       name=paste("HSK, step=", step,", early and late at least ", bp.apart," bp apart, upto " ,upto, sep=""), col="red", step=step)
  abline(v=0, col="gray")
 # abline(v=-5, col="gray")
 # abline(v=-10, col="gray")
@@ -314,7 +315,12 @@ metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9,], col="blue",
 #                             paste("fdr >  0.9, n= ", sum(df$map3.p.value.fdr>0.9), sep="")),
 #        col=c("red", "blue"), bty = "n", lty=1, pch=19)
 # 
+legend("topright", legend=c(paste("Early Pause, fdr <= 0.1, n= ", sum(df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto), sep=""), 
+                            paste("Early Pause, fdr >  0.9, n= ", sum(df$map3.p.value.fdr>0.9), sep="")),
+       col=c("red", "blue"), 
+       bty = "n", lty=1, pch=19)
 
+if (0){
 metaplot.SNPsLocation.aroundLatePause(df[df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto,], 
                                       col="orange", step=step, add=TRUE, pch_u = 12)
 metaplot.SNPsLocation.aroundLatePause(df[df$map3.p.value.fdr>0.9,], col="green", step=step, add=TRUE, pch_u = 12)
@@ -326,7 +332,59 @@ legend("topright", legend=c(paste("Early Pause, fdr <= 0.1, n= ", sum(df$map3.p.
        #col=c("red", "blue", "orange", "green"), 
        bty = "n", lty=1, pch=c(19,19,12,12))
 }
-tempFunc(1,100)
+}
+
+
+##
+## SNPs around early pause, use.sum = TRUE, for test
+step=1
+e1=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto,], 
+                                          name=paste("HSK, step=", step,", early and late at least ", bp.apart," bp apart, upto " ,upto, sep=""), col="red", step=step,
+                                          use.sum = TRUE)
+abline(v=0, col="gray")
+# abline(v=-5, col="gray")
+# abline(v=-10, col="gray")
+
+e9=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9,], col="blue", step=step, use.sum = TRUE)
+# legend("topright", legend=c(paste("fdr <= 0.1, n= ", sum(df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >0), sep=""), 
+#                             paste("fdr >  0.9, n= ", sum(df$map3.p.value.fdr>0.9), sep="")),
+#        col=c("red", "blue"), bty = "n", lty=1, pch=19)
+# 
+
+# add a test
+#pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS.pdf", sep=""))
+par(mfrow=c(3,1))
+tempFunc(1,100) # use mean
+p.value <- NULL
+odds.ratio <- NULL
+testors <- NULL
+
+for (n in (1:length(e1[[2]]))){
+  
+  testor <-  matrix(c(e1[[2]][n], 308,
+                      e9[[2]][n], 2723),
+                    nrow = 2,
+                    dimnames = list(TSS = c("TSS with SNPs", "TSS with or without SNPs"),
+                                    KS.Test = c("TSS fdr<=0.1", "TSS fdr >0.9"))); testor
+  
+  f = fisher.test(testor, alternative = "greater" ); f
+  p.value= c(p.value, f$p.value)
+  odds.ratio = c(odds.ratio, f$estimate)
+}
+adjust.p = p.adjust(p.value, method="fdr")
+plot(e1[[1]], -log10(adjust.p), type="o" , xlab="dist to maxTSN", main=" TSS fdr <= 0.1 vs TSS fdr > 0.9", las=1, col="red")
+abline(h=-1*log10(fdr_cutoff),col="gray")
+plot(e1[[1]],odds.ratio, type="o" , xlab="dist to maxTSN", las=1)
+abline(h=1,col="gray")
+# plot(e1[[1]], p.value, type="o" , 
+#      ylab="unadjust p-value",
+#      xlab="dist to maxTSN",  main=" TSS_SNP/ Total TSS", las=1, col="red")
+# abline(h=0.05,col="gray")
+# text(e1[[1]][which(p.value <= 0.1)],p.value[which(p.value <= 0.1)], label=paste(round(p.value[which(p.value <= 0.1)], digits = 2), sep=" "))
+# dev.off()
+
+
+
 
 par(mfrow=c(2,2))
 for (i in 1:14){
