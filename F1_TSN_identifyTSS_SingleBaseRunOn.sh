@@ -1,4 +1,21 @@
 ### used for single base runon ChRO-seq
+
+# insert length distribution
+for Head in HT KD SK
+do
+  for allele in mat pat
+  do
+    zcat  map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    | awk 'BEGIN{OFS="\t"}  {split($4,a,","); print length(a[2])}' > ${Head}_${allele}_specific_read_length.txt &
+  done
+  zcat  map2ref_1bpbed_map5/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp.sorted.bed.gz \
+  | awk 'BEGIN{OFS="\t"}  {split($4,a,","); print length(a[2])}' > ${Head}_mat_identical_read_length.txt &
+done
+
+
+
+
+
 # identify TSB within dREG sites
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn
 
@@ -59,19 +76,6 @@ done
 wait
 
 
-# paste the all reads  and alleleic reads count into a table
-# only keep base with at least b all reads ($8 >= k)
-k=5
-for Head in HT KD SK
-do
-  for allele in mat pat
-  do
-    paste ${Head}_allReads_TSStemp1.bed ${Head}_allReads_TSStemp1_${allele}.bed \
-    | awk -v k=$k 'BEGIN{OFS="\t"} ($2==$10 && $3==$11 && $8+0 >= k ) {print $0}' |cut -f 9- > ${Head}_${allele}_temp2.bed &
-  done
-done
-
-
 # report more than one maxTSN if multiple TSN share the same max read count
 for Head in HT KD SK
 do
@@ -115,6 +119,18 @@ done
 
 
 # maxTSN of allelic reads
+# paste the all reads  and alleleic reads count into a table
+# only keep base with at least k all reads ($8 >= k)
+k=5
+for Head in HT KD SK
+do
+  for allele in mat pat
+  do
+    paste ${Head}_allReads_TSStemp1.bed ${Head}_allReads_TSStemp1_${allele}.bed \
+    | awk -v k=$k 'BEGIN{OFS="\t"} ($2==$10 && $3==$11 && $8+0 >= k ) {print $0}' |cut -f 9- > ${Head}_${allele}_temp2.bed &
+  done
+done
+
 # report more than one maxTSN if multiple TSN share the same max read count
 for Head in HT KD SK
 do
@@ -152,7 +168,7 @@ done
    4995 SK_matReads_TSS_maxTSNs.bed
    1933 SK_matReads_patReads_TSS_maxTSNs.bed
    4909 SK_patReads_TSS_maxTSNs.bed
-  34873 tota
+  34873 total
 
 for Head in HT KD SK
 do cat ${Head}_matReads_patReads_TSS_maxTSNs.bed | awk '{OFS="\t"; c=","} ($4/$10<2 && $4/$10>0.5){print $1,$2,$3,$4c$10, $5, $6}' > ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed

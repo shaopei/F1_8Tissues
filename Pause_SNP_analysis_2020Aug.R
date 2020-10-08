@@ -80,8 +80,6 @@ for (i in 1:NROW(bed6)){
 
 
 
-
-
 # average pause
 ## average
 for (i in 1:dim(df)[1]){
@@ -590,6 +588,13 @@ legend("right",
 )
 
 
+sub_df_ns=df[df$map3.p.value.fdr > 0.9 & df$AllelicMaxPauseDist ==0,]
+sub_df_SNP_ns=df[df$map3.p.value.fdr > 0.9 & df$AllelicMaxPauseDist ==0  & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause),]
+View(sub_df_SNP_ns)
+dim(sub_df_ns)
+dim(sub_df_SNP_ns)
+
+
 sub_df_indel=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$dist_Indel_maxTSN <= df$latePause,]
 sub_df_no_indel=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$dist_Indel_maxTSN > df$latePause,]
 sub_df_SNP_indel=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause)& df$dist_Indel_maxTSN <= df$latePause,]
@@ -685,7 +690,7 @@ legend("right",
 )
 
 
-legend("right", 
+legend("left", 
        legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
                    paste("SNP at -3 early pause, n=", dim(sub_df_SNP_3G)[1], sep="")),
        title = ,
@@ -703,6 +708,69 @@ legend("right",
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP_3G$AllelicMaxPauseDist, alternative = "less")
 
 ###
+# SNPs at -2
+# exclude difference 0
+snp_position=-2
+df$AllelicMaxPauseDist = abs(df$mat_maxPause_map3 - df$pat_maxPause_map3)
+sub_df=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0,]
+sub_df_SNP_2=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 &((df$SNP1_distance_earlyPause==snp_position & !is.na(df$SNP1_distance_earlyPause))|(df$SNP2_distance_earlyPause==snp_position & !is.na(df$SNP2_distance_earlyPause))),]
+par(mfrow=c(2,1))
+plot(ecdf(sub_df$AllelicMaxPauseDist), col="blue", 
+     xlab="AllelicMaxPauseDist",
+     ylab="density",
+     las=1,
+     main="maxPause map3TomaxTSNs KS FDR <= 0.1, e and l >1bp move")
+hist(sub_df$AllelicMaxPauseDist,
+     freq = F, ylim=c(0,0.4), las=1,
+     breaks = seq(-0.5,50,1), col="blue", main="maxPause map3TomaxTSNs KS FDR <= 0.1",
+     add=T
+)
+
+hist(sub_df_SNP_2$AllelicMaxPauseDist,     freq = F, ylim=c(0,0.4), las=1,
+     breaks = seq(-0.5,50,1),
+     col="dark orange", density = 45, add=T)
+
+lines(ecdf(sub_df$AllelicMaxPauseDist), col="blue")
+lines(ecdf(sub_df_SNP_2$AllelicMaxPauseDist), col="dark orange")
+
+legend("right", 
+       legend = c( paste("SNP at early pause, n=", dim(sub_df_SNP)[1], sep=""), 
+                   paste("SNP at -2 early pause, n=", dim(sub_df_SNP_3G)[1], sep=""),
+                   paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep="")),
+       title = ,
+       #pch=c(15,15),
+       #cex=2, 
+       #lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       #density=c(10000,25),
+       #angle=c(180,45),
+       #angle=45,
+       #fill=c("blue","dark orange","dark green")
+       col=c("red","dark orange","blue"),
+       pch=16,
+       bty = "n"
+)
+
+
+legend("right", 
+       legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
+                   paste("SNP at -2 early pause, n=", dim(sub_df_SNP_3G)[1], sep="")),
+       title = ,
+       #pch=c(15,15),
+       #cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(10000,25),
+       angle=c(180,45),
+       #angle=45,
+       fill=c("blue","red")
+       , bty = "n"
+)
+ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP_2$AllelicMaxPauseDist, alternative = "less")
+
+
 
 
 
@@ -966,7 +1034,7 @@ vioplot(seq_df$C_range1, seq_df$C_range2, seq_df$C_range3,
         ylab="C content", ylim=c(0,100))
 abline(h=20, col="yellow")
 
-}
+
 # Wilcoxon Rank Sum and Signed Rank Tests
 wilcox.test(seq_df$G_range1, seq_df$G_range2, paired = TRUE)
 wilcox.test(seq_df$G_range2, seq_df$G_range3, paired = TRUE)
@@ -979,10 +1047,6 @@ wilcox.test(seq_df$GC_range1, seq_df$GC_range3, paired = TRUE)
 wilcox.test(seq_df$C_range1, seq_df$C_range2, paired = TRUE)
 wilcox.test(seq_df$C_range2, seq_df$C_range3, paired = TRUE)
 wilcox.test(seq_df$C_range1, seq_df$C_range3, paired = TRUE)
-
-
-
-
 
 
 
