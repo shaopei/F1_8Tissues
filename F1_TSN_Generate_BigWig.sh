@@ -110,7 +110,8 @@ done
 
 
 # map3 from shared allelic maxTSNs
-Head=HT
+for Head in SK KD #HT
+do
 for allele in mat pat
   do 
 f=${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed
@@ -118,8 +119,11 @@ j=${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads
 bedtools genomecov -bg -i $f -g ${mouse_chinfo} -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_plus.bedGraph &
 bedtools genomecov -bg -i $f -g ${mouse_chinfo} -strand - |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_minus.inv.bedGraph &
 done
+done
 
 wait
+for Head in SK KD #HT
+do
 for allele in mat pat
   do 
 f=${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed
@@ -128,4 +132,4 @@ j=${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads
   bedGraphToBigWig $j\_minus.bedGraph ${mouse_chinfo} $j\_minus.bw &
   bedGraphToBigWig $j\_plus.bedGraph ${mouse_chinfo} $j\_plus.bw &
 done
-
+done

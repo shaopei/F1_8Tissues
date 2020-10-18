@@ -292,9 +292,10 @@ ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed  < KSte
 done
 
 # make map3 IGC track with only reads from the shared maxTSNs
+#Head=KD
 for allele in mat pat
   do 
-cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/* | sort-bed -  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed
+cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/* | sort-bed -  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed &
 done
 
 #HERE

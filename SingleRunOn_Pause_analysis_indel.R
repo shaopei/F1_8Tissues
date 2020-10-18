@@ -56,27 +56,37 @@ for (i in 1:dim(df)[1]){
 }
 
 df$target=df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 )
-
-plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$V15 <= df$maxPauseSite_map3], 
-      (df$mat_Idel_length - df$pat_Idel_length)[df$V15 <= df$maxPauseSite_map3],
-      xlim=c(-1*lim,lim), ylim=c(-1*lim,lim),
-      pch=21, bg=rgb(0,0,0,alpha = 0.125))
-
-plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="HT"], 
+dim(df)
+sum(df$target)
+sum(df$map3.p.value.fdr<0.1)
+sum(df$map3.p.value.fdr>0.1)
+# plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target], 
+#       (df$mat_Idel_length - df$pat_Idel_length)[df$target],
+#       xlim=c(-1*lim,lim), ylim=c(-1*lim,lim),
+#       xlab="B6 - CAST pause position",
+#       ylab="B6 - CAST indel length",
+#       frame=F, 
+#       pch=19, col=rgb(0,0,0,alpha = 0.25))
+pch_u=19
+plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="HT"],
         (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="HT"],
-        xlim=c(-1*lim,lim), 
+        xlim=c(-1*lim,lim),
       ylim=c(-1*lim,lim),
       xlab="B6 - CAST pause position",
       ylab="B6 - CAST indel length",
-      pch=16, frame=F, 
+      pch=pch_u, frame=F,
       col="red")
+# points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="HT"], 
+#         (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="HT"],
+#         pch=pch_u, 
+#         col="red")
 points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="SK"], 
         (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="SK"],
-        pch=16, 
+        pch=pch_u, 
         col="dark orange")
 points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="KD"], 
       (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="KD"],
-      pch=16, col="blue")
+      pch=pch_u, col="blue")
 
 abline(a=5, b=-1, col="gray")
 abline(a=0,b=-1, col="dark gray")
@@ -84,7 +94,7 @@ abline(a=-5, b=-1, col="gray")
 
 legend("topright", 
        legend = c("HT", "SK", "KD"),
-       pch=16,
+       pch=pch_u,
 #       cex=2, 
        lty=c(0,0),
        #bty="n",
@@ -95,3 +105,30 @@ legend("topright",
        col=c("red", "dark orange", "blue")
        , bty = "n"
 )
+
+
+# get read length distribution
+for (Tissue in c("HT","SK", "KD")){
+  pdf(file = paste(Tissue, "_read_length_distribution.pdf"))
+ide_name=paste(Tissue,"_mat_identical_read_length.txt",sep="")
+mat_name=paste(Tissue,"_mat_specific_read_length.txt",sep="")
+pat_name=paste(Tissue,"_pat_specific_read_length.txt",sep="")
+
+ide<-read.table(ide_name)
+mat<-read.table(mat_name)
+pat<-read.table(pat_name)
+
+par(mfrow=c(3,1))
+xlim_top=101
+hist(mat$V1[mat$V1<=100], 
+     xlim = c(0, xlim_top), las=1, 
+     breaks = seq(0.5, xlim_top,1),
+     main=Tissue)
+hist(pat$V1[pat$V1<=100], 
+     breaks = seq(0.5, xlim_top,1),
+     xlim = c(0, xlim_top), las=1)
+hist(ide$V1[ide$V1<=100], 
+     breaks = seq(0.5, xlim_top,1),
+     xlim = c(0, xlim_top), las=1)
+dev.off()
+}

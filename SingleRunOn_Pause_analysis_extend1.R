@@ -1,81 +1,112 @@
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Kidney_and_SingleRunOn/Pause_manuscript")
 file_dir="~/Box Sync/KD_IGV/"
-
-t="HT"
-show.window=100
-pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
-pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
-end=".rpm.bw"; times=10
-#end=".bw"; times=1
-# allelic reads (map3)
-file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
-file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
-file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
-file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
-# allelic reads (map5) HT.mat.map5.map2ref.1bp_minus.bw
-map5.file.bw.plus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
-map5.file.bw.minus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
-map5.file.bw.plus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_plus.bw", sep="")
-map5.file.bw.minus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_minus.bw", sep="")
-# all reads
-file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
-file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
-map5.file.plus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
-map5.file.minus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
-SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
-AT=pause_window_0.1
-# parameter setting 
-dist=200; step=1;file.pdf="heatmap.pdf"; map5=TRUE; metaplot.pdf="metaplot.pdf";
-heatmap=TRUE; metaplot=TRUE; metaplot.ylim=c(0,20);
-center.at.TSN=TRUE;
-navg = 1; use.log=FALSE; times=1
-up_dist =100;
-breaks=seq(0, 20, 0.001); times=times; map5=TRUE; metaplot.ylim = c(0,160)
-
-### from heatmap.Pause function ###
-# AT here is the window of pause, dREG sites
-AT <- AT[,1:6] 
-
-# identify the location of max reads in mat and pat pause
-# determine the location of long pause and short pause
-hmat.pat.peak <- NULL  #map3
-hmat.mat.peak <- NULL  # map3
-map5.pat.peak <- NULL
-map5.mat.peak <- NULL
-#map5.proseq.peak <- NULL
-for (i in 1:NROW(AT)){
-  # identify the base with of max map3 reads 
-  hmat.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, AT[i,], step, times=times, use.log=use.log)
-  hmat.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, AT[i,], step, times=times, use.log=use.log) 
-  hmat.pat.peak[i] <- which(hmat.pat == max(hmat.pat))
-  hmat.mat.peak[i] <- which(hmat.mat == max(hmat.mat))
-  # identify the base with of max map5 reads 
-  map5.pat <- read_read_mat_S (map5.file.bw.plus.pat, map5.file.bw.minus.pat, AT[i,], step, times=times, use.log=use.log)
-  map5.mat <- read_read_mat_S (map5.file.bw.plus.mat, map5.file.bw.minus.mat, AT[i,], step, times=times, use.log=use.log) 
-  map5.pat.peak[i] <- which(map5.pat == max(map5.pat))  # if two bases with same read count, output the 5 prime one (up stream)
-  map5.mat.peak[i] <- which(map5.mat == max(map5.mat)) 
+source("~/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
+read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 20, times=1, use.log=FALSE)
+{
+  bw.plus  <- load.bigWig( file.plus.bw )
+  bw.minus <- load.bigWig( file.minus.bw )
   
-  map5.t=c(map5.pat.peak[i],   map5.mat.peak[i])   # the base with of max map5 reads 
+  hCountMatrix <- bed6.step.bpQuery.bigWig(bw.plus, bw.minus, bed6[,c(1:6)] , step=step, abs.value=TRUE, op = "sum")
+  hCountMatrix <- lapply(1:NROW(hCountMatrix), function(i){ if(bed6[i,6]=="-") return(rev(hCountMatrix[[i]])) else return(hCountMatrix[[i]])} );
+  if (!use.log){
+    hmat <- times * matrix(unlist(hCountMatrix), nrow= NROW(bed6), byrow=TRUE) ;
+  } else {
+    hmat <- log(times * matrix(unlist(hCountMatrix), nrow= NROW(bed6), byrow=TRUE) + 1) ;
+  }
+  #avgMat <- t(sapply(1:floor(NROW(hmat)/navg), function(x) {colMeans(hmat[((x-1)*navg+1):min(NROW(hmat),(x*navg)),])}))
   
-  # determine which allele is early pause, which is late pause
-  a=sort.int(c(hmat.pat.peak[i],  hmat.mat.peak[i]), index.return = TRUE )
-  AT$early.pause[i] = a$x[1] 
-  AT$late.pause[i] = a$x[2]
-  AT$TSN.early.pause[i] = map5.t[a$ix[1]]  # from the same allele as early pause, which base has the max map5 reads
-  AT$TSN.late.pause[i] = map5.t[a$ix[2]]   # from the same allele as late pause, which base has the max map5 reads,
+  unload.bigWig(bw.plus);
+  unload.bigWig(bw.minus);
+  
+  return(hmat);    
 }
-### from heatmap.Pause function end ###
 
+
+
+combine_pause0.1 <- NULL
+#t="KD"
+for (t in c("HT","SK","KD")){
+  show.window=100
+  pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
+  pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
+  end=".rpm.bw"; times=10
+  #end=".bw"; times=1
+  # allelic reads (map3)
+  file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
+  file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+  # allelic reads (map5) HT.mat.map5.map2ref.1bp_minus.bw
+  map5.file.bw.plus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
+  map5.file.bw.minus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
+  map5.file.bw.plus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_plus.bw", sep="")
+  map5.file.bw.minus.mat <- paste(file_dir, "map5/",t,".mat.map5.map2ref.1bp_minus.bw", sep="")
+  # all reads
+  file.plus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_plus",end, sep="")
+  file.minus.bw <- paste(file_dir,t,"_PB6_F5N6_dedup_QC_end_minus",end, sep="")
+  map5.file.plus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_plus.bw", sep="")
+  map5.file.minus.bw <- paste(file_dir, "map5/",t,"_PB6_F5N6_dedup_QC_end_map5_minus.bw", sep="")
+  SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
+  AT=pause_window_0.1
+  # parameter setting 
+  dist=200; step=1;file.pdf="heatmap.pdf"; map5=TRUE; metaplot.pdf="metaplot.pdf";
+  heatmap=TRUE; metaplot=TRUE; metaplot.ylim=c(0,20);
+  center.at.TSN=TRUE;
+  navg = 1; use.log=FALSE; times=1
+  up_dist =100;
+  breaks=seq(0, 20, 0.001); times=times; map5=TRUE; metaplot.ylim = c(0,160)
+  
+  ### from heatmap.Pause function ###
+  # AT here is the window of pause, dREG sites
+  AT <- AT[,1:6] 
+  
+  # identify the location of max reads in mat and pat pause
+  # determine the location of long pause and short pause
+  hmat.pat.peak <- NULL  #map3
+  hmat.mat.peak <- NULL  # map3
+  map5.pat.peak <- NULL
+  map5.mat.peak <- NULL
+  #map5.proseq.peak <- NULL
+  for (i in 1:NROW(AT)){
+    # identify the base with of max map3 reads 
+    hmat.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, AT[i,], step, times=times, use.log=use.log)
+    hmat.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, AT[i,], step, times=times, use.log=use.log) 
+    hmat.pat.peak[i] <- which(hmat.pat == max(hmat.pat))
+    hmat.mat.peak[i] <- which(hmat.mat == max(hmat.mat))
+    # identify the base with of max map5 reads 
+    map5.pat <- read_read_mat_S (map5.file.bw.plus.pat, map5.file.bw.minus.pat, AT[i,], step, times=times, use.log=use.log)
+    map5.mat <- read_read_mat_S (map5.file.bw.plus.mat, map5.file.bw.minus.mat, AT[i,], step, times=times, use.log=use.log) 
+    map5.pat.peak[i] <- which(map5.pat == max(map5.pat))  # if two bases with same read count, output the 5 prime one (up stream)
+    map5.mat.peak[i] <- which(map5.mat == max(map5.mat)) 
+    
+    map5.t=c(map5.pat.peak[i],   map5.mat.peak[i])   # the base with of max map5 reads 
+    
+    # determine which allele is early pause, which is late pause
+    a=sort.int(c(hmat.pat.peak[i],  hmat.mat.peak[i]), index.return = TRUE )
+    AT$early.pause[i] = a$x[1] 
+    AT$late.pause[i] = a$x[2]
+    AT$TSN.early.pause[i] = map5.t[a$ix[1]]  # from the same allele as early pause, which base has the max map5 reads
+    AT$TSN.late.pause[i] = map5.t[a$ix[2]]   # from the same allele as late pause, which base has the max map5 reads,
+  }
+  ### from heatmap.Pause function end ###
+  combine_pause0.1=rbind.data.frame(combine_pause0.1, AT)
+}
+
+AT=combine_pause0.1
 
 # distribution of distance between early and late TSN
 AT$early.TSN.pause.dist = AT$early.pause - AT$TSN.early.pause
 AT$late.TSN.pause.dist = AT$late.pause - AT$TSN.late.pause
 
+dim(AT)
 
+TSN.pause.dist.lowerbound=10
+TSN.pause.dist.upperbpund=50
 
+AT$valid.pairs = AT$early.TSN.pause.dist > TSN.pause.dist.lowerbound & AT$late.TSN.pause.dist > TSN.pause.dist.lowerbound &
+  AT$early.TSN.pause.dist <TSN.pause.dist.upperbpund & AT$late.TSN.pause.dist <TSN.pause.dist.upperbpund
+sum(AT$valid.pairs)
 
-
-AT$valid.pairs = AT$early.TSN.pause.dist > 5 & AT$late.TSN.pause.dist > 5 & AT$early.TSN.pause.dist <100 & AT$late.TSN.pause.dist <100
 subAT=AT[!AT$valid.pairs,]
 
 old_AT = AT
@@ -94,9 +125,10 @@ sum(AT$TSN.dist >10 )
 # distribution of distance between early and late pause
 AT$pause.dist= AT$late.pause - AT$early.pause
 hist(AT$pause.dist, main="distance between early and late pause")
-hist(AT$pause.dist[AT$pause.dist!= 0], main="distance between early and late pause, exclude dist==0")
+hist(AT$pause.dist[AT$pause.dist!= 0], main="distance between early and late pause, exclude dist==0",
+     add=T, col="red")
 sum(AT$pause.dist==0)
-sum(AT$pause.dist!=0)
+sum(AT$pause.dist>0)
 sum(AT$pause.dist> 10)
 
 plot(AT$TSN.dist, AT$pause.dist, pch=19, col=rgb(0,0,0,alpha = 0.25))
@@ -109,11 +141,14 @@ abline(10,1, col="blue")
 abline(-10,1, col="blue")
 
 hist(AT$pause.dist[AT$TSN.dist==0]
-     #, breaks=seq(-0.5,35,1)
+     , breaks=seq(-0.5,35,1)
      )
-hist(AT$pause.dist[AT$TSN.dist > 0] - AT$TSN.dist[AT$TSN.dist > 0]
-#     , breaks=seq(-35.5,35,1)
+hist(AT$pause.dist[AT$TSN.dist != 0] - AT$TSN.dist[AT$TSN.dist != 0]
+     , breaks=seq(-35.5,35,1)
      )
+hist(AT$pause.dist - AT$TSN.dist
+     , breaks=seq(-35.5,35,1)
+)
 
 subAT=AT[abs(AT$pause.dist - AT$TSN.dist) > 10,]
 subAT=subAT[subAT$TSN.dist==0,]
@@ -125,8 +160,8 @@ myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
 myColor_scale_fill <- scale_fill_gradientn(colours = myColor, trans='log10')
 
 p <- ggplot(AT, aes(x=TSN.dist, y=pause.dist)) +
-  geom_bin2d(bins = 70) +  myColor_scale_fill + theme_bw() +  
-  xlim(-20, 50) + ylim(0,50) + #labs(x="log10 (TSS Read Counts)")  + labs(y="TSN counts") +
+  geom_bin2d(bins = 100) +  myColor_scale_fill + theme_bw() +  
+  #xlim(-20, 50) + ylim(0,50) + #labs(x="log10 (TSS Read Counts)")  + labs(y="TSN counts") +
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20), #,face="bold"))
         legend.title = element_text(size = 20),

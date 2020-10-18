@@ -708,12 +708,14 @@ legend("left",
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP_3G$AllelicMaxPauseDist, alternative = "less")
 
 ###
-# SNPs at -2
+# SNPs at -2 or 3
 # exclude difference 0
-snp_position=-2
+snp_position=c(-2, -3)
 df$AllelicMaxPauseDist = abs(df$mat_maxPause_map3 - df$pat_maxPause_map3)
 sub_df=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0,]
-sub_df_SNP_2=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 &((df$SNP1_distance_earlyPause==snp_position & !is.na(df$SNP1_distance_earlyPause))|(df$SNP2_distance_earlyPause==snp_position & !is.na(df$SNP2_distance_earlyPause))),]
+sub_df_SNP_2=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 &
+                ((df$SNP1_distance_earlyPause%in%snp_position & !is.na(df$SNP1_distance_earlyPause))|
+                    (df$SNP2_distance_earlyPause%in%snp_position & !is.na(df$SNP2_distance_earlyPause))),]
 par(mfrow=c(2,1))
 plot(ecdf(sub_df$AllelicMaxPauseDist), col="blue", 
      xlab="AllelicMaxPauseDist",
