@@ -446,8 +446,8 @@ d=10
  bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
  wait
  paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
- cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($7,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
- (substr($7,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($4,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ (substr($4,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
 
 j=Tissues3_LatePause_1bpapart_KSfdr0.1
 d=10
@@ -458,8 +458,8 @@ d=10
  bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
  wait
  paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
- cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($7,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
- (substr($7,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($4,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ (substr($4,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
 
 
 j=Tissues3_EarlyPause_BG
@@ -471,8 +471,8 @@ d=10
  bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
  wait
  paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
- cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($7,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
- (substr($7,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+ cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($4,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ (substr($4,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
 
 j=combine_maxPause_noduplicate
 d=30
@@ -480,3 +480,7 @@ d=30
  paste ${j}.bed  ${j}_mm10.txt > ${j}_+-${d}_mm10_Seq.bed 
  
 
+j=combine_maxPause_noduplicate
+d=50
+ bedtools getfasta -s -fi mm10.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t"} {print $1, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_mm10.txt 
+ paste ${j}.bed  ${j}_mm10.txt > ${j}_+-${d}_mm10_Seq.bed 

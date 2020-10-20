@@ -960,6 +960,223 @@ fisher.test(data.frame(
 
 #####HERE#####
 
+### What kind of SNPs?
 
+df$earlyPause_parent = "M"
+df$earlyPause_parent[df$earlyPause==df$pat_maxPause_map3] = "P"
+df$earlyPause_parent[df$earlyPause==df$mat_maxPause_map3] = "M"
+sum(df$earlyPause_parent=="M")
+show.window=0
+bed7 <- df[,1:6]
+bed7$V4 = df$earlyPause_parent
+bed7$earlyPause_parent = df$earlyPause_parent
+for (i in 1:NROW(bed7)){
+  if(bed7[i,6]=="-") {
+    bed7[i,3] <- df[i,3] - df$earlyPause[i] + show.window
+    bed7[i,2] <- df[i,2] - df$earlyPause[i] - show.window
+  } else {
+    bed7[i,2] <- df[i,2] + df$earlyPause[i] - show.window
+    bed7[i,3] <- df[i,3] + df$earlyPause[i] + show.window
+  }
+}
+# early and late pause with at least 1 bp apart AND map3 KS test fdr<=0.1
+bed7 = bed7[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,]
+bed7 = unique(bed7)
+dim(bed7)
+dim(df)
+write.table(bed7, file="Tissues3_EarlyPause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+
+# early pause, background 
+bed0 <- df[,1:6]
+bed0$earlyPause_parent = df$earlyPause_parent
+bed0$V4 = df$earlyPause_parent
+show.window=0
+for (i in 1:NROW(bed0)){
+  if(bed0[i,6]=="-") {
+    bed0[i,3] <- df[i,3] - df$earlyPause[i] + show.window
+    bed0[i,2] <- df[i,2] - df$earlyPause[i] - show.window
+  } else {
+    bed0[i,2] <- df[i,2] + df$earlyPause[i] - show.window
+    bed0[i,3] <- df[i,3] + df$earlyPause[i] + show.window
+  }
+}
+bed0 = unique(bed0)
+dim(bed0)
+dim(df)
+write.table(bed0, file="Tissues3_EarlyPause_BG.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+
+
+bed9 <- df[,1:6]
+bed9$earlyPause_parent = df$earlyPause_parent
+bed9$V4 = df$earlyPause_parent
+for (i in 1:NROW(bed9)){
+  if(bed9[i,6]=="-") {
+    bed9[i,3] <- df[i,3] - df$latePause[i] 
+    bed9[i,2] <- df[i,2] - df$latePause[i] 
+  } else {
+    bed9[i,2] <- df[i,2] + df$latePause[i]  
+    bed9[i,3] <- df[i,3] + df$latePause[i]  
+  }
+}
+# early and late pause with at least 1 bp apart
+bed9 = unique(bed9[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,])
+dim(bed9)
+dim(df)
+write.table(bed9, file="Tissues3_LatePause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+# maxPause from all (mat, pat, ide) reads, combine all organs, duplicates removed 
+bed8 <- df[,1:6]
+for (i in 1:NROW(bed8)){
+  if(bed8[i,6]=="-") {
+    bed8[i,3] <- df[i,3] - df$maxPause_map3AllReads[i]
+    bed8[i,2] <- df[i,2] - df$maxPause_map3AllReads[i]
+  } else {
+    bed8[i,2] <- df[i,2] + df$maxPause_map3AllReads[i]
+    bed8[i,3] <- df[i,3] + df$maxPause_map3AllReads[i]
+  }
+}
+
+dim(bed8)
+bed8 = bed8[!duplicated(bed8$V2),]
+dim(bed8)
+write.table(bed8, file="combine_maxPause_noduplicate.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+
+
+library("TmCalculator")
+library(seqLogo)
+#define function that divides the frequency by the row sum i.e. proportions
+proportion <- function(x){
+  rs <- sum(x);
+  return(x / rs);
+}
+
+seq_upperCase <- function(seq){
+  seq[seq=="a"]<- "A"
+  seq[seq=="t"]<- "T"
+  seq[seq=="c"]<- "C"
+  seq[seq=="g"]<- "G"
+  
+  a <- NULL
+  t <- NULL
+  c <- NULL
+  g <- NULL
+  for (i in 1:NCOL(seq)){
+    a <- c(a, sum(seq[,i]=="A"))
+    t <- c(t, sum(seq[,i]=="T"))
+    c <- c(c, sum(seq[,i]=="C"))
+    g <- c(g, sum(seq[,i]=="G"))
+  }
+  return (data.frame(a,c,g,t))
+}
+
+SeqLogo <- function(seq, output, range=NULL) {
+  #seq=m$HighAlleleSeq
+  seq<- data.frame(do.call(rbind, strsplit(as.character(seq), "")))
+  df <- seq_upperCase(seq)
+  #create position weight matrix
+  pwm <- apply(df, 1, proportion)
+  if (!is.null(range)){
+    p = makePWM((pwm[,range]))    
+  }else{
+    p = makePWM((pwm))  
+  }
+  
+  #p <- makePWM(pwm)
+  # slotNames(p)
+  # p@consensus
+  # p@ic
+  # p@width
+  # p@alphabet
+  pdf(output)
+  seqLogo(p)
+  dev.off()
+  return (pwm)
+}
+
+seq=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
+dim(seq)
+Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_early.pdf")
+Tissues3_EarlyPause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_late.pdf")
+
+seq=read.table("Tissues3_LatePause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
+Tissues3_LatePause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_LatePause_1bpapart_KSfdr0.1_early.pdf")
+Tissues3_LatePause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_LatePause_1bpapart_KSfdr0.1_late.pdf")
+
+seq=read.table("Tissues3_EarlyPause_BG_+-10_Early_LateAlleleSeq.bed")
+Tissues3_EarlyPause_BG_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_BG_early.pdf")
+Tissues3_EarlyPause_BG_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_BG_late.pdf")
+
+
+seq=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
+combine_maxPause_noduplicate= SeqLogo(seq$V7, "combine_maxPause_noduplicate_+-30_mm10_Se.pdf")
+
+
+
+acgt_col=c("dark green", "blue", "orange" , "red")
+acgt=c("A","C","G","T")
+
+# combine maxPause 
+C <- function(a){
+  return (sum(a=="C"|a=="c")/length(a)*100)
+}
+G <- function(a){
+  return (sum(a=="G"|a=="g")/length(a)*100)
+}
+par(mfrow=c(1,3))
+bin=10
+d=30
+#for (bin in c(10,12)){
+seq_df=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
+range1=(d-bin*2+1):(d-bin)
+range2=(d-bin+1):d
+range3=(d+2):(d+bin)
+
+for (i in 1:NROW(seq)){
+  a=s2c(as.character(seq$V7[i]))
+  a1=a[range1]
+  a2=a[range2]
+  a3=a[range3]
+  seq_df$GC_range1[i]= GC(a1)
+  seq_df$GC_range2[i]= GC(a2)
+  seq_df$GC_range3[i]= GC(a3)
+  seq_df$G_range1[i]= G(a1)
+  seq_df$G_range2[i]= G(a2)
+  seq_df$G_range3[i]= G(a3)
+  seq_df$C_range1[i]= C(a1)
+  seq_df$C_range2[i]= C(a2)
+  seq_df$C_range3[i]= C(a3)
+  #sum(a=="C"|a=="c")/length(a)*100
+}
+
+library("vioplot")
+vioplot(seq_df$G_range1, seq_df$G_range2, seq_df$G_range3, 
+        main= paste("bin size = ", bin, sep=""),
+        ylab="G content", ylim=c(0,100))
+#abline(h=40, col="yellow")
+vioplot(seq_df$GC_range1, seq_df$GC_range2, seq_df$GC_range3, 
+        main= paste("bin size = ", bin, sep=""),
+        ylab="GC content", ylim=c(0,100))
+#abline(h=60, col="green")
+vioplot(seq_df$C_range1, seq_df$C_range2, seq_df$C_range3, 
+        main= paste("bin size = ", bin, sep=""),
+        ylab="C content", ylim=c(0,100))
+#abline(h=20, col="yellow")
+
+
+# Wilcoxon Rank Sum and Signed Rank Tests
+wilcox.test(seq_df$G_range1, seq_df$G_range2, paired = TRUE)
+wilcox.test(seq_df$G_range2, seq_df$G_range3, paired = TRUE)
+wilcox.test(seq_df$G_range1, seq_df$G_range3, paired = TRUE)
+
+wilcox.test(seq_df$GC_range1, seq_df$GC_range2, paired = TRUE)
+wilcox.test(seq_df$GC_range2, seq_df$GC_range3, paired = TRUE)
+wilcox.test(seq_df$GC_range1, seq_df$GC_range3, paired = TRUE)
+
+wilcox.test(seq_df$C_range1, seq_df$C_range2, paired = TRUE)
+wilcox.test(seq_df$C_range2, seq_df$C_range3, paired = TRUE)
+wilcox.test(seq_df$C_range1, seq_df$C_range3, paired = TRUE)
 
 
