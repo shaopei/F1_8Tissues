@@ -814,7 +814,7 @@ for (i in 0:11){
 snp_pause_distance(i)
 }
 
-
+#####HERE#####
 ### What kind of SNPs?
 
 df$earlyPause_parent = "M"
@@ -823,6 +823,7 @@ df$earlyPause_parent[df$earlyPause==df$mat_maxPause_map3] = "M"
 sum(df$earlyPause_parent=="M")
 show.window=0
 bed7 <- df[,1:6]
+bed7$V4 = df$earlyPause_parent
 bed7$earlyPause_parent = df$earlyPause_parent
 for (i in 1:NROW(bed7)){
   if(bed7[i,6]=="-") {
@@ -835,6 +836,7 @@ for (i in 1:NROW(bed7)){
 }
 # early and late pause with at least 1 bp apart AND map3 KS test fdr<=0.1
 bed7 = bed7[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,]
+bed7 = unique(bed7)
 dim(bed7)
 dim(df)
 write.table(bed7, file="Tissues3_EarlyPause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
@@ -861,6 +863,7 @@ write.table(bed0, file="Tissues3_EarlyPause_BG.bed", quote = F, sep="\t", row.na
 
 bed9 <- df[,1:6]
 bed9$earlyPause_parent = df$earlyPause_parent
+bed9$V4 = df$earlyPause_parent
 for (i in 1:NROW(bed9)){
   if(bed9[i,6]=="-") {
     bed9[i,3] <- df[i,3] - df$latePause[i] 
@@ -871,7 +874,7 @@ for (i in 1:NROW(bed9)){
   }
 }
 # early and late pause with at least 1 bp apart
-bed9 = bed9[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,]
+bed9 = unique(bed9[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,])
 dim(bed9)
 dim(df)
 write.table(bed9, file="Tissues3_LatePause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
@@ -1004,7 +1007,7 @@ bin=10
 seq_df=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
 range1=(30-bin*2+1):(30-bin)
 range2=(30-bin+1):30
-range3=31:(30+bin)
+range3=32:(30+bin)
 for (i in 1:NROW(seq)){
   a=s2c(as.character(seq$V7[i]))
   a1=a[range1]
