@@ -6,6 +6,7 @@ ln -s ../identifyTSS_MultiBaseRunOn/*_allReads_TSS.bed .
 studyBed=allReads_TSS
 
 # Use TSS sites with  mat reads >=5 AND pat reads >=5 (strand specific) 
+# The TSS can be allelic bias transcribed
 # remove TSS in chrX
 ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
 for Head in BN HT  SK  SP  KD  LV  GI  ST
@@ -102,12 +103,6 @@ done
 ### seperate TSS with some kind of allelic difference into two group: 1. change driven by 1 single base 2. Change driven by more than 1 base
 # examine all TSS
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSS_KStest_MultiBaseRunOn
-## mask the TSN with biggest difference between the two alleles
-# identify the abundance of PolII at each position
-# strand specific
-# use all reads (not just allelic reads)
-
-
 
 # mask the TSN with biggest difference between the two alleles
 # for TSS with only 1bp length, it will be removed after the masking
@@ -141,7 +136,7 @@ R --vanilla --slave --args $(pwd) ${Head} ${studyBed}_5mat5pat_uniq_masked < KSt
 # output ${Head}_${studyBed}_5mat5pat_uniq_masked_pValue.bed bed6, col7 p.value, col8 fdr
 done
 
-# make a table to comapre masked and unmasked p-value and fdr
+# make a table to compare masked and unmasked p-value and fdr
 # -a masked -b umasked
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do

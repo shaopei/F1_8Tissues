@@ -73,7 +73,7 @@ for (Tissue in c("HT","SK", "KD")){
 
 # pause center analysis, using dREG sites with KS test, map3 position, fdr<=0.1
 combine_pause0.1 <- NULL
-#t="KD"
+t="HT"
 for (t in c("HT","SK","KD")){
   show.window=100
   pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
@@ -1102,15 +1102,18 @@ Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_EarlyPause
 Tissues3_EarlyPause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_late.pdf")
 
 seq=read.table("Tissues3_LatePause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
+dim(seq)
 Tissues3_LatePause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_LatePause_1bpapart_KSfdr0.1_early.pdf")
 Tissues3_LatePause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_LatePause_1bpapart_KSfdr0.1_late.pdf")
 
 seq=read.table("Tissues3_EarlyPause_BG_+-10_Early_LateAlleleSeq.bed")
+dim(seq)
 Tissues3_EarlyPause_BG_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_BG_early.pdf")
 Tissues3_EarlyPause_BG_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_BG_late.pdf")
 
 
 seq=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
+dim(seq)
 combine_maxPause_noduplicate= SeqLogo(seq$V7, "combine_maxPause_noduplicate_+-30_mm10_Se.pdf")
 
 
@@ -1179,4 +1182,63 @@ wilcox.test(seq_df$C_range1, seq_df$C_range2, paired = TRUE)
 wilcox.test(seq_df$C_range2, seq_df$C_range3, paired = TRUE)
 wilcox.test(seq_df$C_range1, seq_df$C_range3, paired = TRUE)
 
+dim(seq_df)
+
+#pdf(paste(organ,"_deltaATCG_single.pdf" ,sep=""), width =7, height = 7)
+par(mfcol=c(3,1))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+#par(cex=1.5)
+pch_u=15
+w=10
+# background
+organ="3 Tissues" ; target=Tissues3_EarlyPause_BG_early - Tissues3_EarlyPause_BG_late
+plot(-w:w, target[1,] , col = acgt_col[1], type="o",
+     ylim=c(-0.15,0.15), 
+     pch=pch_u,
+     ylab="Early Allele - Late Allele",
+     xlab="Distance to early allelic max Pause",
+     main=paste(organ,"BG", sep=" "),
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+for (i in 4:1){
+  points(-w:w,target[i,], col = acgt_col[i], type="o", pch=pch_u)
+}
+legend("topleft", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+target=test_early - test_late
+organ="3 Tissues" ; target=Tissues3_EarlyPause_1bpapart_KSfdr0.1_early - Tissues3_EarlyPause_1bpapart_KSfdr0.1_late
+plot(-w:w, target[1,] , col = acgt_col[1], type="o",
+     ylim=c(-0.15,0.15), 
+     pch=pch_u,
+     ylab="Early Allele - Late Allele",
+     xlab="Distance to early allelic max Pause",
+     main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1", sep=" "),
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+for (i in 4:1){
+  points(-w:w,target[i,], col = acgt_col[i], type="o", pch=pch_u)
+}
+legend("topleft", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+organ="3 Tissues" ; target=Tissues3_LatePause_1bpapart_KSfdr0.1_early - Tissues3_LatePause_1bpapart_KSfdr0.1_late
+plot(-w:w, target[1,] , col = acgt_col[1], type="o",
+     ylim=c(-0.15,0.15), 
+     pch=pch_u,
+     ylab="Early Allele - Late Allele",
+     xlab="Distance to LATE allelic max Pause",
+     main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1", sep=" "),
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+for (i in 4:1){
+  points(-w:w,target[i,], col = acgt_col[i], type="o", pch=pch_u)
+}
+legend("topleft", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
 

@@ -169,11 +169,13 @@ uper_bound = 20
 lower_bound = -20
 for (organ in c("BN", "LV")){
   for (a in 1:3){
-    asTSS=asTSS_list[a]
+    asTSS=asTSS_list[a]  ; asTSS
     asTSS_name = asTSS_name_list[a]
     for (SNP_orBackground in c("_","_SNP_")){
       name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
       df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      cat ("\n")
       temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
       temp = temp[temp$dist!=0,]
       v_list[[paste(name, lower_bound, "_",uper_bound, sep="")]] = temp$Delta_Signal[temp$dist >lower_bound & temp$dist<uper_bound ]
