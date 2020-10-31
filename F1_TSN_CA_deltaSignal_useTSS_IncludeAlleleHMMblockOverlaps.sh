@@ -1,8 +1,8 @@
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSN_ShootingGallery
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSN_ShootingGallery/NoAlleleHMMFilter
 
 # use maxTSNs
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSS_maxTSNs.bed .
-ln -s ../identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
+ln -s ../../identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSS.bed .
 
 
@@ -12,33 +12,34 @@ Head=LV
 # wc -l BN_allReads_TSS.bed
 #78652 BN_allReads_TSS.bed
 
-# remove the TSS overlap with AlleleHMM blocks
 # remove chrX
-ln -s /workdir/sc2457/F1_Tissues/Find_consistent_blocks/HMM_bed . # AlleleHMM blocks
 
 for Head in BN LV
 do
-bedtools intersect -v -a <(grep -v chrX ${Head}_allReads_TSS.bed) -b <(cat HMM_bed/combined_cross/${Head}_HMM_*.bed) > ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed
+grep -v chrX ${Head}_allReads_TSS.bed > ${Head}_allReads_TSS_NoAlleleHMMFilter.bed
 
 # maxTSN with SNPs at initiation motif
 bedtools closest -D a -id -a <(sort-bed ${Head}_allReads_TSS_maxTSNs.bed) -b <(zcat unfiltered_snp.sorted.bed.gz) | awk 'BEGIN {OFS="\t"; t="_"} ($11==-1 || $11==0) {print $1, $2, $3, $4, $5, $6}'  > ${Head}_allReads_TSS_maxTSNs_SNP.bed
 # -id	Ignore features in B that are downstream of features
 
-# maxTSN with SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
-#body=allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
-# wc -l ${Head}_allReads_TSS_maxTSNs*
-#   83088 BN_allReads_TSS_maxTSNs.bed
-#     612 BN_allReads_TSS_maxTSNs_SNP.bed
-#     536 BN_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
-  # 97577 LV_allReads_TSS_maxTSNs.bed
-  #   935 LV_allReads_TSS_maxTSNs_SNP.bed
-  #   714 LV_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
-
+# maxTSN with SNPs at initiation motif within the TSS
+bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b  ${Head}_allReads_TSS_NoAlleleHMMFilter.bed > ${Head}_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter.bed
 
 # maxTSN with or without SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
-#body=allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks
+bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NoAlleleHMMFilter.bed > ${Head}_allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter.bed
+#body=allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter
+ wc -l ${Head}_allReads_TSS_maxTSNs*
+  # 83088 BN_allReads_TSS_maxTSNs.bed
+  #   612 BN_allReads_TSS_maxTSNs_SNP.bed
+  #   600 BN_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter.bed
+  # 81170 BN_allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter.bed
+
+  # 97577 LV_allReads_TSS_maxTSNs.bed
+  #   935 LV_allReads_TSS_maxTSNs_SNP.bed
+  #   926 LV_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter.bed
+  # 95840 LV_allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter.bed
+
+
 done
 
 mkdir toremove
@@ -102,7 +103,7 @@ wait
 # Perform BinomialTest one strand at a time, using pooled MB6 and PB6 reads 
 for Head in BN LV # HT  SK  SP  KD  LV  GI  ST
 do 
-for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter
 do
     MAT_READ_BED=${Head}_mat_temp.gz
     PAT_READ_BED=${Head}_pat_temp.gz
@@ -112,7 +113,7 @@ done
 wait
 
 # get sequence for High and Low Allele (defind by TSN expression level)
-ln -s ../P.CAST.EiJ_M.C57BL.6J_*aternal_all.fa* .
+ln -s ../../P.CAST.EiJ_M.C57BL.6J_*aternal_all.fa* .
 Seq_High_Low_TSN(){
  Head=$1
  j=$2
@@ -137,7 +138,7 @@ Seq_High_Low_TSN(){
 
 for Head in BN LV #HT  SK  SP  KD  GI  ST
 do
-for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP  allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP  allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter
 do
 	d=50
   k=${Head}_${body}
@@ -147,12 +148,14 @@ done
 done
 
 # seperate into TSS in Sinlge Base driven and in multiple base driven
-for body in allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+
+for body in allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter
 do
 for Head in BN LV
 do
 for asTSS in SingleBaseDriven MultipleBaseDriven
 do
+  ln -s ../${Head}_allReads_TSS_5mat5pat_uniq_AsTSS${asTSS}.bed .
 bedtools intersect -u -a <(cat ${Head}_${body}_binomtest_+-50_High_LowAlleleSeq.bed | awk '{OFS="\t"}{print $1,$2,$3,$4,$5, $10, $0}') \
 -b ${Head}_allReads_TSS_5mat5pat_uniq_AsTSS${asTSS}.bed |cut -f 7- > ${Head}_${body}_binomtest_+-50_High_LowAlleleSeq_AsTSS${asTSS}.bed
 done
