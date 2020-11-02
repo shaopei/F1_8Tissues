@@ -2,7 +2,7 @@ library("TmCalculator")
 library(bigWig)
 
 file_dir="~/Box Sync/BN_IGV/"
-setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery/")
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_TSSNotInAlleleHMMBlocks/")
 
 getTSN_2N <- function(seq, d){  
   # generate dinucleotide at position d and d+1 in seq
@@ -475,10 +475,11 @@ wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_)
 w_p_value <- NULL
 for (lower_bound in seq(-40,30,step)){
   uper_bound = lower_bound + step
-  name1 = paste("BN+LV", asTSS_name, "_SNP_",lower_bound, "_",uper_bound, sep = "")
-  name2 = paste("BN+LV", asTSS_name, "_BG_",lower_bound, "_",uper_bound, sep = "")
+  name1 = paste(organ, asTSS_name, "_SNP_",lower_bound, "_",uper_bound, sep = "")
+  name2 = paste(organ, asTSS_name, "_BG_",lower_bound, "_",uper_bound, sep = "")
   w_p_value= c(w_p_value, wilcox.test(b_list[[name1]], b_list[[name2]])$p.value)
 #str(w)
 }
 
 p.adjust(w_p_value, method = "fdr")
+

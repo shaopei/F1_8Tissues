@@ -1,13 +1,13 @@
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSN_ShootingGallery
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSN_ShootingGallery/WithAlleleHMMFilter_strandBigCorrected
 
 # use maxTSNs
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSS_maxTSNs.bed .
-ln -s ../identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
+ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSS.bed .
 
 
-Head=BN
-Head=LV
+#Head=BN
+#Head=LV
 
 # wc -l BN_allReads_TSS.bed
 #78652 BN_allReads_TSS.bed
@@ -25,20 +25,23 @@ bedtools closest -D a -id -a <(sort-bed ${Head}_allReads_TSS_maxTSNs.bed) -b <(z
 # -id	Ignore features in B that are downstream of features
 
 # maxTSN with SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
+bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
 #body=allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
-# wc -l ${Head}_allReads_TSS_maxTSNs*
-#   83088 BN_allReads_TSS_maxTSNs.bed
-#     612 BN_allReads_TSS_maxTSNs_SNP.bed
-#     536 BN_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
-  # 97577 LV_allReads_TSS_maxTSNs.bed
-  #   935 LV_allReads_TSS_maxTSNs_SNP.bed
-  #   714 LV_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
 
 
 # maxTSN with or without SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
 #body=allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks
+ wc -l ${Head}_allReads_TSS_maxTSNs*
+   # 83088 BN_allReads_TSS_maxTSNs.bed
+   #   612 BN_allReads_TSS_maxTSNs_SNP.bed
+   #   520 BN_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
+   # 76398 BN_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+   # 97577 LV_allReads_TSS_maxTSNs.bed
+   #   935 LV_allReads_TSS_maxTSNs_SNP.bed
+   #   673 LV_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
+   # 77574 LV_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+
 done
 
 mkdir toremove
@@ -91,7 +94,7 @@ BinomialTest_TSN(){
 ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
 bed_dir=map2ref_1bpbed_map5
 bowtiebody=bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz
-for Head in BN HT  SK  SP  KD  LV  GI  ST
+for Head in BN LV #HT  SK  SP  KD  GI  ST
 do 
 #echo $Head
 zcat ${bed_dir}/${Head}_MB6_all_R1.mat.${bowtiebody} ${bed_dir}/${Head}_PB6_all_R1.mat.${bowtiebody} |grep -v chrX | sort-bed --max-mem 10G - |gzip >${Head}_mat_temp.gz  &
@@ -153,6 +156,7 @@ for Head in BN LV
 do
 for asTSS in SingleBaseDriven MultipleBaseDriven
 do
+    ln -s ../${Head}_allReads_TSS_5mat5pat_uniq_AsTSS${asTSS}.bed .
 bedtools intersect -u -a <(cat ${Head}_${body}_binomtest_+-50_High_LowAlleleSeq.bed | awk '{OFS="\t"}{print $1,$2,$3,$4,$5, $10, $0}') \
 -b ${Head}_allReads_TSS_5mat5pat_uniq_AsTSS${asTSS}.bed |cut -f 7- > ${Head}_${body}_binomtest_+-50_High_LowAlleleSeq_AsTSS${asTSS}.bed
 done
