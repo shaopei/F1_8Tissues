@@ -171,7 +171,7 @@ for (organ in c("BN", "LV")){
   for (a in 1:3){
     asTSS=asTSS_list[a]  ; asTSS
     asTSS_name = asTSS_name_list[a]
-    for (SNP_orBackground in c("_","_SNP_")){
+    for (SNP_orBackground in c("_NoSNP_","_SNP_")){
       name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
       df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
       cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
@@ -194,8 +194,8 @@ for (organ in c("BN", "LV")){
 }
 
 
-SNP_orBackground=c("_SNP_", "_")
-SNP_orBackground_name =c("_SNP_","_BG_")
+SNP_orBackground=c("_SNP_", "_NoSNP_")
+SNP_orBackground_name =c("_SNP_","_NoSNP_")
 v_list_withNewName <- NULL
 for (organ in c("BN", "LV")){
   for (a in 1:3){
@@ -211,8 +211,8 @@ for (organ in c("BN", "LV")){
 }
 
 
-SNP_orBackground=c("_SNP_", "_")
-SNP_orBackground_name =c("_SNP_","_BG_")
+SNP_orBackground=c("_SNP_", "_NoSNP_")
+SNP_orBackground_name =c("_SNP_","_NoSNP_")
 Inr_name=c("AllInr","OnlyWeakInr","OnlyCA")
 Inr=c("","_OnlyWeakInr","_OnlyCA")
 v_list_withNewName <- NULL
@@ -248,7 +248,7 @@ vioplot(v_list_withNewName, las=2,
 
 
 abline(h=0, lty=2)
-legend("topleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
+legend("topleft", legend=c("maxTSNs with SNPs at Inr", "No SNP" ),
        #title = "SNPs",
        fill = c("purple", "gray"), 
        bty = "n")
@@ -267,7 +267,7 @@ dev.off()
 new_v_list <- NULL
 asTSS_name=""
 for (organ in c("BN", "LV")){
-  for (SNP_orBackground in c("_SNP_", "_")){
+  for (SNP_orBackground in c("_SNP_", "_NoSNP_")){
     name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
     new_v_list[[paste(name, sep="")]]=v_list[[paste(name, lower_bound, "_",uper_bound, sep="")]]
     }
@@ -286,7 +286,7 @@ vioplot(new_v_list, las=1,
         )
 
 abline(h=0, lty=2)
-legend("topleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
+legend("topleft", legend=c("maxTSNs with SNPs at Inr", "No SNP" ),
        #title = "SNPs",
        fill = c("purple", "gray"), 
        bty = "n")
@@ -296,10 +296,10 @@ dev.off()
 
 # Wilcoxon Rank Sum and Signed Rank Tests
 
-wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_)
-wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_)
+wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_NoSNP_)
+wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_NoSNP_)
 
-wilcox.test(v_list_withNewName$BN_Single_SNP_AllInr, v_list_withNewName$BN_Single_BG_AllInr)
+wilcox.test(v_list_withNewName$BN_Single_SNP_AllInr, v_list_withNewName$BN_Single_NoSNP_AllInr)
 
 
 
@@ -308,7 +308,7 @@ d=50
 asTSS = ""
 asTSS_name=asTSS
 organ="BN"
-SNP_orBackground ="_"
+SNP_orBackground ="_NoSNP_"
 
 name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
 df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
@@ -382,7 +382,7 @@ S_list <- NULL
 asTSS=""
 asTSS_name=""
 for (organ in c("BN", "LV")){
-  for (SNP_orBackground in c("_","_SNP_")){
+  for (SNP_orBackground in c("_NoSNP_","_SNP_")){
     
     name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
     # exclude TSS overlap with AlleleHMM blocks
@@ -399,8 +399,8 @@ organ="BN"
 organ="LV"
 b_list <- NULL
 step=5
-SNP_orBackground=c("_SNP_", "_")
-SNP_orBackground_name =c("_SNP_","_BG_")
+SNP_orBackground=c("_SNP_", "_NoSNP_")
+SNP_orBackground_name =c("_SNP_","_NoSNP_")
 for (lower_bound in seq(-40,30,step)){
   for (s in 1:2){
       uper_bound = lower_bound + step
@@ -419,8 +419,8 @@ organ="BN+LV"
 
 b_list <- NULL
 step=5
-SNP_orBackground=c("_SNP_", "_")
-SNP_orBackground_name =c("_SNP_","_BG_")
+SNP_orBackground=c("_SNP_", "_NoSNP_")
+SNP_orBackground_name =c("_SNP_","_NoSNP_")
 for (lower_bound in seq(-40,30,step)){
   for (s in 1:2){
     uper_bound = lower_bound + step
@@ -462,21 +462,21 @@ boxplot(b_list, las=2,
         )
 abline(h=0, lty=2)
 
-legend("bottomleft", legend=c("maxTSNs with SNPs at Inr", "Background" ),
+legend("bottomleft", legend=c("maxTSNs with SNPs at Inr", "No SNP" ),
        #title = "SNPs",
        fill = c("purple", "gray"), 
        bty = "n")
 
 # Wilcoxon Rank Sum and Signed Rank Tests
 
-wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_)
-wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_)
+wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_NoSNP_)
+wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_NoSNP_)
 
 w_p_value <- NULL
 for (lower_bound in seq(-40,30,step)){
   uper_bound = lower_bound + step
   name1 = paste(organ, asTSS_name, "_SNP_",lower_bound, "_",uper_bound, sep = "")
-  name2 = paste(organ, asTSS_name, "_BG_",lower_bound, "_",uper_bound, sep = "")
+  name2 = paste(organ, asTSS_name, "_NoSNP_",lower_bound, "_",uper_bound, sep = "")
   w_p_value= c(w_p_value, wilcox.test(b_list[[name1]], b_list[[name2]])$p.value)
 #str(w)
 }

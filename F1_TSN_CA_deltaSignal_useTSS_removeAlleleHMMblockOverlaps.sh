@@ -31,8 +31,13 @@ bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b ${Head}_allRead
 
 # maxTSN with or without SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
 bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+
+# maxTSN WITHOUT SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
+bedtools intersect -s -a <(bedtools intersect -v -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_maxTSNs_SNP.bed) -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks.bed
+
+
 #body=allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks
- wc -l ${Head}_allReads_TSS_maxTSNs*
+ wc -l ${Head}_allReads_TSS_maxTSNs*_TSSNotInAlleleHMMBlocks.bed
    # 83088 BN_allReads_TSS_maxTSNs.bed
    #   612 BN_allReads_TSS_maxTSNs_SNP.bed
    #   520 BN_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
@@ -41,6 +46,15 @@ bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TS
    #   935 LV_allReads_TSS_maxTSNs_SNP.bed
    #   673 LV_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
    # 77574 LV_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+
+  # 75878 BN_allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks.bed
+  #   520 BN_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
+  # 76398 BN_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+  
+  # 76901 LV_allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks.bed
+  #   673 LV_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
+  # 77574 LV_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
+
 
 done
 
@@ -105,7 +119,7 @@ wait
 # Perform BinomialTest one strand at a time, using pooled MB6 and PB6 reads 
 for Head in BN LV # HT  SK  SP  KD  LV  GI  ST
 do 
-for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
 do
     MAT_READ_BED=${Head}_mat_temp.gz
     PAT_READ_BED=${Head}_pat_temp.gz
@@ -140,7 +154,7 @@ Seq_High_Low_TSN(){
 
 for Head in BN LV #HT  SK  SP  KD  GI  ST
 do
-for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP  allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP  allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
 do
 	d=50
   k=${Head}_${body}
@@ -150,7 +164,7 @@ done
 done
 
 # seperate into TSS in Sinlge Base driven and in multiple base driven
-for body in allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
+for body in allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
 do
 for Head in BN LV
 do
