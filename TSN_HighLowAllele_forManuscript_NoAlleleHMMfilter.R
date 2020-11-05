@@ -2,7 +2,7 @@ library("TmCalculator")
 library(bigWig)
 
 file_dir="~/Box Sync/BN_IGV/"
-setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_TSSNoAlleleHMMFilter/")
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_NoAlleleHMMFilter/")
 
 getTSN_2N <- function(seq, d){  
   # generate dinucleotide at position d and d+1 in seq

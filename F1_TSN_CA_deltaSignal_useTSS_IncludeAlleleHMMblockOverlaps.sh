@@ -6,9 +6,6 @@ ln -s ../../identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSS.bed .
 
 
-Head=BN
-Head=LV
-
 # wc -l BN_allReads_TSS.bed
 #78652 BN_allReads_TSS.bed
 
@@ -25,20 +22,24 @@ bedtools closest -D a -id -a <(sort-bed ${Head}_allReads_TSS_maxTSNs.bed) -b <(z
 # maxTSN with SNPs at initiation motif within the TSS
 bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b  ${Head}_allReads_TSS_NoAlleleHMMFilter.bed > ${Head}_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter.bed
 
-# maxTSN with or without SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
+# maxTSN with or without SNPs at initiation motif within the TSS
 bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NoAlleleHMMFilter.bed > ${Head}_allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter.bed
+
+# maxTSN WITHOUT SNPs at initiation motif within the TSS
+bedtools intersect -s -a <(bedtools intersect -v -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_maxTSNs_SNP.bed) -b ${Head}_allReads_TSS_NoAlleleHMMFilter.bed > ${Head}_allReads_TSS_maxTSNs_NoSNP_TSSNoAlleleHMMFilter.bed
+
+
+
 #body=allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter
- wc -l ${Head}_allReads_TSS_maxTSNs*
-  # 83088 BN_allReads_TSS_maxTSNs.bed
-  #   612 BN_allReads_TSS_maxTSNs_SNP.bed
+ wc -l ${Head}_allReads_TSS_maxTSNs*_TSSNoAlleleHMMFilter.bed
+
+  # 80570 BN_allReads_TSS_maxTSNs_NoSNP_TSSNoAlleleHMMFilter.bed
   #   600 BN_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter.bed
   # 81170 BN_allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter.bed
-
-  # 97577 LV_allReads_TSS_maxTSNs.bed
-  #   935 LV_allReads_TSS_maxTSNs_SNP.bed
+ 
+  # 94914 LV_allReads_TSS_maxTSNs_NoSNP_TSSNoAlleleHMMFilter.bed
   #   926 LV_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter.bed
   # 95840 LV_allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter.bed
-
 
 done
 
@@ -101,6 +102,7 @@ done
 wait
 
 # Perform BinomialTest one strand at a time, using pooled MB6 and PB6 reads 
+body=allReads_TSS_maxTSNs_NoSNP_TSSNoAlleleHMMFilter
 for Head in BN LV # HT  SK  SP  KD  LV  GI  ST
 do 
 for body in allReads_TSS_maxTSNs allReads_TSS_maxTSNs_SNP allReads_TSS_maxTSNs_TSSNoAlleleHMMFilter allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter
