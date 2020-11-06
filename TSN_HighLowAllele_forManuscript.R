@@ -248,7 +248,7 @@ vioplot(v_list_withNewName, las=2,
 
 
 abline(h=0, lty=2)
-legend("topleft", legend=c("maxTSNs with SNPs at Inr", "No SNP" ),
+legend("topleft", legend=c("maxTSNs with SNPs", "maxTSNs without SNP" ),
        #title = "SNPs",
        fill = c("purple", "gray"), 
        bty = "n")
@@ -286,7 +286,7 @@ vioplot(new_v_list, las=1,
         )
 
 abline(h=0, lty=2)
-legend("topleft", legend=c("maxTSNs with SNPs at Inr", "No SNP" ),
+legend("topleft", legend=c("maxTSNs with SNPs", "maxTSNs without SNP"),
        #title = "SNPs",
        fill = c("purple", "gray"), 
        bty = "n")
@@ -376,6 +376,79 @@ abline(v=-20, lty=2, col="blue")
 dev.off()
 
 
+# scatter plots of LV
+d=50
+asTSS = ""
+asTSS_name=asTSS
+organ="LV"
+SNP_orBackground ="_NoSNP_"
+
+name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
+
+SNP_orBackground ="_SNP_"
+
+name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+temp2=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
+out=temp2
+
+
+pdf("ShootingGallery_scatter_LV.pdf", width = 8, height = 8, useDingbats=FALSE)
+par(mfcol=c(3,2))
+
+#out=temp2
+name=""
+for (out in list(temp, temp2)){
+  plot(out$dist, out$Delta_Signal, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
+       #ylim=c(-100,100),
+       main=name,
+       ylab = "log2(High Allele + 1 / Low Allele + 1)",
+       xlab = "Distance to maxTSN with CA at High Allele",
+       las=1,
+       #ylim=c(-6,6),
+       frame.plot=F)
+  abline(v=20, lty=2, col="blue")
+  abline(v=-20, lty=2, col="blue")
+  abline(h=0)
+  
+  out = out[out$dist!=0,]
+  
+  signal.lo <-  loess(Delta_Signal ~ dist, out)
+  x=seq(-d+1,d,1)
+  p=predict(signal.lo, data.frame(dist = x), se = TRUE)
+  plot(out, col=rgb(red=0.2, green=0.2, blue=0.2, alpha=0.15), pch=19,
+       main=name,
+       #ylim=c(-5,5),
+       ylab = "log2(High Allele + 1 / Low Allele + 1)",
+       xlab = "Distance to maxTSN with CA at High Allele", 
+       #ylim=c(-4,4)
+       las=1,
+       frame.plot=F)
+  
+  abline(v=20, lty=2, col="blue")
+  abline(v=-20, lty=2, col="blue")
+  abline(h=0)
+  lines(x, p$fit, col="red" )
+  #abline(v=0)
+  plot(x, p$fit, col="red",  ylab = "Predicted log2(High Allele + 1 / Low Allele + 1)",
+       main=name,
+       ylim=c(-0.5,0.5),
+       xlab = "Distance to TSN with CA at High Allele",
+       las=1, type="l",
+       frame.plot=F, lwd=3)
+  abline(h=0)
+  #abline(v=0)
+  abline(v=20, lty=2, col="blue")
+  abline(v=-20, lty=2, col="blue")
+  
+}
+
+
+dev.off()
+
+
 d=50
 
 S_list <- NULL
@@ -421,7 +494,7 @@ b_list <- NULL
 step=5
 SNP_orBackground=c("_SNP_", "_NoSNP_")
 SNP_orBackground_name =c("_SNP_","_NoSNP_")
-for (lower_bound in seq(-40,30,step)){
+for (lower_bound in seq(-25,20,step)){
   for (s in 1:2){
     uper_bound = lower_bound + step
     new_name = paste(organ, asTSS_name, SNP_orBackground_name[s], sep = "")
@@ -441,7 +514,7 @@ for (lower_bound in seq(-40,30,step)){
 
 
 
-
+pdf("ShootingGallery_boxplot_BN+LV_AlleleHMMoverlappingTSSRemoved.pdf", width = 10, height = 6, useDingbats=FALSE)
 par(mar=c(10.1, 4.1, 2.1, 2.1))
 at.x <- NULL # set here the X-axis positions
 x=1
@@ -462,23 +535,114 @@ boxplot(b_list, las=2,
         )
 abline(h=0, lty=2)
 
-legend("bottomleft", legend=c("maxTSNs with SNPs at Inr", "No SNP" ),
+legend("topleft", legend=c("maxTSNs with SNPs", "maxTSNs without SNP"),
        #title = "SNPs",
        fill = c("purple", "gray"), 
        bty = "n")
-
+dev.off()
 # Wilcoxon Rank Sum and Signed Rank Tests
 
 wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_NoSNP_)
 wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_NoSNP_)
 
 w_p_value <- NULL
-for (lower_bound in seq(-40,30,step)){
+for (lower_bound in seq(-25,20,step)){
   uper_bound = lower_bound + step
   name1 = paste(organ, asTSS_name, "_SNP_",lower_bound, "_",uper_bound, sep = "")
   name2 = paste(organ, asTSS_name, "_NoSNP_",lower_bound, "_",uper_bound, sep = "")
   w_p_value= c(w_p_value, wilcox.test(b_list[[name1]], b_list[[name2]])$p.value)
 #str(w)
+}
+
+p.adjust(w_p_value, method = "fdr")
+
+
+
+# as a supp figs
+# ShootingGallery_boxplot_BN+LV_WithoutAlleleHMMFilter
+# include TSS overlapping with AlleleHMM blocks
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_NoAlleleHMMFilter/")
+
+d=50
+
+S_list <- NULL
+asTSS=""
+asTSS_name=""
+for (organ in c("BN", "LV")){
+  for (SNP_orBackground in c("_NoSNP_","_SNP_")){
+    
+    name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+    # exclude TSS overlap with AlleleHMM blocks
+    df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNoAlleleHMMFilter_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+    # include TSS overlap with AlleleHMM blocks
+    #df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+    temp=getInr2N_Dist_Delta_Signal_aroundMaxTSN(df, name, d)
+    temp = temp[temp$dist!=0,]
+    S_list[[name]]=temp
+  }
+}
+
+str(S_list)
+
+# combine BN and LV
+organ="BN+LV"
+
+b_list <- NULL
+step=5
+SNP_orBackground=c("_SNP_", "_NoSNP_")
+SNP_orBackground_name =c("_SNP_","_NoSNP_")
+for (lower_bound in seq(-25,20,step)){
+  for (s in 1:2){
+    uper_bound = lower_bound + step
+    new_name = paste(organ, asTSS_name, SNP_orBackground_name[s], sep = "")
+    name1 = paste("BN", asTSS_name, SNP_orBackground[s], sep = "")
+    name2 = paste("LV", asTSS_name, SNP_orBackground[s], sep = "")
+    temp1=S_list[[name1]]
+    temp2=S_list[[name2]]
+    b_list[[paste(new_name, lower_bound, "_",uper_bound, sep="")]] = c(temp1$Delta_Signal[temp1$dist >= lower_bound & temp1$dist < uper_bound ],
+                                                                       temp2$Delta_Signal[temp2$dist >= lower_bound & temp2$dist < uper_bound ])
+    
+    
+    str(b_list)
+  }
+}
+
+
+pdf("ShootingGallery_boxplot_BN+LV_WithoutAlleleHMMFilter.pdf", width = 10, height = 6, useDingbats=FALSE)
+par(mar=c(10.1, 4.1, 2.1, 2.1))
+at.x <- NULL # set here the X-axis positions
+x=1
+for (i in 1:(length(b_list)/2)){
+  at.x <- c(at.x,x)
+  x = x+1
+  at.x <- c(at.x,x)
+  x = x+1.5
+}
+
+boxplot(b_list, las=2, 
+        col=c("purple","gray"),
+        ylab = "log2(High Allele + 1 / Low Allele + 1)",
+        frame.plot=F,
+        outline=FALSE,
+        #space = rep(c(1,2),(length(b_list)/2))
+        at=at.x
+)
+abline(h=0, lty=2)
+
+legend("topright", legend=c("maxTSNs with SNPs", "maxTSNs without SNP"),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
+dev.off
+# Wilcoxon Rank Sum and Signed Rank Tests
+
+w_p_value <- NULL
+for (lower_bound in seq(-25,20,step)){
+  uper_bound = lower_bound + step
+  name1 = paste(organ, asTSS_name, "_SNP_",lower_bound, "_",uper_bound, sep = "")
+  name2 = paste(organ, asTSS_name, "_NoSNP_",lower_bound, "_",uper_bound, sep = "")
+  w_p_value= c(w_p_value, wilcox.test(b_list[[name1]], b_list[[name2]])$p.value)
+  #str(w)
 }
 
 p.adjust(w_p_value, method = "fdr")
