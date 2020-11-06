@@ -10,7 +10,7 @@ require(bigWig)
 #source("/Users/shaopei/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
 
 #SNP.bw <- "/Volumes/SPC_SD/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
-
+#SNP.bw <- "/Users/sc2457/Box Sync/KD_IGV/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
 SNP.bw <- "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw"
 
 read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.log=FALSE)
@@ -332,12 +332,12 @@ TSSwithSNPsAroundMaxTSN <-function(d=50, bin=5,times=1, use.log=FALSE, use.sum=F
   step=bin
   show.window <- d
   if (use.sum){
-    a = colSums(g1.SNPs)
+    #a = colSums(g1.SNPs)
     b = colSums(g9.SNPs)
     s_plot = colSums(s.SNPs)
     m_plot = colSums(m.SNPs)
   }else{
-    a = colMeans(g1.SNPs)
+    #a = colMeans(g1.SNPs)
     b = colMeans(g9.SNPs)
     s_plot = colMeans(s.SNPs)
     m_plot = colMeans(m.SNPs)

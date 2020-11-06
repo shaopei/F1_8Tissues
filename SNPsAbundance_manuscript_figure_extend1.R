@@ -4,8 +4,9 @@ draw_plot=TRUE;
 s_l=NULL; m_l=NULL
 
 
+name="LV"
 name="BN"
-d=50; OnlyAsTSS= TRUE
+d=202; OnlyAsTSS= TRUE
 
 
 #d=202
@@ -71,9 +72,7 @@ m.SNPs <- read_read_mat_SNPs (SNP.bw, m[,c(1:6)], step, times=times, use.log=use
 
 #hist(rowSums(s.SNPs), breaks = seq(0,20,1))
 #hist(rowSums(m.SNPs), breaks = seq(0,20,1))
-mean(rowSums(s.SNPs))
-mean(rowSums(m.SNPs))
-ks.test(rowSums(s.SNPs), rowSums(m.SNPs), alternative = "less")
+
 plot(ecdf(rowSums(m.SNPs)), col="blue", 
      xlab= paste("SNPs count per site (d= ", d, " bp)", sep=""),
      ylab="density",
@@ -81,8 +80,8 @@ plot(ecdf(rowSums(m.SNPs)), col="blue",
      main=name
      )
 lines(ecdf(rowSums(s.SNPs)), col="red")
-hist(rowSums(s.SNPs), breaks = seq(0,20,1), freq = F, add=T, col="red", density = 45, angle = -45)
-hist(rowSums(m.SNPs), breaks = seq(0,20,1), freq = F, add=T, col = "blue", density = 45)
+hist(rowSums(s.SNPs), breaks = seq(-0.5,20,1), freq = F, add=T, col="red", density = 45, angle = -45)
+hist(rowSums(m.SNPs), breaks = seq(-0.5,25,1), freq = F, add=T, col = "blue", density = 45)
 
 legend("right", 
        legend = c( paste("single SNPs per row, n=", dim(s)[1], sep=""),
@@ -100,6 +99,10 @@ legend("right",
        , bty = "n"
 )
 
+
+mean(rowSums(s.SNPs))
+mean(rowSums(m.SNPs))
+ks.test(rowSums(s.SNPs), rowSums(m.SNPs), alternative = "less")
 
 SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, use.sum=FALSE, name="", 
                                           OnlyAsTSS= FALSE, OnlynonAsTSSwithAsMaxTSN= FALSE, p_value_cut=NULL ,
