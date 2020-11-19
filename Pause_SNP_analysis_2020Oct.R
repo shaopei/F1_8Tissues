@@ -187,13 +187,19 @@ sum(AT$pause.dist> 10)
 hist(AT$pause.dist - AT$TSN.dist
      , breaks=seq(-35.5,35,1)
 )
-hist(AT$pause.dist[AT$TSN.dist==0]
-     , breaks=seq(-0.5,35,1)
-)
+pdf("TSN_Pause_hist.pdf", width=7, height = 7)
+par(mfrow=c(2,1))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
 hist(abs(AT$TSN.dist[AT$pause.dist==0])# &AT$TSN.dist !=0 ]
-     , breaks=seq(-0.5,35,1)
+     , breaks=seq(-0.5,35,1), col="gray", las=1
      #, ylim=c(0,20)
 )
+hist(AT$pause.dist[AT$TSN.dist==0]
+     , breaks=seq(-0.5,35,1), col="gray", las=1
+)
+dev.off()
 sum(AT$pause.dist==0 &AT$TSN.dist !=0)
 
 #View(AT[AT$pause.dist==0 &AT$TSN.dist !=0, ])
@@ -210,7 +216,7 @@ subAT=subAT[subAT$TSN.dist==0,]
 subAT$deltaTsnPauseDist = subAT$pause.dist - subAT$TSN.dist
 
 library("ggplot2")
-
+pdf("TSN_Pause_scatterplot.pdf", width=7, height = 7)
 myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
 myColor_scale_fill <- scale_fill_gradientn(colours = myColor, trans='log10')
 
@@ -223,7 +229,7 @@ p <- ggplot(AT, aes(x=TSN.dist, y=pause.dist)) +
         legend.text = element_text(size = 14)
   )
 p
-
+dev.off()
 
 ### maxTSN centered pause analysis ###
 # use the shared allelic maxTSN
@@ -286,6 +292,7 @@ for (i in 1:dim(df)[1]){
   df$pat_AvePause_map3[i] = mean(as.numeric(unlist(strsplit(as.character(df$V10[i]), ","))))
 }
 
+# return the row with distinct chromStart and early Pause sites
 UniqRowCount <- function(subdf){
  dim(unique(data.frame(subdf$V2, subdf$earlyPause)))[1]
 }
@@ -320,14 +327,19 @@ dim(unique(subdf))
 #       ylab="B6 - CAST indel length",
 #       frame=F, 
 #       pch=19, col=rgb(0,0,0,alpha = 0.25))
+pdf("pause_indelength.pdf", width=7, height = 7, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
 pch_u=19
 plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="HT"],
       (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="HT"],
       xlim=c(-1*lim,lim),
       ylim=c(-1*lim,lim),
-      xlab="B6 - CAST pause position",
+      xlab="B6 - CAST average pause position on mm10",
       ylab="B6 - CAST indel length",
       pch=pch_u, frame=F,
+      cex=2.2, las=1,
       col="red")
 # points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="HT"], 
 #         (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="HT"],
@@ -336,10 +348,13 @@ plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="HT"],
 points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="SK"], 
         (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="SK"],
         pch=pch_u, 
+        cex=2.2,
         col="dark orange")
 points( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target& df$Tissue=="KD"], 
         (df$mat_Idel_length - df$pat_Idel_length)[df$target & df$Tissue=="KD"],
-        pch=pch_u, col="blue")
+        pch=pch_u,
+        cex=2.2, 
+        col="blue")
 
 abline(a=5, b=-1, col="gray")
 abline(a=0,b=-1, col="dark gray")
@@ -355,10 +370,12 @@ legend("topright",
        #density=c(10000,25),
        #angle=c(180,45),
        #angle=45,
+       cex=2.2,
        col=c("red", "dark orange", "blue")
        , bty = "n"
+       
 )
-
+dev.off()
 
 
 ### maxTSN centered pause analysis ###
@@ -640,7 +657,7 @@ metaplot.SNPsLocation.aroundLatePause <-function(df, name="", use.sum=FALSE, col
 
 ### early pause with at least bp.apart bp difference
 # exclude region with indel
-tempFunc <-function(bp.apart=1, upto=100){
+tempFunc <-function(bp.apart=1, upto=100, show.window=30){
   step=1
   
   ## SNPs around early pause
@@ -648,12 +665,14 @@ tempFunc <-function(bp.apart=1, upto=100){
                                             & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart 
                                             & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto
                                             & df$dist_Indel_maxTSN > df$latePause,], 
+                                            show.window=show.window,
                                          name=paste("HSK, step=", step,", early and late at least ", bp.apart," bp apart, upto " ,upto, sep=""), col="red", step=step)
   abline(v=0, col="gray")
 
   t2=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9  
                                                & (df$mat_maxPause_map3 == df$pat_maxPause_map3) 
                                             & df$dist_Indel_maxTSN > df$latePause,], 
+                                            show.window=show.window,
                                          col="blue", step=step, add=TRUE)
 
   legend("topright", legend=c(paste("Early Pause, fdr <= 0.1, n= ", t1[[3]], sep=""),
@@ -713,6 +732,12 @@ e9=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9
 
 # add a test
 #pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS.pdf", sep=""))
+pdf("SNP_distribution_around_short_pause.pdf", width=9.25, height = 5.36, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+tempFunc(1,100, show.window=30)
+dev.off()
 par(mfrow=c(3,1))
 tempFunc(1,100) # use mean
 fdr_cutoff=0.1
@@ -799,11 +824,16 @@ if (set_remove_duplicates_V2_earlyPause){
 }
 
 #par(mfrow=c(2,1))
+pdf("SNPc_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
 plot(ecdf(sub_df$AllelicMaxPauseDist), col="blue", 
-     xlab="AllelicMaxPauseDist",
-     ylab="density",
-     las=1,
-     main="maxPause map3TomaxTSNs KS FDR <= 0.1, e and l >1bp move")
+     xlab="Distance between allelic maxPause",
+     ylab="fraction",
+     las=1, 
+     main="maxPause map3TomaxTSNs KS FDR <= 0.1, e and l >1bp move"
+     )
 hist(sub_df$AllelicMaxPauseDist,
      freq = F, ylim=c(0,0.4), las=1,
      breaks = seq(-0.5,50,1), col="blue", main="maxPause map3TomaxTSNs KS FDR <= 0.1",
@@ -815,12 +845,12 @@ hist(sub_df_SNP$AllelicMaxPauseDist,     freq = F, ylim=c(0,0.4), las=1,
      col="red", density = 45, add=T)
 
 lines(ecdf(sub_df$AllelicMaxPauseDist), col="blue")
-lines(ecdf(sub_df_SNP$AllelicMaxPauseDist), col="red")
+lines(ecdf(sub_df_SNP$AllelicMaxPauseDist), col="red", pch=10)
 
 
 legend("right", 
-       legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
-                   paste("SNP at early pause, n=", dim(sub_df_SNP)[1], sep="")),
+       legend = c( paste("Control, n = ", dim(sub_df)[1], sep=""),  # paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep="")
+                   paste("SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
        title = ,
        #pch=c(15,15),
        #cex=2, 
@@ -830,9 +860,30 @@ legend("right",
        density=c(10000,25),
        angle=c(180,45),
        #angle=45,
-       fill=c("blue","red")
-       , bty = "n"
+       fill=c("blue","red"),
+       border =c("black","red"),
+       bty = "n"
 )
+legend("right", 
+       legend = c( paste("Control, n = ", dim(sub_df)[1], sep=""), 
+                   paste("SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
+       title = ,
+       #pch=c(15,15),
+       #lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       #density=c(10000,25),
+       #angle=c(180,45),
+       #angle=45,
+       #fill=c("blue","dark organe","dark green")
+       col=c("blue","red"),
+       pch=c(19,10),
+       bty = "n"
+)
+
+
+
+dev.off()
 
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP$AllelicMaxPauseDist, alternative = "less")
 
@@ -843,10 +894,13 @@ sub_df_indel=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df
 #sub_df_SNP_indel=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause)& df$dist_Indel_maxTSN <= df$latePause,]
 dim(sub_df_indel)
 #dim(sub_df_SNP_indel)
-
+pdf("Indel_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
 plot(ecdf(sub_df$AllelicMaxPauseDist), col="blue", 
-     xlab="AllelicMaxPauseDist",
-     ylab="density",
+     xlab="Distance between allelic maxPause",
+     ylab="fraction",
      las=1,
      main="maxPause map3TomaxTSNs KS FDR <= 0.1, e and l >1bp move")
 
@@ -862,8 +916,8 @@ hist(sub_df_indel$AllelicMaxPauseDist,     freq = F, ylim=c(0,0.4), las=1,
      col="dark green", density = 45, add=T)
 
 
-lines(ecdf(sub_df$AllelicMaxPauseDist), col="blue")
-lines(ecdf(sub_df_indel$AllelicMaxPauseDist), col="dark green")
+lines(ecdf(sub_df$AllelicMaxPauseDist), cex=1, col="blue", pch=19)
+lines(ecdf(sub_df_indel$AllelicMaxPauseDist), cex=1, col="dark green", pch=10)
 
 
 legend("right", 
@@ -872,7 +926,6 @@ legend("right",
                    paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
        title = ,
        #pch=c(15,15),
-       #cex=2, 
        #lty=c(0,0),
        #bty="n",
        lwd=1.5, 
@@ -881,9 +934,27 @@ legend("right",
        #angle=45,
        #fill=c("blue","dark organe","dark green")
        col=c("blue","dark green"),
-       pch=16,
+       pch=c(19,10),
        bty = "n"
 )
+
+legend("right", 
+       legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
+                   #paste("Without Indel, n=", dim(sub_df_no_indel)[1], sep=""),
+                   paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       title = ,
+       #pch=c(15,15),
+       #cex=1.5, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(10000,25),
+       angle=c(180,45),
+       #angle=45,
+       fill=c("blue","dark green")
+       , bty = "n"
+)
+dev.off()
 
 
 # KS test 
@@ -1155,19 +1226,24 @@ for (i in 1:NROW(seq)){
 }
 
 library("vioplot")
+pdf("GC_content_around_maxPause_noduplicate.pdf", width=7, height = 3.5, useDingbats=FALSE)
+par(mfrow=c(1,3))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
 vioplot(seq_df$G_range1, seq_df$G_range2, seq_df$G_range3, 
         main= paste("bin size = ", bin, sep=""),
-        ylab="G content", ylim=c(0,100))
+        ylab="G content", ylim=c(0,100), las=1, frame.plot = F)
 #abline(h=40, col="yellow")
 vioplot(seq_df$GC_range1, seq_df$GC_range2, seq_df$GC_range3, 
         main= paste("bin size = ", bin, sep=""),
-        ylab="GC content", ylim=c(0,100))
+        ylab="GC content", ylim=c(0,100), las=1, frame.plot = F)
 #abline(h=60, col="green")
 vioplot(seq_df$C_range1, seq_df$C_range2, seq_df$C_range3, 
         main= paste("bin size = ", bin, sep=""),
-        ylab="C content", ylim=c(0,100))
+        ylab="C content", ylim=c(0,100), las=1, frame.plot = F)
 #abline(h=20, col="yellow")
-
+dev.off()
 
 # Wilcoxon Rank Sum and Signed Rank Tests
 wilcox.test(seq_df$G_range1, seq_df$G_range2, paired = TRUE)
@@ -1184,21 +1260,21 @@ wilcox.test(seq_df$C_range1, seq_df$C_range3, paired = TRUE)
 
 dim(seq_df)
 
-#pdf(paste(organ,"_deltaATCG_single.pdf" ,sep=""), width =7, height = 7)
+pdf(paste(organ,"_pause_deltaATCG.pdf" ,sep=""), width =7, height = 7,useDingbats=FALSE)
 par(mfcol=c(3,1))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 #par(cex=1.5)
-pch_u=15
+pch_u=1
 w=10
 # background
 organ="3 Tissues" ; target=Tissues3_EarlyPause_BG_early - Tissues3_EarlyPause_BG_late
 plot(-w:w, target[1,] , col = acgt_col[1], type="o",
      ylim=c(-0.15,0.15), 
      pch=pch_u,
-     ylab="Early Allele - Late Allele",
-     xlab="Distance to early allelic max Pause",
+     ylab="Short Allele - Long Allele",
+     xlab="Distance to short allelic maxPause",
      main=paste(organ,"BG", sep=" "),
      las=1, frame=FALSE
 )
@@ -1207,15 +1283,15 @@ for (i in 4:1){
   points(-w:w,target[i,], col = acgt_col[i], type="o", pch=pch_u)
 }
 legend("topleft", legend=acgt,
-       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+       col=acgt_col, bty = "n", lty=1, pch=pch_u, cex=1.5)
 
-target=test_early - test_late
+#target=test_early - test_late
 organ="3 Tissues" ; target=Tissues3_EarlyPause_1bpapart_KSfdr0.1_early - Tissues3_EarlyPause_1bpapart_KSfdr0.1_late
 plot(-w:w, target[1,] , col = acgt_col[1], type="o",
      ylim=c(-0.15,0.15), 
      pch=pch_u,
-     ylab="Early Allele - Late Allele",
-     xlab="Distance to early allelic max Pause",
+     ylab="Short Allele - Long Allele",
+     xlab="Distance to short allelic maxPause",
      main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1", sep=" "),
      las=1, frame=FALSE
 )
@@ -1223,15 +1299,14 @@ abline(h=0, col="gray")
 for (i in 4:1){
   points(-w:w,target[i,], col = acgt_col[i], type="o", pch=pch_u)
 }
-legend("topleft", legend=acgt,
-       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+#legend("topleft", legend=acgt,col=acgt_col, bty = "n", lty=1, pch=pch_u)
 
 organ="3 Tissues" ; target=Tissues3_LatePause_1bpapart_KSfdr0.1_early - Tissues3_LatePause_1bpapart_KSfdr0.1_late
 plot(-w:w, target[1,] , col = acgt_col[1], type="o",
      ylim=c(-0.15,0.15), 
      pch=pch_u,
-     ylab="Early Allele - Late Allele",
-     xlab="Distance to LATE allelic max Pause",
+     ylab="Short Allele - Long Allele",
+     xlab="Distance to long allelic maxPause",
      main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1", sep=" "),
      las=1, frame=FALSE
 )
@@ -1239,6 +1314,8 @@ abline(h=0, col="gray")
 for (i in 4:1){
   points(-w:w,target[i,], col = acgt_col[i], type="o", pch=pch_u)
 }
-legend("topleft", legend=acgt,
-       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+#legend("topleft", legend=acgt,
+#       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+dev.off()
 
