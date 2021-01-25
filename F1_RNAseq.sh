@@ -294,6 +294,7 @@ STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/
 --outSAMattributes All \
 --sjdbFileChrStartEnd ${FASTQ}_pat1SJ.out.tab 
 
+
 #mat3 with sj list from mat2v, wasp
 FASTQ=BN_MB6 
 
@@ -430,6 +431,7 @@ done
 # make bigwig files
 export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+
 for p in cast b6
 do
 	# switch plus amd minus strand
@@ -507,3 +509,95 @@ sed -i 's/'${c}'_maternal/chr'${c}'/g' $f
 
 
 # the intersect between AT window and AlleleHMM blocks
+# -s	Force “strandedness”
+
+wc -l BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed
+for t in {1..9}
+do
+echo $t
+intersectBed -u -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) > BN_t1E-0${t}_AT_AlleleHMM.bed #| wc -l 
+intersectBed -v -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) | wc -l 
+done
+
+t=9
+intersectBed -wao -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) 
+
+
+# AlleleHMM blocks from RNA-seq was just upstream of AT window
+# strandness -s, ignore downstream -id
+# -fu	Choose first from features in B that are upstream of features in A.
+t=9
+bedtools closest -s -D a -id -fu -t first -a <(sort-bed BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed) -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed | sort-bed -) \
+| awk '{OFS="\t"} ($13+0 < -1 && $13+0 >-100000) {print $0}' > BN_t1E-0${t}_AT_AlleleHMM_within10K.bed
+
+cat BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed  | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}' | sort |uniq |wc -l
+cat BN_t1E-0${t}_AT_AlleleHMM.bed  BN_t1E-0${t}_AT_AlleleHMM_within10K.bed | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}'  | sort |uniq |wc -l
+
+
+f=BN_MB6_BOTH_RNA_mat3waspSJ.out.tab
+
+
+for c in {10..19}
+do 
+sed -i 's/'${c}'_maternal/chr'${c}'/g' $f 
+done
+
+for c in {1..9}
+do 
+sed -i 's/'${c}'_maternal/chr'${c}'/g' $f 
+done
+
+for c in X Y MT
+do 
+sed -i 's/'${c}'_maternal/chr'${c}'/g' $f 
+done
+
+
+# paternal genome
+# CrossMap.py bam  <chain_file>  <input.bam> [output_file] [options]
+CrossMap.py bam /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/pat2ref.chain \
+BN_MB6_pat2Aligned.sortedByCoord.out.bam BN_MB6_pat2Aligned.sortedByCoord.out.pat2ref.bam
+
+
+# reads that mapped to paternal genome perfectly (can be readswithout SNPs or indel)
+samtools view  BN_MB6_pat2Aligned.sortedByCoord.out.bam | grep MD:Z:85 > BN_MB6_pat2Aligned.sortedByCoord.out.MD:Z:85.sam
+samtools view  BN_MB6_pat2Aligned.sortedByCoord.out.bam | grep MD:Z:84 > BN_MB6_pat2Aligned.sortedByCoord.out.MD:Z:84.sam
+samtools view -H BN_MB6_pat2Aligned.sortedByCoord.out.bam > BN_MB6_pat2Aligned.sortedByCoord.out.pat.perfact.match.sam
+cat BN_MB6_pat2Aligned.sortedByCoord.out.MD:Z:85.sam BN_MB6_pat2Aligned.sortedByCoord.out.MD:Z:84.sam >> BN_MB6_pat2Aligned.sortedByCoord.out.pat.perfact.match.sam
+
+wc -l BN_MB6_pat2Aligned.sortedByCoord*sam
+    4,844,292 BN_MB6_pat2Aligned.sortedByCoord.out.MD:Z:84.sam
+   48,517,317 BN_MB6_pat2Aligned.sortedByCoord.out.MD:Z:85.sam
+
+samtools view BN_MB6_pat2Aligned.sortedByCoord.out.bam -F 4 | wc -l
+71,318,642
+
+# all reads mapped to paternal genome
+samtools view -H BN_MB6_pat2Aligned.sortedByCoord.out.bam |grep @SQ|sed 's/@SQ\tSN:\|LN://g'  > cast.chromInfo
+
+j=BN_MB6_pat2Aligned.sortedByCoord.out
+samtools sort -@ 30 ${j}.bam > ${j}.sorted.bam
+	# switch plus amd minus strand
+bedtools genomecov -split -bg -ibam ${j}.sorted.bam -strand - |LC_COLLATE=C sort -k1,1 -k2,2n >  ${j}_plus.bedGraph &
+bedtools genomecov -split -bg -ibam ${j}.sorted.bam -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}_minus.bedGraph &
+wait
+
+
+# CrossMap.py bam  <chain_file>  <input.bam> [output_file] [options]
+CrossMap.py bed /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/pat2ref.chain \
+$k\_plus.bedGraph $k\_pat2ref_plus &
+CrossMap.py bed /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/pat2ref.chain \
+$k\_minus.bedGraph $k\_pat2ref_minus &
+wait
+
+k=${j}
+cat $k\_pat2ref_plus| awk '{OFS="\t"} {print "chr"$0}' | grep -v chrMT |LC_COLLATE=C sort -k1,1 -k2,2n > $k\_pat2ref_plus.bedGraph &
+cat $k\_pat2ref_minus| awk '{OFS="\t"} {print "chr"$0}' | grep -v chrMT |LC_COLLATE=C sort -k1,1 -k2,2n  > $k\_pat2ref_minus.bedGraph &
+
+
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+k=${j}_pat2ref
+echo $k
+  bedGraphToBigWig $k\_minus.bedGraph ${mouse_chinfo} $k\_minus.bw &
+  bedGraphToBigWig $k\_plus.bedGraph ${mouse_chinfo} $k\_plus.bw &
+wait
