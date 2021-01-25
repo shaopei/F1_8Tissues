@@ -1,6 +1,6 @@
 ### used for single base runon ChRO-seq
 
-# insert length distribution
+# insert(read) length distribution
 for Head in HT KD SK
 do
   for allele in mat pat
@@ -439,6 +439,7 @@ ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/P.CAST.EiJ_M.C57BL.6J_*ater
 
 j=Tissues3_EarlyPause_1bpapart_KSfdr0.1
 d=10
+d=30
 #if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
  # get sequence from maternal genome
  bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &

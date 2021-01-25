@@ -187,6 +187,7 @@ sum(AT$pause.dist> 10)
 hist(AT$pause.dist - AT$TSN.dist
      , breaks=seq(-35.5,35,1)
 )
+#panel52_TSN_Pause_hist_plot.pdf
 pdf("TSN_Pause_hist.pdf", width=7, height = 7)
 par(mfrow=c(2,1))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -216,6 +217,7 @@ subAT=subAT[subAT$TSN.dist==0,]
 subAT$deltaTsnPauseDist = subAT$pause.dist - subAT$TSN.dist
 
 library("ggplot2")
+#panel51_TSN_Pause_scatterplot.pdf
 pdf("TSN_Pause_scatterplot.pdf", width=7, height = 7)
 myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
 myColor_scale_fill <- scale_fill_gradientn(colours = myColor, trans='log10')
@@ -327,6 +329,7 @@ dim(unique(subdf))
 #       ylab="B6 - CAST indel length",
 #       frame=F, 
 #       pch=19, col=rgb(0,0,0,alpha = 0.25))
+# Panel53_pause_indelength.pdf
 pdf("pause_indelength.pdf", width=7, height = 7, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -528,7 +531,7 @@ metaplot.SNPsLocation.aroundEarlyPause <-function(df, name="", use.sum=FALSE, co
   bed6 <- df[,1:6]
   bed6[,4] <-df$earlyPause
   #dim(bed6)
-  bed6 = unique(bed6)
+  bed6 = unique(bed6)  # remove duplicates with shared maxTSN and early pause
   bed6_copy = bed6
   # maxPause location +- window
   
@@ -732,6 +735,7 @@ e9=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9
 
 # add a test
 #pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS.pdf", sep=""))
+# panel54_SNP_distribution_around_short_pause
 pdf("SNP_distribution_around_short_pause.pdf", width=9.25, height = 5.36, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -824,6 +828,7 @@ if (set_remove_duplicates_V2_earlyPause){
 }
 
 #par(mfrow=c(2,1))
+# panel55_SNPc_allelicMaxPauseDist
 pdf("SNPc_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -894,6 +899,8 @@ sub_df_indel=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df
 #sub_df_SNP_indel=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause)& df$dist_Indel_maxTSN <= df$latePause,]
 dim(sub_df_indel)
 #dim(sub_df_SNP_indel)
+
+# panel56_Indel_allelicMaxPauseDist
 pdf("Indel_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -1167,6 +1174,13 @@ SeqLogo <- function(seq, output, range=NULL) {
   return (pwm)
 }
 
+
+seq=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-30_Early_LateAlleleSeq.bed")
+dim(seq)
+Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-30_early.pdf")
+Tissues3_EarlyPause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-30_late.pdf")
+
+# Panel58_short_pause_site_seqlogo
 seq=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
 dim(seq)
 Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_early.pdf")
@@ -1226,6 +1240,7 @@ for (i in 1:NROW(seq)){
 }
 
 library("vioplot")
+# panel57_GC_content_around_maxPause_noduplicate
 pdf("GC_content_around_maxPause_noduplicate.pdf", width=7, height = 3.5, useDingbats=FALSE)
 par(mfrow=c(1,3))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
