@@ -598,6 +598,44 @@ cat $k\_pat2ref_minus| awk '{OFS="\t"} {print "chr"$0}' | grep -v chrMT |LC_COLL
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 k=${j}_pat2ref
 echo $k
-  bedGraphToBigWig $k\_minus.bedGraph ${mouse_chinfo} $k\_minus.bw &
+  cat $k\_minus.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' >  $k\_minus.inv.bedGraph 
+  bedGraphToBigWig $k\_minus.inv.bedGraph ${mouse_chinfo} $k\_minus.bw &
   bedGraphToBigWig $k\_plus.bedGraph ${mouse_chinfo} $k\_plus.bw &
 wait
+
+
+# calculate the stability of mRNA
+# reads counts of proseq in gene body / read counts of mRNA-seq in exon
+
+cat gencode.vM25.annotation.gtf | awk 'BEGIN{OFS="\t"} $3=="gene" {split($10,a,"\""); split($14,b,"\""); print $1, $4-1, $5,a[2], b[2],$7}' > gencode.vM25.annotation.gene.bed
+
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
+samtools view -H ${b}.sorted.bam > ${b}.header
+samtools view ${b}.sorted.bam | awk '{OFS="\t"} $5==255 {print $1,$2,$3,$4,"60",$6,$7,$8,$9,$10, $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22 }' > ${b}.temp
+cat ${b}.header ${b}.temp | samtools sort -n -@ 20 - > ${b}.nsorted.bam
+
+
+samtools sort -n -@ 20 BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted > BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.bam
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
+samtools sort -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.bam &
+
+
+# htseq-count [options] alignment_file gff_file
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out
+htseq-count --stranded yes --minaqual 20 -t exon -f bam BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.bam gencode.vM25.annotation.gtf > ${b}.exon.read.count
+htseq-count --stranded yes --minaqual 20 -t gene -f bam ${b}.bam gencode.vM25.annotation.gtf > ${b}.gene.read.count &
+
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.sorted
+htseq-count --stranded yes --minaqual 20 -t exon -f bam ${b}.bam gencode.vM25.annotation.gtf > ${b}.exon.read.count &
+
+for b in BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6 BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
+do 
+	htseq-count --stranded yes --minaqual 20 -t exon -f bam ${b}.nsorted.bam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count &
+    #htseq-count --stranded yes -t exon -f bam ${b}.bam gencode.vM25.annotation.gtf > ${b}.exon.read.count-2 
+    htseq-count --stranded yes --minaqual 20 -t gene -f bam ${b}.nsorted.bam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count &
+done
+
+
+
