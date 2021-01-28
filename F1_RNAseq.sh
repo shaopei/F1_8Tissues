@@ -532,6 +532,12 @@ bedtools closest -s -D a -id -fu -t first -a <(sort-bed BN_AT_4tunitIntersectNat
 
 cat BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed  | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}' | sort |uniq |wc -l
 cat BN_t1E-0${t}_AT_AlleleHMM.bed  BN_t1E-0${t}_AT_AlleleHMM_within10K.bed | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}'  | sort |uniq |wc -l
+#          intersect ones                       with AlleleHMM block upstream <10Kb
+
+# identify the tunits that contain the AT window of interests
+# use the tunits to identify the geneID within that tunits
+
+
 
 
 f=BN_MB6_BOTH_RNA_mat3waspSJ.out.tab
@@ -609,33 +615,27 @@ wait
 
 cat gencode.vM25.annotation.gtf | awk 'BEGIN{OFS="\t"} $3=="gene" {split($10,a,"\""); split($14,b,"\""); print $1, $4-1, $5,a[2], b[2],$7}' > gencode.vM25.annotation.gene.bed
 
-b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6
-b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
-samtools view -H ${b}.sorted.bam > ${b}.header
-samtools view ${b}.sorted.bam | awk '{OFS="\t"} $5==255 {print $1,$2,$3,$4,"60",$6,$7,$8,$9,$10, $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22 }' > ${b}.temp
-cat ${b}.header ${b}.temp | samtools sort -n -@ 20 - > ${b}.nsorted.bam
-
-
-samtools sort -n -@ 20 BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted > BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.bam
-b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
-samtools sort -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.bam &
-
-
 # htseq-count [options] alignment_file gff_file
 b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out
-htseq-count --stranded yes --minaqual 20 -t exon -f bam BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.bam gencode.vM25.annotation.gtf > ${b}.exon.read.count
-htseq-count --stranded yes --minaqual 20 -t gene -f bam ${b}.bam gencode.vM25.annotation.gtf > ${b}.gene.read.count &
+samtools sort -O SAM -n -@ 20 ${b}.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.exon.read.count 
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.gene.read.count 
 
-b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted
-b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.sorted
-htseq-count --stranded yes --minaqual 20 -t exon -f bam ${b}.bam gencode.vM25.annotation.gtf > ${b}.exon.read.count &
-
-for b in BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6 BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
-do 
-	htseq-count --stranded yes --minaqual 20 -t exon -f bam ${b}.nsorted.bam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count &
-    #htseq-count --stranded yes -t exon -f bam ${b}.bam gencode.vM25.annotation.gtf > ${b}.exon.read.count-2 
-    htseq-count --stranded yes --minaqual 20 -t gene -f bam ${b}.nsorted.bam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count &
-done
+htseq-count --stranded yes --minaqual 20 -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.exon.read.count-Q20 &
+htseq-count --stranded yes --minaqual 20 -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.gene.read.count-Q20 &
 
 
+samtools sort -O SAM -n -@ 20 BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted.bam > BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.sam
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count 
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count 
 
+
+b=BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
+samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count 
+htseq-count --stranded yes --minaqual 20 -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count-Q20 &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count 
+htseq-count --stranded yes --minaqual 20 -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count-Q20&
+
+# determine the gene thats in 
