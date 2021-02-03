@@ -69,6 +69,9 @@ setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/RNA-seq")
 load("BN_gencode.vM25.annotation.gene-Readcounts.RData")
 
 counts = merge.counts
+
+counts = counts[counts$B6.proseq > 10,]
+counts = counts[counts$CAST.proseq > 10,]
 counts$sB6 <- counts$B6.exon/counts$B6.proseq
 counts$sCAST <- counts$CAST.exon/counts$CAST.proseq
 
@@ -76,91 +79,60 @@ plot(counts$sB6, counts$sCAST,
      xlim=c(0,200), ylim = c(0,200))
 
 
+geneID_withATwindow <- read.table("geneID_withATwindow", header=F)
+geneID_withATwindow$ATwindow = TRUE
+geneID_withATwindow_withRNAAlleleHMMBlocks <- read.table("geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks", header=F)
+geneID_withATwindow_withRNAAlleleHMMBlocks$AlleleHMM <- 1
+
+target = merge(geneID_withATwindow, geneID_withATwindow_withRNAAlleleHMMBlocks, by = "V1", all.x = T)
+colnames(target)[1]="geneID"
+target$AlleleHMM[is.na(target$AlleleHMM)] = 0
+target = merge(target, counts, by = "geneID", all.x = T)
+target$deltaS = abs(target$sB6-target$sCAST)
 
 
 
+#hist(target$sB6, breaks = seq(0,14,0.01),col="blue")
+#hist(target$sCAST, breaks = seq(0,14,0.01), col="red")
 
-library("sqldf")
-new_tus <- sqldf ("select TXCHROM,TXSTART,TXEND,GENEID,TXNAME,TXSTRAND,V2,TXTYPE from tus left join geneID_name on tus.GENEID=geneID_name.V1" )
-colnames(new_tus)[7]="GENENAME"
-tus <- new_tus
-bodies <- tus
+sum(target$AlleleHMM==0)
+sum(target$AlleleHMM==1)
+pdf("Allelic_Termination_Gene_Stablility.pdf", width=7, height = 3.5, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+plot(ecdf(target$deltaS[target$AlleleHMM==0]),
+     #pch=10, 
+     col="dark blue",
+     xlim=c(0,2),
+     ylim=c(0.9,1),
+     xlab="|Stability B6 - Stability CAST|",
+     ylab="CDF",
+     las=1,cex=1,
+     main=""
+)
+lines(ecdf(target$deltaS[target$AlleleHMM==1]), cex=1, col="dark orange")
 
+legend("right", 
+       legend = c( paste("Genes without allelic difference in mature mRNA, n = ", sum(target$AlleleHMM==0), sep=""), 
+                   #paste("Without Indel, n=", dim(sub_df_no_indel)[1], sep=""),
+                   paste("Genes with allelic difference in mature mRNA, n=", sum(target$AlleleHMM==1), sep="")),
+       title = ,
+       #pch=c(15,15),
+       #lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       #density=c(10000,25),
+       #angle=c(180,45),
+       #angle=45,
+       #fill=c("blue","dark organe","dark green")
+       col=c("dark blue","dark orange"),
+       pch=c(19,19),
+       bty = "n"
+)
+dev.off()
 
-
-tus <- read.table("../annotations/tuSelecter/final_tus.txt", header=TRUE)
-tus <- tus[(tus$TXEND-tus$TXSTART)>500,]
-geneID_name <- read.table("../annotations/gencode.vM20_geneID_name_pair.txt", header=F)
-#colnames(geneID_name)=c("GENEID", "GENENAME")
-
-library("sqldf")
-new_tus <- sqldf ("select TXCHROM,TXSTART,TXEND,GENEID,TXNAME,TXSTRAND,V2,TXTYPE from tus left join geneID_name on tus.GENEID=geneID_name.V1" )
-colnames(new_tus)[7]="GENENAME"
-tus <- new_tus
-bodies <- tus
-# bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
-# bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
-
-# pause <- tus
-# pause$TXEND[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
-# pause$TXSTART[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
-
-# postcps <- tus
-# postcps$TXSTART[bodies$TXSTRAND == "+"] <- bodies$TXEND[bodies$TXSTRAND == "+"]
-# postcps$TXEND[bodies$TXSTRAND == "+"] <- bodies$TXEND[bodies$TXSTRAND == "+"]+15000
-# postcps$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXSTART[bodies$TXSTRAND == "-"]
-# postcps$TXSTART[bodies$TXSTRAND == "-"] <- bodies$TXSTART[bodies$TXSTRAND == "-"]-15000
-# postcps$TXSTART[postcps$TXSTART < 0] <- 0
-
-countBigWig <- function(prefix, bed, rpkm=FALSE, path="./") {
- pl <- load.bigWig(paste(path, prefix, "_plus.bw", sep=""))
- mn <- load.bigWig(paste(path, prefix, "_minus.bw", sep=""))
-
- counts <- bed6.region.bpQuery.bigWig(pl, mn, bed, abs.value = TRUE)
-        if(rpkm==TRUE) {
-                counts <- counts * (1000/(bed[,3]-bed[,2])) * (1e6/(abs(pl$mean)*pl$basesCovered+abs(mn$mean)*mn$basesCovered))
-        }
-
- return(counts)
-}
-
-stage     <- c("WT", "MUT")
-replicate <- c(1, 2, 3, 4)
-
-filenames <- c(paste("WT_R", replicate, sep=""), paste("MUT_R", replicate, sep=""))
-stage     <- c("WT", "MUT", "PHDHET")
-filenames <- c(filenames, "PHDHET_R1", "PHDHET_R2")
-
-## Gets counts
-counts <- NULL
-#pause_counts <- NULL
-#postcps_counts <- NULL
-for(f in filenames) {
-	counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE))
-    #pause_counts <- cbind(pause_counts, countBigWig(f, pause, rpkm=FALSE))
-	#postcps_counts <- cbind(postcps_counts, countBigWig(f, postcps, rpkm=FALSE)) 
-}
-colnames(counts) <- filenames
-counts_wPHDHET <-counts
-#remove(counts)
-save.image("data-counts_wPHDHET.RData")
-#save.image("data-counts.RData")
-#remove(counts_wPHDHET); #remove(pause_counts); remove(postcps_counts)
-
-## Gets RPKMs
-rpkm <- NULL
-#pause_rpkm <- NULL
-#postcps_rpkm <- NULL
-for(f in filenames) {
-    rpkm <- cbind(rpkm, countBigWig(f, bodies, rpkm=TRUE))
-	#pause_rpkm <- cbind(pause_rpkm, countBigWig(f, pause, rpkm=TRUE))
-	#postcps_rpkm <- cbind(postcps_rpkm, countBigWig(f, postcps, rpkm=TRUE))
-}
-colnames(rpkm) <- filenames
-rpkm_wPHDHET <-rpkm
-#remove(rpkm)
-#save.image("data-rpkms.RData")
-save.image("data-rpkms_wPHDHET.RData")
-#remove(rpkm_wPHDHET)
+# KS test 
+ks.test(target$deltaS[target$AlleleHMM==1] ,target$deltaS[target$AlleleHMM==0], alternative = "less")
 
 

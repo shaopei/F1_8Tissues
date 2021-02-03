@@ -535,7 +535,12 @@ cat BN_t1E-0${t}_AT_AlleleHMM.bed  BN_t1E-0${t}_AT_AlleleHMM_within10K.bed | awk
 #          intersect ones                       with AlleleHMM block upstream <10Kb
 
 # identify the tunits that contain the AT window of interests
+intersectBed -wao -s -a BN_AT_4tunitIntersectNativeHMM_tunits.bed -b ../gencode.vM25.annotation.gene.bed  > BN_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed
+cat BN_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed | cut -f 10 |sort |uniq > geneID_withATwindow
+#intersectBed -s -a ../gencode.vM25.annotation.gene.bed -b BN_AT_4tunitIntersectNativeHMM_tunits.bed > gencode.vM25.annotation.geneWithATwindow.bed
 # use the tunits to identify the geneID within that tunits
+intersectBed -u -s -a BN_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed -b <(cat BN_t1E-0${t}_AT_AlleleHMM.bed BN_t1E-0${t}_AT_AlleleHMM_within10K.bed|cut -f 1-6 | sort | uniq ) | cut -f 10 |sort |uniq \
+> geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks
 
 
 
