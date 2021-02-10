@@ -1,4 +1,5 @@
-##
+## cd /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5
+# R
 ## getCounts.R - Counts reads in each gene.
 require(bigWig)
 
@@ -19,7 +20,7 @@ bodies <- bodies[bodies$V1 != "chrX",]
 bodies <- bodies[bodies$V1 != "chrY",]
 bodies <- bodies[bodies$V1 != "chrM",]
 
-filenames <- c("BN_map2ref_1bpbed_map5", "BN_map2ref_1bpbed_map5_B6", "BN_map2ref_1bpbed_map5_CAST")
+filenames <- c("LV_map2ref_1bpbed_map5", "LV_map2ref_1bpbed_map5_B6", "LV_map2ref_1bpbed_map5_CAST")
 
 ## Gets counts
 counts <- NULL
@@ -34,39 +35,40 @@ counts <- cbind(bodies, counts)
 colnames(counts)[4]="geneID"
 colnames(counts)[5]="geneName"
 
-exon.filenames <- c("BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.exon.read.count",
-	"BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.exon.read.count", 
-	"BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.nsorted.exon.read.count")
+#exon.filenames <- c("LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.exon.read.count",
+exon.filenames <- c(	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.exon.read.count", 
+	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.nsorted.exon.read.count")
 exon.counts <- NULL
 for(f in exon.filenames) {
-	r <- read.table(paste("/workdir/sc2457/F1_Tissues/RNA-seq/STAR_BN/",f,sep=""), header=F)
+	r <- read.table(paste("/workdir/sc2457/F1_Tissues/RNA-seq/STAR_LV/",f,sep=""), header=F)
 	#merge.counts <- merge(rna.counts, r, by="V1", all=TRUE) 
 	exon.counts <- cbind(exon.counts, r[,2])
 }
 exon.counts <- cbind.data.frame(r$V1, exon.counts)
-colnames(exon.counts) <- c("geneID","All.exon", "B6.exon", "CAST.exon")
+#colnames(exon.counts) <- c("geneID","All.exon", "B6.exon", "CAST.exon")
+colnames(exon.counts) <- c("geneID","B6.exon", "CAST.exon")
 
-
-rna.filenames <- c("BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.gene.read.count",
-	"BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.gene.read.count", 
-	"BN_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.nsorted.gene.read.count")
+if(0){
+rna.filenames <- c("LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.gene.read.count",
+	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.gene.read.count", 
+	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.nsorted.gene.read.count")
 rna.counts <- NULL
 for(f in rna.filenames) {
-	r <- read.table(paste("/workdir/sc2457/F1_Tissues/RNA-seq/STAR_BN/",f,sep=""), header=F)
+	r <- read.table(paste("/workdir/sc2457/F1_Tissues/RNA-seq/STAR_LV/",f,sep=""), header=F)
 	#merge.counts <- merge(rna.counts, r, by="V1", all=TRUE) 
 	rna.counts <- cbind(rna.counts, r[,2])
 }
 rna.counts <- cbind.data.frame(r$V1, rna.counts)
 colnames(rna.counts) <- c("geneID","All.rna", "B6.rna", "CAST.rna")
+}
 
+#merge.counts <- merge(counts, rna.counts, by="geneID", all.x=TRUE) 
+merge.counts <- merge(counts, exon.counts, by="geneID", all.x=TRUE) 
 
-merge.counts <- merge(counts, rna.counts, by="geneID", all.x=TRUE) 
-merge.counts <- merge(merge.counts, exon.counts, by="geneID", all.x=TRUE) 
-
-save.image("BN_gencode.vM25.annotation.gene-Readcounts.RData")
+save.image("LV_gencode.vM25.annotation.gene-Readcounts.RData")
 
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/RNA-seq")
-load("BN_gencode.vM25.annotation.gene-Readcounts.RData")
+load("LV_gencode.vM25.annotation.gene-Readcounts.RData")
 
 counts = merge.counts
 
@@ -79,9 +81,9 @@ plot(counts$sB6, counts$sCAST,
      xlim=c(0,200), ylim = c(0,200))
 
 
-geneID_withATwindow <- read.table("geneID_withATwindow", header=F)
+geneID_withATwindow <- read.table("LV_geneID_withATwindow", header=F)
 geneID_withATwindow$ATwindow = TRUE
-geneID_withATwindow_withRNAAlleleHMMBlocks <- read.table("geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks", header=F)
+geneID_withATwindow_withRNAAlleleHMMBlocks <- read.table("LV_geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks", header=F)
 geneID_withATwindow_withRNAAlleleHMMBlocks$AlleleHMM <- 1
 
 target = merge(geneID_withATwindow, geneID_withATwindow_withRNAAlleleHMMBlocks, by = "V1", all.x = T)
@@ -133,6 +135,6 @@ legend("right",
 dev.off()
 
 # KS test 
-ks.test(target$deltaS[target$AlleleHMM==1] ,target$deltaS[target$AlleleHMM==0], alternative = "less")
+ks.test(target$deltaS[target$AlleleHMM==1] ,target$deltaS[target$AlleleHMM==0], alternative = "two.sided")
 
 
