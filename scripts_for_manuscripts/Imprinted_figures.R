@@ -3,7 +3,7 @@ setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster")
 pdf("domain_length.pdf")
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
-par(cex.lab=2.2, cex.axis=2.2)
+par(cex.lab=3, cex.axis=3)
 f1=read.table("T8_2Strand_p0.05_effect_imprinting.bed_cluster_length",header=F)
 h<- hist(log10(f1$V1),col="red" 
      ,density=25
@@ -47,7 +47,7 @@ plot(h,col="red" ,density=25, add=T)
 legend("topleft", 
        legend = c( "Imprinted","Strain effect"), 
        #pch=c(15,15),
-       cex=2, 
+       cex=3, 
        lty=c(0,0),
        #bty="n",
        lwd=1.5, 
@@ -62,14 +62,14 @@ dev.off()
 
 
 
-# gencode.vM20.annotation_geneMergedinCluster_SI.pdf
+# gencode.vM25.annotation_geneMergedinCluster_SI.pdf
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Cluster/GeneAnnotationInCluster/")
-pdf("gencode.vM20.annotation_geneMergedinCluster_SI.pdf")
+pdf("gencode.vM25.annotation_geneMergedinCluster_SI.pdf")
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
-par(cex.lab=2.2, cex.axis=2.2)
-binSize=1
-f2=read.table("gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster",header=F)
+par(cex.lab=3, cex.axis=3)
+binSize=2
+f2=read.table("gencode.vM25.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_strain.bed_cluster",header=F)
 f2_0=read.table("T8_2Strand_p0.05_effect_strain.bed_cluster",header=F)
 
 h2=hist(c(rep(0,dim(f2_0)[1] - dim(f2)[1]),f2$V1),col="blue" 
@@ -94,7 +94,7 @@ plot(h2,col="blue"
      ,las=1
      ,main= "")
 
-f1=read.table("gencode.vM20.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster",header=F)
+f1=read.table("gencode.vM25.annotation_geneMerged.bed_count_in_T8_2Strand_p0.05_effect_imprinting.bed_cluster",header=F)
 f1_0=read.table("T8_2Strand_p0.05_effect_imprinting.bed_cluster",header=F)
 
 h=hist(c(rep(0,dim(f1_0)[1] - dim(f1)[1]),f1$V1),col="red" 
@@ -111,17 +111,17 @@ h=hist(c(rep(0,dim(f1_0)[1] - dim(f1)[1]),f1$V1),col="red"
        ,right = FALSE
 )
 h$counts=h$counts/sum(h$counts)
-plot(h,col="red" ,density=25, add=T)
+plot(h,col="red" ,density=50, add=T)
 
 
 legend("topright", 
        legend = c( "Imprinted","Strain effect"), 
        #pch=c(15,15),
-       cex=2, 
+       cex=3, 
        lty=c(0,0),
        #bty="n",
        lwd=1.5, 
-       density=c(25, 10000),
+       density=c(50, 10000),
        angle=c(45, 180),
        #angle=45,
        fill=c("red","blue")
