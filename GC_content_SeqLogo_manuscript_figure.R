@@ -1,7 +1,7 @@
 
 library("TmCalculator")
 library(seqLogo)
-setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/GC_content")
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/GC_content/2021Feb_HighLowBasedOnMaxTSN/")
 
 
 
@@ -176,7 +176,8 @@ df_process <- function(df, name, step){
   #par(cex=1.5)
   pch_u=15
   plot(-w:w,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
-       ylim=c(-0.1,0.1), pch=pch_u,
+       #ylim=c(-0.1,0.1), 
+       pch=pch_u,
        ylab="HighAllele - LowAllele",
        xlab="Distance to maxTSN",
        main=paste(organ,"fdr<=0.1 single", sep=" "),
