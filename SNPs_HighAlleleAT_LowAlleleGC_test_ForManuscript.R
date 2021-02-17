@@ -1,5 +1,5 @@
 
-setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/GC_content")
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/GC_content/2021Feb_HighLowBasedOnMaxTSN/")
 
 AT2GC_SNP <- function(df, name="" ,step=5, excludeCA=FALSE){
   AT2GC_SNP=c("AG","AC","TG","TC")
@@ -114,7 +114,7 @@ for (organ in c("LV", "BN")){
   m_tss = AT2GC_SNP(m, step=step, "multiple, exlcude CA", excludeCA=TRUE)
   #dev.off()
   
-  pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS.pdf", sep=""))
+  pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS_SingleBaseASTSS.pdf", sep=""))
   par(mfrow=c(3,1))
   p.value <- NULL
   odds.ratio <- NULL
@@ -143,6 +143,37 @@ for (organ in c("LV", "BN")){
   abline(h=0.05,col="gray")
   text(s_tss[[1]][which(p.value <= 0.1)],p.value[which(p.value <= 0.1)], label=paste(round(p.value[which(p.value <= 0.1)], digits = 2), sep=" "))
   dev.off()
+  
+  pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS_MultipleBaseASTSS.pdf", sep=""))
+  par(mfrow=c(3,1))
+  p.value <- NULL
+  odds.ratio <- NULL
+  testors <- NULL
+  
+  for (n in (1:length(m_tss[[2]]))){
+    
+    testor <-  matrix(c(m_tss[[2]][n], dim(s)[1],
+                        g9_tss[[2]][n], dim(g9)[1]),
+                      nrow = 2,
+                      dimnames = list(TSS = c("TSS with ATtoGC SNPs", "All TSS"),
+                                      KS.Test = c("Single", "NS"))); testor
+    
+    f = fisher.test(testor, alternative = "greater" ); f
+    p.value= c(p.value, f$p.value)
+    odds.ratio = c(odds.ratio, f$estimate)
+  }
+  adjust.p = p.adjust(p.value, method="fdr")
+  plot(m_tss[[1]], -log10(adjust.p), type="o" , xlab="dist to maxTSN", main=" TSS_with_AT2GC_SNP/ Total TSS", las=1, col="red")
+  abline(h=-1*log10(fdr_cutoff),col="gray")
+  plot(m_tss[[1]],odds.ratio, type="o" , xlab="dist to maxTSN", main=paste(organ,"_MultipleBaseTSS_SNPs", sep=""), las=1)
+  abline(h=1,col="gray")
+  plot(m_tss[[1]], p.value, type="o" , 
+       ylab="unadjust p-value",
+       xlab="dist to maxTSN",  main=" TSS_with_AT2GC_SNP/ Total TSS", las=1, col="red")
+  abline(h=0.05,col="gray")
+  text(m_tss[[1]][which(p.value <= 0.1)],p.value[which(p.value <= 0.1)], label=paste(round(p.value[which(p.value <= 0.1)], digits = 2), sep=" "))
+  dev.off()
+  
   }
 
 
