@@ -250,7 +250,7 @@ for (n in (1:length(m_tss[[2]]))){
 adjust.p = p.adjust(p.value, method="fdr")
 plot(m_tss[[1]], -log10(adjust.p), type="o" , xlab="dist to maxTSN", main=" TSS_with_AT2GC_SNP/ Total TSS", las=1, col="red")
 abline(h=-1*log10(fdr_cutoff),col="gray")
-plot(m_tss[[1]],odds.ratio, type="o" , xlab="dist to maxTSN", main=paste(organ,"_SingleBaseTSS_SNPs", sep=""), las=1)
+plot(m_tss[[1]],odds.ratio, type="o" , xlab="dist to maxTSN", main=paste(organ,"_MultipleBaseTSS_SNPs", sep=""), las=1)
 abline(h=1,col="gray")
 plot(m_tss[[1]], p.value, type="o" , 
      ylab="unadjust p-value",
