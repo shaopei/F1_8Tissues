@@ -176,8 +176,7 @@ df_process <- function(df, name, step){
   #par(cex=1.5)
   pch_u=15
   plot(-w:w,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
-       #ylim=c(-0.1,0.1), 
-       pch=pch_u,
+       ylim=c(-0.12,0.12), pch=pch_u,
        ylab="HighAllele - LowAllele",
        xlab="Distance to maxTSN",
        main=paste(organ,"fdr<=0.1 single", sep=" "),
@@ -258,7 +257,7 @@ n_s = output[[6]]
 
 ### Single base plot
 # width=9.23, height = 6.52)
-pdf(paste(organ,"_deltaGC_exclude_CA_step=",step,"_d=",d,".pdf" ,sep=""), width=9.23, height = 6.52/2)
+pdf(paste(organ,"_single_deltaGC_exclude_CA_step=",step,"_d=",d,".pdf" ,sep=""), width=9.23, height = 6.52/2)
 #par(mfcol=c(2,1))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -266,29 +265,33 @@ par(cex.lab=2.2, cex.axis=2.2)
 #par(cex=1.5)
 pch_u=15
 #Brain Single base plot
-plot(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[2]]-s_gc_e[[3]], type="o", col="red", 
+plot(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[3]]-s_gc_e[[2]], type="o", col="red", 
      #     ylim=c(min(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]]), max(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]])),
      main=paste(organ, " High Allele - Low Allele, d=",g9_gc_e[[4]] ," bin size=",step,"_exclude maxTSN",sep=""),
-     xlab="distance to maxTSN", ylab="delta GC", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
+     xlab="distance to maxTSN", ylab="delta AT", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
 #abline(h=0)
 #abline(v=0)
 
+abline(h=0, col="gray", lty=2)
 
-
-points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[2]]-g9_gc_e[[3]], type="o", col="black", pch=pch_u)
+points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[3]]-g9_gc_e[[2]], type="o", col="black", pch=pch_u)
 #points(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[2]]-m_gc_e[[3]], type="o", col="blue", pch=19)
 
-points(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[2]]-s_gc_e[[3]], type="o", col="red", pch=pch_u)
+points(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[3]]-s_gc_e[[2]], type="o", col="red", pch=pch_u)
 
-legend("bottomleft", legend=c(paste("Single, n=", n_s,sep=""), paste("NS, n=", n_g9)),
+legend("topleft", legend=c(paste("Single, n=", n_s,sep=""), paste("NS, n=", n_g9)), cex=1.5,
        col=c("red", "black"), bty = "n", lty=1, pch=pch_u)
 dev.off()
 
-pdf(paste(organ,"_deltaGC_exclude_CA_step=",step,"_d=",d,"-SI.pdf" ,sep=""), width=9.23, height = 6.52*1.5)
-par(mfcol=c(3,1))
-par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
-par(mgp=c(3,1,0))
-par(cex.lab=2.2, cex.axis=2.2)
+# pdf(paste(organ,"_deltaGC_exclude_CA_step=",step,"_d=",d,"-SI.pdf" ,sep=""), width=9.23, height = 6.52*1.5)
+# par(mfcol=c(3,1))
+# par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+# par(mgp=c(3,1,0))
+# par(cex.lab=2.2, cex.axis=2.2)
+
+
+#par(cex=1.5)
+pch_u=15
 # Brain multiple
 organ="BN"
 output = BN_output
@@ -299,16 +302,22 @@ n_g9 = output[[4]]
 n_m = output[[5]] 
 n_s = output[[6]]
 
-plot(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[2]]-m_gc_e[[3]], type="o", col="blue", 
+pdf(paste(organ,"_multiple_deltaGC_exclude_CA_step=",step,"_d=",d,".pdf" ,sep=""), width=9.23, height = 6.52/2)
+#par(mfcol=c(2,1))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+
+plot(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[3]]-m_gc_e[[2]], type="o", col="blue", 
      #ylim=c(min(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]]), max(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]])),
      main=paste(organ, " High Allele - Low Allele, d=",g9_gc_e[[4]] ," bin size=",step,"_exclude maxTSN",sep=""),
-     xlab="distance to maxTSN", ylab="delta GC", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
-
-points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[2]]-g9_gc_e[[3]], type="o", col="black", pch=pch_u)
-points(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[2]]-m_gc_e[[3]], type="o", col="blue", pch=pch_u)
+     xlab="distance to maxTSN", ylab="delta AT", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
+abline(h=0, col="gray", lty=2)
+points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[3]]-g9_gc_e[[2]], type="o", col="black", pch=pch_u)
+points(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[3]]-m_gc_e[[2]], type="o", col="blue", pch=pch_u)
 legend("topleft", legend=c(paste("Multiple, n=", n_m,sep=""), paste("NS, n=", n_g9)),
        col=c("blue", "black"), bty = "n", lty=1, pch=pch_u)
-
+dev.off()
 
 
 organ="LV"; 
@@ -324,33 +333,43 @@ n_s = output[[6]]
 #par(cex=1.5)
 pch_u=15
 #Liver Single base plot
-
-plot(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[2]]-s_gc_e[[3]], type="o", col="red", 
+pdf(paste(organ,"_single_deltaGC_exclude_CA_step=",step,"_d=",d,".pdf" ,sep=""), width=9.23, height = 6.52/2)
+#par(mfcol=c(2,1))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+plot(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[3]]-s_gc_e[[2]], type="o", col="red", 
      #ylim=c(min(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]]), max(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]])),
      main=paste(organ, " High Allele - Low Allele, d=",g9_gc_e[[4]] ," bin size=",step,"_exclude maxTSN",sep=""),
-     xlab="distance to maxTSN", ylab="delta GC", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
+     xlab="distance to maxTSN", ylab="delta AT", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
 #abline(h=0)
 #abline(v=0)
+abline(h=0, col="gray", lty=2)
 
 
-
-points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[2]]-g9_gc_e[[3]], type="o", col="black", pch=pch_u)
+points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[3]]-g9_gc_e[[2]], type="o", col="black", pch=pch_u)
 #points(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[2]]-m_gc_e[[3]], type="o", col="blue", pch=19)
 
-points(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[2]]-s_gc_e[[3]], type="o", col="red", pch=pch_u)
+points(s_gc_e[[1]][1:length(s_gc_e[[2]])], s_gc_e[[3]]-s_gc_e[[2]], type="o", col="red", pch=pch_u)
 
-legend("bottomleft", legend=c(paste("Single, n=", n_s,sep=""), paste("NS, n=", n_g9)),
+legend("topleft", legend=c(paste("Single, n=", n_s,sep=""), paste("NS, n=", n_g9)),cex=1.5,
        col=c("red", "black"), bty = "n", lty=1, pch=pch_u)
+dev.off()
 
 # Liver multiple base
+pdf(paste(organ,"_multiple_deltaGC_exclude_CA_step=",step,"_d=",d,".pdf" ,sep=""), width=9.23, height = 6.52/2)
+#par(mfcol=c(2,1))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
 
-plot(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[2]]-m_gc_e[[3]], type="o", col="blue", 
+plot(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[3]]-m_gc_e[[2]], type="o", col="blue", 
      #ylim=c(min(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]]), max(s_gc_e[[2]]-s_gc_e[[3]], m_gc_e[[2]]-m_gc_e[[3]])),
      main=paste(organ, " High Allele - Low Allele, d=",g9_gc_e[[4]] ," bin size=",step,"_exclude maxTSN",sep=""),
-     xlab="distance to maxTSN", ylab="delta GC", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
-
-points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[2]]-g9_gc_e[[3]], type="o", col="black", pch=pch_u)
-points(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[2]]-m_gc_e[[3]], type="o", col="blue", pch=pch_u)
+     xlab="distance to maxTSN", ylab="delta AT", pch=pch_u, xlim=c(-d,d), las=1, frame=FALSE)
+abline(h=0, col="gray", lty=2)
+points(g9_gc_e[[1]][1:length(g9_gc_e[[2]])], g9_gc_e[[3]]-g9_gc_e[[2]], type="o", col="black", pch=pch_u)
+points(m_gc_e[[1]][1:length(m_gc_e[[2]])], m_gc_e[[3]]-m_gc_e[[2]], type="o", col="blue", pch=pch_u)
 legend("topleft", legend=c(paste("Multiple, n=", n_m,sep=""), paste("NS, n=", n_g9)),
        col=c("blue", "black"), bty = "n", lty=1, pch=pch_u)
 
