@@ -371,7 +371,7 @@ plot_colorByDensity = function(x1,x2,
 }
 
 setwd(paste("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/tunitIntersectNativeHMM",Tversion,sep = "/"))
-tissue_list_full <-c("BN","SP","HT", "SK","KD", "ST" , "GI", "LV")
+tissue_list_full <-c("BN","HT", "SK", "LV","GI", "ST" , "KD", "SP")
 
 ### the relationship between Tunit expression level and AT window length
 pdf("scatter_plot_logATRPKM_logTunitRPKM.pdf",width=16, height = 8 )
@@ -517,6 +517,7 @@ axis(1, at=seq(0,7,1), labels=c(0,"10","102","103","104","105","106","107"), las
 
 dev.off()
 
+tussue_list <-c("BN","HT", "SK", "LV","GI", "ST" , "KD", "SP")
 pdf("Organs_ATwindow_length_violin.pdf", width=10, height = 8)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
