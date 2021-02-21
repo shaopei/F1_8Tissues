@@ -485,3 +485,12 @@ j=combine_maxPause_noduplicate
 d=50
  bedtools getfasta -s -fi mm10.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t"} {print $1, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_mm10.txt 
  paste ${j}.bed  ${j}_mm10.txt > ${j}_+-${d}_mm10_Seq.bed 
+
+
+# examine the SNPs in the 38 sub_df_SNP.bed
+ln -s /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/pause_Indel/P.CAST_M.B6_F1hybrid.snps.bed
+j=sub_df_SNP
+d=0
+ bedtools getfasta -s -fi mm10.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t"} {print $1, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_mm10.txt 
+ paste ${j}.bed  ${j}_mm10.txt > ${j}_+-${d}_mm10_Seq.bed 
+intersectBed -wao -a ${j}_+-${d}_mm10_Seq.bed -b P.CAST_M.B6_F1hybrid.snps.bed

@@ -269,13 +269,13 @@ df$Indel_Len = df$mat_Idel_length - df$pat_Idel_length
 
 
 for (i in 1:dim(df)[1]){
-  m=as.numeric(unlist(strsplit(as.character(df$V7[i]), ",")))
-  p=as.numeric(unlist(strsplit(as.character(df$V8[i]), ",")))
+  m=as.numeric(unlist(strsplit(as.character(df$V7[i]), ","))) #mat read length
+  p=as.numeric(unlist(strsplit(as.character(df$V8[i]), ","))) # pat read length
   df$RL.p.value[i] = ks.test(m,p) $ p.value
 }
 for (i in 1:dim(df)[1]){
-  m=as.numeric(unlist(strsplit(as.character(df$V9[i]), ",")))
-  p=as.numeric(unlist(strsplit(as.character(df$V10[i]), ",")))
+  m=as.numeric(unlist(strsplit(as.character(df$V9[i]), ","))) # mat reads 3 prime mapped position on mm10
+  p=as.numeric(unlist(strsplit(as.character(df$V10[i]), ","))) # pat reads 3 prime mapped position on mm10
   df$map3.p.value[i] = ks.test(m,p) $ p.value
 }
 
@@ -299,19 +299,24 @@ UniqRowCount <- function(subdf){
  dim(unique(data.frame(subdf$V2, subdf$earlyPause)))[1]
 }
 
+# df$V15 is the distance between maxTSN to the nearest indel
+# df$V15 <= df$maxPauseSite_map3  to identify the indels located between maxPauseSite_map3 and maxTSN
+# (df$mat_maxPause_map3 != df$pat_maxPause_map3) make sure the early pause position =! late pause position
+# df$map3.p.value.fdr <=0.1 KS test is significant (fdr<=0.1)
 
 df$target=df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3)
 dim(df)
 # use only fdr<=0.1 sites where early pause != late pause
-sum((df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3))
-a=UniqRowCount(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])
+sum((df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3)) #308
+a=UniqRowCount(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])  #use maxTSN and early pause postion to count uniq row
 b=UniqRowCount(df[df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])
 c=UniqRowCount(df[(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
 d=UniqRowCount(df[df$V15 <= df$maxPauseSite_map3 &(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
 a;b;c;d
+#271, 56, 1401, 113
 fisher.test(data.frame(c(b, a), c(d, c)))
 subdf=(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),c(1,2,3,14,5,6)])
-dim(unique(subdf))
+dim(unique(subdf)) #use maxTSN and INDEL postion to count uniq row
 
 #sum(df$target)
 #names(df)
@@ -740,7 +745,7 @@ pdf("SNP_distribution_around_short_pause.pdf", width=9.25, height = 5.36, useDin
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
-tempFunc(1,100, show.window=30)
+tempFunc(1,100, show.window=30) # sites with indel were removed
 dev.off()
 par(mfrow=c(3,1))
 tempFunc(1,100) # use mean
@@ -810,6 +815,25 @@ df$AllelicMaxPauseDist = abs(df$mat_maxPause_map3 - df$pat_maxPause_map3)
 sub_df=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0,]
 sub_df_SNP=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & 
                 df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause),]
+
+bed6 <- sub_df_SNP[,c('V1','V2','V3','earlyPause','V5','V6','AllelicMaxPauseDist','V1','V2','V3')]
+bed6 = unique(bed6)  # remove duplicates with shared maxTSN and early pause
+#dim(bed6)
+bed6_copy = bed6
+# maxPause location +- window
+show.window=0
+for (i in 1:NROW(bed6)){
+  if(bed6[i,6]=="-") {
+    bed6[i,3] <- bed6_copy[i,3] - bed6_copy[i,4] + show.window
+    bed6[i,2] <- bed6_copy[i,2] - bed6_copy[i,4] - show.window
+  } else {
+    bed6[i,2] <- bed6_copy[i,2] + bed6_copy[i,4] - show.window
+    bed6[i,3] <- bed6_copy[i,3] + bed6_copy[i,4] + show.window
+  }
+}
+write.table(bed6, file="sub_df_SNP.bed", quote = F, sep="\t", row.names = F, col.names = F)
+# find out the SNP at the early pause
+
 remove_duplicates_V2_earlyPause <- function(subdf){
   return(subdf[!duplicated(subdf[,c('V2','earlyPause')]),])
 }
@@ -827,6 +851,14 @@ if (set_remove_duplicates_V2_earlyPause){
                      c('V1','V2','V3','earlyPause','AllelicMaxPauseDist')])
 }
 
+# if only use those with C to ATG SNPs
+sub_df_SNP_2=read.table("sub_df_SNP_C2ATG.bed", header=T)
+sub_df_SNP=cbind.data.frame(bed6, sub_df_SNP_2)
+sub_df_SNP=sub_df_SNP[sub_df_SNP$C2ATG_SNPs==1,]
+dim(sub_df_SNP)
+if (set_remove_duplicates_V2_earlyPause){
+  sub_df_SNP = sub_df_SNP[!duplicated(sub_df_SNP[,c('V2','V2.1')]),]}
+dim(sub_df_SNP)
 #par(mfrow=c(2,1))
 # panel55_SNPc_allelicMaxPauseDist
 pdf("SNPc_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
