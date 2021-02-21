@@ -4,7 +4,6 @@ SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.
 
 # functions:
 source("~/Box\ Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/heatmap/heatmaps.R")
-
 read_read_mat_S <-function (file.plus.bw, file.minus.bw , bed6, step=2, navg = 20, times=1, use.log=FALSE)
 {
   bw.plus  <- load.bigWig( file.plus.bw )
@@ -44,43 +43,15 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
 }
 
 
-# get read length distribution
-for (Tissue in c("HT","SK", "KD")){
-  pdf(file = paste(Tissue, "_read_length_distribution.pdf"))
-  ide_name=paste(Tissue,"_mat_identical_read_length.txt",sep="")
-  mat_name=paste(Tissue,"_mat_specific_read_length.txt",sep="")
-  pat_name=paste(Tissue,"_pat_specific_read_length.txt",sep="")
-  
-  ide<-read.table(ide_name)
-  mat<-read.table(mat_name)
-  pat<-read.table(pat_name)
-  
-  par(mfrow=c(3,1))
-  xlim_top=101
-  hist(mat$V1[mat$V1<=100], 
-       xlim = c(0, xlim_top), las=1, 
-       breaks = seq(0.5, xlim_top,1),
-       main=Tissue)
-  hist(pat$V1[pat$V1<=100], 
-       breaks = seq(0.5, xlim_top,1),
-       xlim = c(0, xlim_top), las=1)
-  hist(ide$V1[ide$V1<=100], 
-       breaks = seq(0.5, xlim_top,1),
-       xlim = c(0, xlim_top), las=1)
-  dev.off()
-}
-
-
 # pause center analysis, using dREG sites with KS test, map3 position, fdr<=0.1
 combine_pause0.1 <- NULL
-t="HT"
 for (t in c("HT","SK","KD")){
   show.window=100
   pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
   pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
   end=".rpm.bw"; times=10
   #end=".bw"; times=1
-  # allelic reads (map3)
+  # allelic reads (map3) #mapped position of the 3 prime end of reads
   file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
   file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
   file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
@@ -98,12 +69,14 @@ for (t in c("HT","SK","KD")){
   SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
   AT=pause_window_0.1
   # parameter setting 
+
   dist=200; step=1;file.pdf="heatmap.pdf"; map5=TRUE; metaplot.pdf="metaplot.pdf";
   heatmap=TRUE; metaplot=TRUE; metaplot.ylim=c(0,20);
   center.at.TSN=TRUE;
   navg = 1; use.log=FALSE; times=1
   up_dist =100;
   breaks=seq(0, 20, 0.001); times=times; map5=TRUE; metaplot.ylim = c(0,160)
+
   
   ### from heatmap.Pause function ###
   # AT here is the window of pause, dREG sites
@@ -158,8 +131,6 @@ AT$valid.pairs = AT$early.TSN.pause.dist > TSN.pause.dist.lowerbound & AT$late.T
 sum(AT$valid.pairs)
 
 subAT=AT[!AT$valid.pairs,]
-
-old_AT = AT
 AT = AT[AT$valid.pairs,]
 
 AT$TSN.dist = AT$TSN.late.pause - AT$TSN.early.pause
@@ -188,6 +159,7 @@ hist(AT$pause.dist - AT$TSN.dist
      , breaks=seq(-35.5,35,1)
 )
 #panel52_TSN_Pause_hist_plot.pdf
+# Figure 4B
 pdf("TSN_Pause_hist.pdf", width=7, height = 7)
 par(mfrow=c(2,1))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -203,13 +175,8 @@ hist(AT$pause.dist[AT$TSN.dist==0]
 dev.off()
 sum(AT$pause.dist==0 &AT$TSN.dist !=0)
 
-#View(AT[AT$pause.dist==0 &AT$TSN.dist !=0, ])
-
 sum(AT$TSN.dist==0)
 sum(AT$TSN.dist!=0)
-#hist(AT$pause.dist[AT$TSN.dist != 0] - AT$TSN.dist[AT$TSN.dist != 0]
-#     , breaks=seq(-35.5,35,1)
-#)
 
 
 subAT=AT[abs(AT$pause.dist - AT$TSN.dist) > 10,]
@@ -217,6 +184,7 @@ subAT=subAT[subAT$TSN.dist==0,]
 subAT$deltaTsnPauseDist = subAT$pause.dist - subAT$TSN.dist
 
 library("ggplot2")
+# Figure 4A
 #panel51_TSN_Pause_scatterplot.pdf
 pdf("TSN_Pause_scatterplot.pdf", width=7, height = 7)
 myColor <- rev(RColorBrewer::brewer.pal(11, "Spectral"))
