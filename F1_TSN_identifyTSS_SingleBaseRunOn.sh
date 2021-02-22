@@ -13,9 +13,6 @@ do
 done
 
 
-
-
-
 # identify TSB within dREG sites
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn
 
@@ -113,10 +110,6 @@ for Head in HT KD SK
 do
    R --vanilla --slave --args $(pwd) ${Head}_allReads_TSS_maxTSNs+-10.txt ${Head}_allReads_TSS_maxTSNs+-10_SeqLogo.pdf < getSeqLogo.R &
 done
-
-
-
-
 
 # maxTSN of allelic reads
 # paste the all reads  and alleleic reads count into a table
