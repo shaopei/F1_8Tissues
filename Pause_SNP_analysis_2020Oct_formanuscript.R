@@ -235,9 +235,9 @@ for (i in 1:dim(df)[1]){
 
 df$Indel_Len = df$mat_Idel_length - df$pat_Idel_length
 
-
+# KS test of pause shape, using read length RL (actual length on native genome) and map3 mapped position on reference genome
 for (i in 1:dim(df)[1]){
-  m=as.numeric(unlist(strsplit(as.character(df$V7[i]), ","))) #mat read length
+  m=as.numeric(unlist(strsplit(as.character(df$V7[i]), ","))) #mat read length, between maxTSN and pause
   p=as.numeric(unlist(strsplit(as.character(df$V8[i]), ","))) # pat read length
   df$RL.p.value[i] = ks.test(m,p) $ p.value
 }
@@ -262,46 +262,16 @@ for (i in 1:dim(df)[1]){
   df$pat_AvePause_map3[i] = mean(as.numeric(unlist(strsplit(as.character(df$V10[i]), ","))))
 }
 
-# return the row with distinct chromStart and early Pause sites
-UniqRowCount <- function(subdf){
- dim(unique(data.frame(subdf$V2, subdf$earlyPause)))[1]
-}
-
 # df$V15 is the distance between maxTSN to the nearest indel
 # df$V15 <= df$maxPauseSite_map3  to identify the indels located between maxPauseSite_map3 and maxTSN
 # (df$mat_maxPause_map3 != df$pat_maxPause_map3) make sure the early pause position =! late pause position
 # df$map3.p.value.fdr <=0.1 KS test is significant (fdr<=0.1)
 
-df$target=df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3)
-dim(df)
 # use only fdr<=0.1 sites where early pause != late pause
-sum((df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3)) #308
-a=UniqRowCount(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])  #use maxTSN and early pause postion to count uniq row
-b=UniqRowCount(df[df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])
-c=UniqRowCount(df[(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
-d=UniqRowCount(df[df$V15 <= df$maxPauseSite_map3 &(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
-a;b;c;d
-#271, 56, 1401, 113
-fisher.test(data.frame(c(b, a), c(d, c)))
-subdf=(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),c(1,2,3,14,5,6)])
-dim(unique(subdf)) #use maxTSN and INDEL postion to count uniq row
-
-#sum(df$target)
-#names(df)
-#subdf = (df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3), c(1:6, 25,26, 19,20,16)])
-#sum(df$map3.p.value.fdr<=0.1)
-#sum(df$map3.p.value.fdr>0.1)
-
-#sum(df$V15 > df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 ))
-#sum(df$V15 > df$maxPauseSite_map3 & (df$map3.p.value.fdr > 0.1 ))
-
-# plot( (df$mat_AvePause_map3- df$pat_AvePause_map3)[df$target], 
-#       (df$mat_Idel_length - df$pat_Idel_length)[df$target],
-#       xlim=c(-1*lim,lim), ylim=c(-1*lim,lim),
-#       xlab="B6 - CAST pause position",
-#       ylab="B6 - CAST indel length",
-#       frame=F, 
-#       pch=19, col=rgb(0,0,0,alpha = 0.25))
+df$target = (df$V15 <= df$maxPauseSite_map3) & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3)
+dim(df)
+sum(df$target)
+#figure 4C
 # Panel53_pause_indelength.pdf
 pdf("pause_indelength.pdf", width=7, height = 7, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -353,6 +323,45 @@ legend("topright",
 )
 dev.off()
 
+# return the row with distinct chromStart and early Pause sites
+# UniqRowCount <- function(subdf){
+#   dim(unique(data.frame(subdf$V2, subdf$earlyPause)))[1]
+# }
+# return the number of rows with uniq early pause position
+UniqRowCount <- function(subdf){
+  bed6 <- subdf[1:6]
+  if (NROW(bed6)>0){
+  for (i in 1:NROW(bed6)){
+    if(bed6[i,6]=="-") {
+      bed6[i,3] <- subdf[i,3] - subdf$earlyPause[i]
+      bed6[i,2] <- subdf[i,2] - subdf$earlyPause[i]
+    } else {
+      bed6[i,2] <- subdf[i,2] + subdf$earlyPause[i]
+      bed6[i,3] <- subdf[i,3] + subdf$earlyPause[i]
+    }
+  }
+  
+  bed6[,4]=111
+  bed6[,5]=111
+  dim(unique(bed6))[1]
+  } else {0}
+  #dim(unique(data.frame(subdf$V1, subdf$V2+subdf$earlyPause)))[1]
+}
+
+
+# Fisher's exact test, test if there is more sites contains indel in the group of   ks test fdr<0.1 AND early pause != late pause
+sum((df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3)) #308
+a=UniqRowCount(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])  #use maxTSN and early pause postion to count uniq row
+b=UniqRowCount(df[df$V15 <= df$maxPauseSite_map3 & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])
+c=UniqRowCount(df[(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
+d=UniqRowCount(df[df$V15 <= df$maxPauseSite_map3 &(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
+a;b;c;d
+#269;56;1396;113
+#                                                  # of sites with indel  VS # of sites 
+# ks test fdr<0.1 AND early pause != late pause       56                  269
+# ks test fdr>0.9 AND early pause == late pause      113                 1396   
+fisher.test(data.frame(c(b, a), c(d, c)))
+#p-value = 0.0000003912
 
 ### maxTSN centered pause analysis ###
 # use the shared allelic maxTSN
@@ -423,7 +432,7 @@ SNPs.show.window <- read_read_mat_SNPs (SNP.bw, bed6[,c(1:6)], step=step, times=
 dim(SNPs.show.window)
 for (i in 1:NROW(bed6)){
   SNP_distance_earlyPause = which(SNPs.show.window[i,]==1)-show.window-1
-  
+  df$SNP_distance_earlyPause[i] = paste(SNP_distance_earlyPause,collapse = ",")
   df$SNP1_distance_earlyPause[i] = SNP_distance_earlyPause[order(abs(SNP_distance_earlyPause), decreasing = F)[1]]
   df$SNP2_distance_earlyPause[i] = SNP_distance_earlyPause[order(abs(SNP_distance_earlyPause), decreasing = F)[2]]
   df$SNP3_distance_earlyPause[i] = SNP_distance_earlyPause[order(abs(SNP_distance_earlyPause), decreasing = F)[3]]
@@ -456,6 +465,9 @@ metaplot.SNPsLocation.aroundMaxPause <-function(df, name="", use.sum=FALSE, col=
     }
   }
   
+  bed6[,4]=0
+  bed6[,5]=111
+  bed6 = unique(bed6) # remove duplicates with max pause position  
   
   #write.table(bed6, file="test.bed", quote = F, sep="\t", row.names = F, col.names = F)
   SNPs.show.window <- read_read_mat_SNPs (SNP.bw, bed6[,c(1:6)], step=step, times=1, use.log=FALSE)
@@ -504,7 +516,6 @@ metaplot.SNPsLocation.aroundEarlyPause <-function(df, name="", use.sum=FALSE, co
   bed6 <- df[,1:6]
   bed6[,4] <-df$earlyPause
   #dim(bed6)
-  bed6 = unique(bed6)  # remove duplicates with shared maxTSN and early pause
   bed6_copy = bed6
   # maxPause location +- window
   
@@ -518,6 +529,9 @@ metaplot.SNPsLocation.aroundEarlyPause <-function(df, name="", use.sum=FALSE, co
     }
   }
   
+  bed6[,4]=0
+  bed6[,5]=111
+  bed6 = unique(bed6) # remove duplicates with max pause position  
   
   #write.table(bed6, file="test.bed", quote = F, sep="\t", row.names = F, col.names = F)
   SNPs.show.window <- read_read_mat_SNPs (SNP.bw, bed6[,c(1:6)], step=step, times=1, use.log=FALSE)
@@ -586,6 +600,9 @@ metaplot.SNPsLocation.aroundLatePause <-function(df, name="", use.sum=FALSE, col
     }
   }
   
+  bed6[,4]=0
+  bed6[,5]=111
+  bed6 = unique(bed6) # remove duplicates with max pause position  
   
   #write.table(bed6, file="test.bed", quote = F, sep="\t", row.names = F, col.names = F)
   SNPs.show.window <- read_read_mat_SNPs (SNP.bw, bed6[,c(1:6)], step=step, times=1, use.log=FALSE)
@@ -658,33 +675,6 @@ tempFunc <-function(bp.apart=1, upto=100, show.window=30){
 
 }
 
-# fdr<=0.1, early != late pause,  and with indel
-a=UniqRowCount(df[(df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])
-b=UniqRowCount(df[df$dist_Indel_maxTSN <= df$latePause & (df$map3.p.value.fdr <=0.1 ) & (df$mat_maxPause_map3 != df$pat_maxPause_map3),])
-c=UniqRowCount(df[(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
-d=UniqRowCount(df[df$dist_Indel_maxTSN <= df$latePause &(df$map3.p.value.fdr >0.9 ) & (df$mat_maxPause_map3 == df$pat_maxPause_map3),])
-a;b;c;d
-fisher.test(data.frame(c(b, a), c(d, c)))
-
-if(0){
-sum(df$map3.p.value.fdr<=0.1)
-sum(df$earlyPause==df$latePause)
-
-
-sum(df$map3.p.value.fdr<=0.1 & df$dist_Indel_maxTSN <= df$latePause)
-
-sum(df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) ==0
-    & df$dist_Indel_maxTSN <= df$latePause)
-sum(df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto)
-sum(df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto
-    & df$dist_Indel_maxTSN <= df$latePause)
-
-
-subdf=df[df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto,]
-dim(subdf)
-sum(subdf$dist_Indel_maxTSN <= subdf$latePause)
-}
-
 ##
 ## SNPs around early pause, use.sum = TRUE, for test
 step=1; bp.apart=1; upto=100
@@ -709,6 +699,7 @@ e9=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9
 # add a test
 #pdf(paste(organ,"_FisherExactTest_CountOfTSSwithAT2GCSNPs_vs_AllTSS.pdf", sep=""))
 # panel54_SNP_distribution_around_short_pause
+#Figure4D
 pdf("SNP_distribution_around_short_pause.pdf", width=9.25, height = 5.36, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -718,33 +709,35 @@ dev.off()
 par(mfrow=c(3,1))
 tempFunc(1,100) # use mean
 fdr_cutoff=0.1
-if(0){
-p.value <- NULL
-odds.ratio <- NULL
-testors <- NULL
 
-for (n in (1:length(e1[[2]]))){
+Test_one_by_one=FALSE
+if(Test_one_by_one){
+  p.value <- NULL
+  odds.ratio <- NULL
+  testors <- NULL
   
-  testor <-  matrix(c(e1[[2]][n], e1[[3]],
-                      e9[[2]][n], e9[[3]]),
-                    nrow = 2,
-                    dimnames = list(TSS = c("with SNPs", "with or without SNPs"),
-                                    KS.Test = c("fdr <= 0.1, Early Pause", "fdr >0.9, Early Pause "))); testor
-  
-  f = fisher.test(testor, alternative = "greater" ); f
-  p.value= c(p.value, f$p.value)
-  odds.ratio = c(odds.ratio, f$estimate)
-}
-adjust.p = p.adjust(p.value, method="fdr")
-plot(e1[[1]], -log10(adjust.p), type="o" , xlab="distance to early pause", main=" pause KS test fdr <= 0.1 vs fdr > 0.9", las=1, col="red")
-abline(h=-1*log10(fdr_cutoff),col="gray")
-plot(e1[[1]],odds.ratio, type="o" , xlab="distance to early pause", las=1)
-abline(h=1,col="gray")
-#plot(e1[[1]], adjust.p, type="o" , #ylim = c(0,0.2),
-#     xlab="distance to early pause", main=" pause KS test fdr <= 0.1 vs fdr > 0.9", las=1, col="red")
-#abline(h=0.25,col="gray")
-# text(e1[[1]][which(p.value <= 0.1)],p.value[which(p.value <= 0.1)], label=paste(round(p.value[which(p.value <= 0.1)], digits = 2), sep=" "))
-# dev.off()
+  for (n in (1:length(e1[[2]]))){
+    
+    testor <-  matrix(c(e1[[2]][n], e1[[3]],
+                        e9[[2]][n], e9[[3]]),
+                      nrow = 2,
+                      dimnames = list(TSS = c("with SNPs", "with or without SNPs"),
+                                      KS.Test = c("fdr <= 0.1, Early Pause", "fdr >0.9, Early Pause "))); testor
+    
+    f = fisher.test(testor, alternative = "greater" ); f
+    p.value= c(p.value, f$p.value)
+    odds.ratio = c(odds.ratio, f$estimate)
+  }
+  adjust.p = p.adjust(p.value, method="fdr")
+  plot(e1[[1]], -log10(adjust.p), type="o" , xlab="distance to early pause", main=" pause KS test fdr <= 0.1 vs fdr > 0.9", las=1, col="red")
+  abline(h=-1*log10(fdr_cutoff),col="gray")
+  plot(e1[[1]],odds.ratio, type="o" , xlab="distance to early pause", las=1)
+  abline(h=1,col="gray")
+  #plot(e1[[1]], adjust.p, type="o" , #ylim = c(0,0.2),
+  #     xlab="distance to early pause", main=" pause KS test fdr <= 0.1 vs fdr > 0.9", las=1, col="red")
+  #abline(h=0.25,col="gray")
+  # text(e1[[1]][which(p.value <= 0.1)],p.value[which(p.value <= 0.1)], label=paste(round(p.value[which(p.value <= 0.1)], digits = 2), sep=" "))
+  # dev.off()
 }
 
 group_fisher_test <- function(group1,e1,e9){
@@ -756,54 +749,79 @@ group_fisher_test <- function(group1,e1,e9){
   return(fisher.test(data.frame(c(e1_i, e1[[3]]),c(e9_i, e9[[3]])), alternative = "greater" ))
 }
 
-group1_list=list(c(-4:-8), c(-2,-3), c(0), c(1))#, c(2:7), 8)
-group1_label=c("-4-8", "-2,-3", 0, 1)#, "2:7", 8)
-#group1_label=c((-4-8)/2, (-2-3)/2,0,1, (2+10)/2)
-group1_pvalue<-NULL
-p.value <- NULL
-odds.ratio <- NULL
-for (group1 in group1_list){
-  f=group_fisher_test(group1,e1,e9)
-  p.value= c(p.value, f$p.value)
-  odds.ratio = c(odds.ratio, f$estimate)
+if(!Test_one_by_one){
+  group1_list=list(c(-4:-8), c(-2,-3), c(0), c(1))#, c(2:7), 8)
+  group1_label=c("-4-8", "-2,-3", 0, 1)#, "2:7", 8)
+  #group1_label=c((-4-8)/2, (-2-3)/2,0,1, (2+10)/2)
+  group1_pvalue<-NULL
+  p.value <- NULL
+  odds.ratio <- NULL
+  for (group1 in group1_list){
+    f=group_fisher_test(group1,e1,e9)
+    p.value= c(p.value, f$p.value)
+    odds.ratio = c(odds.ratio, f$estimate)
+  }
+  adjust.p = p.adjust(p.value, method="fdr")
+  barplot( -log10(adjust.p), names.arg = group1_label, 
+           ylab="-log10(adjust.p)" , xlab="distance to early pause", main=" pause KS test fdr <= 0.1 vs fdr > 0.9", las=1, col="red")
+  abline(h=-1*log10(fdr_cutoff),col="gray")
+  barplot(odds.ratio, names.arg = group1_label,
+          ylab="odds.ratio" , xlab="distance to early pause", las=1)
+  abline(h=1)
 }
-adjust.p = p.adjust(p.value, method="fdr")
-barplot( -log10(adjust.p), names.arg = group1_label, 
-         ylab="-log10(adjust.p)" , xlab="distance to early pause", main=" pause KS test fdr <= 0.1 vs fdr > 0.9", las=1, col="red")
-abline(h=-1*log10(fdr_cutoff),col="gray")
-barplot(odds.ratio, names.arg = group1_label,
-        ylab="odds.ratio" , xlab="distance to early pause", las=1)
-abline(h=1)
-
 
 # effect of SNPs at the difference between maxPauses of early and late pause
 # exclude allelic maxPause difference 0
 df$AllelicMaxPauseDist = abs(df$mat_maxPause_map3 - df$pat_maxPause_map3)
-
+# Figure 4H
 sub_df=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0,]
 sub_df_SNP=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & 
                 df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause),]
+#UniqRowCount(sub_df)
+#UniqRowCount(sub_df_SNP)
+dim(sub_df)
+dim(sub_df_SNP)
 
-bed6 <- sub_df_SNP[,c('V1','V2','V3','earlyPause','V5','V6','AllelicMaxPauseDist','V1','V2','V3')]
-bed6 = unique(bed6)  # remove duplicates with shared maxTSN and early pause
-#dim(bed6)
-bed6_copy = bed6
-# maxPause location +- window
-show.window=0
-for (i in 1:NROW(bed6)){
-  if(bed6[i,6]=="-") {
-    bed6[i,3] <- bed6_copy[i,3] - bed6_copy[i,4] + show.window
-    bed6[i,2] <- bed6_copy[i,2] - bed6_copy[i,4] - show.window
-  } else {
-    bed6[i,2] <- bed6_copy[i,2] + bed6_copy[i,4] - show.window
-    bed6[i,3] <- bed6_copy[i,3] + bed6_copy[i,4] + show.window
+useOnlySitesWithSNP_C2ATG=TRUE
+if(useOnlySitesWithSNP_C2ATG){
+  bed6_SNP <- sub_df_SNP[,c('V1','V2','V3','earlyPause','V5','V6','AllelicMaxPauseDist','V1','V2','V3')]
+  bed6_SNP = unique(bed6_SNP)  # remove duplicates with shared maxTSN, early pause, and AllelicMaxPauseDist
+  dim(bed6_SNP)
+  bed6_SNP_copy = bed6_SNP
+  # maxPause location +- window
+  show.window=0
+  for (i in 1:NROW(bed6_SNP)){
+    if(bed6_SNP[i,6]=="-") {
+      bed6_SNP[i,3] <- bed6_SNP_copy[i,3] - bed6_SNP_copy[i,4] + show.window
+      bed6_SNP[i,2] <- bed6_SNP_copy[i,2] - bed6_SNP_copy[i,4] - show.window
+    } else {
+      bed6_SNP[i,2] <- bed6_SNP_copy[i,2] + bed6_SNP_copy[i,4] - show.window
+      bed6_SNP[i,3] <- bed6_SNP_copy[i,3] + bed6_SNP_copy[i,4] + show.window
+    }
   }
+  write.table(bed6, file="sub_df_SNP.bed", quote = F, sep="\t", row.names = F, col.names = F)
+  # find out the SNP at the early pause using shell script in F1_TSN_identifyTSS_SingleBaseRunOn_forManuscript.sh
 }
-write.table(bed6, file="sub_df_SNP.bed", quote = F, sep="\t", row.names = F, col.names = F)
-# find out the SNP at the early pause
 
 remove_duplicates_V2_earlyPause <- function(subdf){
-  return(subdf[!duplicated(subdf[,c('V2','earlyPause')]),])
+  return(subdf[!duplicated(subdf[,c('V1','V2','earlyPause','V6')]),])
+}
+
+getEarlyPauseSites <- function(subdf){
+  bed6 <- subdf[1:6]
+  for (i in 1:NROW(bed6)){
+    if(bed6[i,6]=="-") {
+      bed6[i,3] <- subdf[i,3] - subdf$earlyPause[i]
+      bed6[i,2] <- subdf[i,2] - subdf$earlyPause[i]
+    } else {
+      bed6[i,2] <- subdf[i,2] + subdf$earlyPause[i]
+      bed6[i,3] <- subdf[i,3] + subdf$earlyPause[i]
+    }
+  }
+  bed6[,4]=111
+  bed6[,5]=111
+  return((bed6))
+  #dim(unique(data.frame(subdf$V1, subdf$V2+subdf$earlyPause)))[1]
 }
 
 set_remove_duplicates_V2_earlyPause =FALSE
@@ -811,22 +829,28 @@ if (set_remove_duplicates_V2_earlyPause){
   sub_df=remove_duplicates_V2_earlyPause(sub_df)
   sub_df_SNP=remove_duplicates_V2_earlyPause(sub_df_SNP)
 }else{
-
-  sub_df=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0, 
-                   c('V1','V2','V3','earlyPause','AllelicMaxPauseDist')])
-  sub_df_SNP=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 
-                     & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause),
-                     c('V1','V2','V3','earlyPause','AllelicMaxPauseDist')])
+  # deduplicates based on early pause sites and AllelicMaxPauseDist
+  sub_df$earlyPauseSites=getEarlyPauseSites(sub_df)$V2
+  sub_df=sub_df[!duplicated(sub_df[,c('V1','earlyPauseSites','V6','AllelicMaxPauseDist')]),]
+  sub_df_SNP$earlyPauseSites=getEarlyPauseSites(sub_df_SNP)$V2
+  sub_df_SNP=sub_df_SNP[!duplicated(sub_df_SNP[,c('V1','earlyPauseSites','V6','AllelicMaxPauseDist')]),]
 }
-
+dim(sub_df)
+dim(sub_df_SNP)
 # if only use those with C to ATG SNPs
-sub_df_SNP_2=read.table("sub_df_SNP_C2ATG.bed", header=T)
-sub_df_SNP=cbind.data.frame(bed6, sub_df_SNP_2)
-sub_df_SNP=sub_df_SNP[sub_df_SNP$C2ATG_SNPs==1,]
-dim(sub_df_SNP)
-if (set_remove_duplicates_V2_earlyPause){
-  sub_df_SNP = sub_df_SNP[!duplicated(sub_df_SNP[,c('V2','V2.1')]),]}
-dim(sub_df_SNP)
+if(useOnlySitesWithSNP_C2ATG){
+  sub_df_SNP_2=read.table("sub_df_SNP_C2ATG.bed", header=T)
+  sub_df_SNP=cbind.data.frame(bed6_SNP, sub_df_SNP_2)
+  dim(sub_df_SNP)
+  sub_df_SNP=sub_df_SNP[sub_df_SNP$V2==sub_df_SNP$chrStart,] # examine if the rows in bed6_SNP and sub_df_SNP_2 matches
+  dim(sub_df_SNP)
+  View(sub_df_SNP)
+  sub_df_SNP=sub_df_SNP[sub_df_SNP$C2ATG_SNPs==1,] # if only use those with C to ATG SNPs
+  dim(sub_df_SNP)
+  # remove duplicates based on early pause sites and AllelicMaxPauseDist 
+  sub_df_SNP = sub_df_SNP[!duplicated(sub_df_SNP[,c('V1','V6','earlyPauseV2','AllelicMaxPauseDist')]),]
+  dim(sub_df_SNP)
+}
 #par(mfrow=c(2,1))
 # panel55_SNPc_allelicMaxPauseDist
 pdf("SNPc_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
@@ -886,20 +910,18 @@ legend("right",
        bty = "n"
 )
 
-
-
 dev.off()
 
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP$AllelicMaxPauseDist, alternative = "less")
 
 # indel 
-sub_df_indel=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$dist_Indel_maxTSN <= df$latePause,
-                c('V1','V2','V3','earlyPause','AllelicMaxPauseDist')])
-#sub_df_no_indel=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$dist_Indel_maxTSN > df$latePause,]
-#sub_df_SNP_indel=unique(df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause)& df$dist_Indel_maxTSN <= df$latePause,]
+sub_df_indel=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$dist_Indel_maxTSN <= df$latePause,]
+                #c('V1','V2','V3','earlyPause','AllelicMaxPauseDist')])
 dim(sub_df_indel)
-#dim(sub_df_SNP_indel)
-
+sub_df_indel$earlyPauseSites=getEarlyPauseSites(sub_df_indel)$V2
+sub_df_indel=sub_df_indel[!duplicated(sub_df_indel[,c('V1','earlyPauseSites','V6','AllelicMaxPauseDist')]),]
+dim(sub_df_indel)
+#Figure4I
 # panel56_Indel_allelicMaxPauseDist
 pdf("Indel_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -963,7 +985,6 @@ legend("right",
 )
 dev.off()
 
-
 # KS test 
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP$AllelicMaxPauseDist, alternative = "less")
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_indel$AllelicMaxPauseDist, alternative = "greater")
@@ -972,27 +993,49 @@ ks.test(sub_df$AllelicMaxPauseDist ,sub_df_indel$AllelicMaxPauseDist, alternativ
 # count SNPs 
 # use UniqRowCount dim(unique(data.frame(subdf$V2, subdf$earlyPause)))[1]
 SNP_count_and_or <- function(snp_position, subDF=df){
-  a = (subDF[((subDF$SNP1_distance_earlyPause %in% snp_position & !is.na(subDF$SNP1_distance_earlyPause)) 
-              #&(subDF$SNP3_distance_earlyPause %in% snp_position & !is.na(subDF$SNP3_distance_earlyPause)) 
-              & (subDF$SNP2_distance_earlyPause %in% snp_position & !is.na(subDF$SNP2_distance_earlyPause))),])
-  o = 
-    (subDF[(subDF$SNP1_distance_earlyPause %in% snp_position & !is.na(subDF$SNP1_distance_earlyPause)) 
-           | (subDF$SNP2_distance_earlyPause %in% snp_position & !is.na(subDF$SNP2_distance_earlyPause))
-           | (subDF$SNP3_distance_earlyPause %in% snp_position & !is.na(subDF$SNP3_distance_earlyPause)),])
-  count <-NULL
-  for (s in snp_position){
-    count = c(count, 
-              UniqRowCount(subDF[((subDF$SNP1_distance_earlyPause==s & !is.na(subDF$SNP1_distance_earlyPause)) 
-                                  |(subDF$SNP3_distance_earlyPause==s & !is.na(subDF$SNP3_distance_earlyPause)) 
-                                  | (subDF$SNP2_distance_earlyPause==s & !is.na(subDF$SNP2_distance_earlyPause))),]))
+  s1<-NULL
+  s2<-NULL
+  s3<-NULL
+  for (i in 1:NROW(subDF)){
+    SNP_distance_earlyPause = as.numeric(unlist(strsplit(as.character(subDF$SNP_distance_earlyPause[i]), ",")))
+    if (length(snp_position) ==1){
+      s1= c(s1, (snp_position[1]%in% SNP_distance_earlyPause))
+    }
+        if (length(snp_position) >=2){
+      s1= c(s1, (snp_position[1]%in% SNP_distance_earlyPause))
+      s2= c(s2, (snp_position[2]%in% SNP_distance_earlyPause))
+    }
+    if (length(snp_position) ==3){
+      s3= c(s3, (snp_position[3]%in% SNP_distance_earlyPause))
+    }
   }
-  
-  return (list(UniqRowCount(a),UniqRowCount(o),snp_position, count))
-  # return and, or, snp position, count of sites with snp in that position
+  if (length(snp_position) == 2){
+    a = s1 & s2
+    o = s1 | s2
+  }
+  if (length(snp_position) == 3){
+    a = s1 & s2 & s3
+    o = s1 | s2 | s3
+  }
+  if (length(snp_position) == 1){
+    return (list(snp_position, UniqRowCount(subDF[s1,])))
+  }
+  if (length(snp_position) == 2){
+    return (list(UniqRowCount(subDF[a,]),UniqRowCount(subDF[o,]),
+                 snp_position, UniqRowCount(subDF[s1,]), UniqRowCount(subDF[s2,])))
+  }
+    if (length(snp_position) >= 3){
+  return (list(UniqRowCount(subDF[a,]),UniqRowCount(subDF[o,]),
+               snp_position, UniqRowCount(subDF[s1,]), UniqRowCount(subDF[s2,]), UniqRowCount(subDF[s3,])))
+}
 }
 
+# Figure4F
 df_target=df[df$map3.p.value.fdr<=0.1&  # KS test 
                df$AllelicMaxPauseDist >0,] # at least 1bp apart]
+dim(df_target)
+UniqRowCount(df_target)
+
 
 # pause distribution not significantly different
 df_target=df[df$map3.p.value.fdr> 0.9 & # KS test 
@@ -1005,11 +1048,10 @@ SNP_count_and_or(c(0,-2),df_target)
 SNP_count_and_or(c(0,-3),df_target)
 SNP_count_and_or(c(-2, -3),df_target)
 SNP_count_and_or(c(1,0),df_target)
-SNP_count_and_or(c(0,-2),df_target)
-SNP_count_and_or(c(0,-3),df_target)
 SNP_count_and_or(c(1:10),df_target)
 SNP_count_and_or(c(1,-3),df_target)
-SNP_count_and_or(c(-2, 1),df_target)
+SNP_count_and_or(c(1, -2),df_target)
+SNP_count_and_or(c(1, -2, -3),df_target)
 
 # with indel
 SNP_count_and_or(0, subDF = df_target[df_target$dist_Indel_maxTSN <= df_target$latePause,])
@@ -1022,20 +1064,20 @@ SNP_count_and_or(1, subDF = df_target[df_target$dist_Indel_maxTSN <= df_target$l
 SNP_count_and_or(0, subDF = df_target[df_target$dist_Indel_maxTSN > df_target$latePause,])
 SNP_count_and_or(-2, subDF = df_target[df_target$dist_Indel_maxTSN > df_target$latePause,])
 SNP_count_and_or(-3, subDF = df_target[df_target$dist_Indel_maxTSN > df_target$latePause,])
-SNP_count_and_or(-3, subDF = df_target[df_target$dist_Indel_maxTSN > df_target$latePause,])
+SNP_count_and_or(c(-2,-3), subDF = df_target[df_target$dist_Indel_maxTSN > df_target$latePause,])
 SNP_count_and_or(1, subDF = df_target[df_target$dist_Indel_maxTSN > df_target$latePause,])
 
-# examine if there is SNPs at C of early pause in regions with fdr>0.9 # pause distribution not significantly different
+# examine if there is SNPs at early pause in regions with fdr>0.9 # pause distribution not significantly different
 sub_df_ns=df[df$map3.p.value.fdr > 0.9 & df$AllelicMaxPauseDist ==0,]
 sub_df_SNP_ns=df[df$map3.p.value.fdr > 0.9 & df$AllelicMaxPauseDist ==0  & df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause),]
 #View(sub_df_SNP_ns)
-UniqRowCount(sub_df_ns)  #1401
+UniqRowCount(sub_df_ns)  #1396
 UniqRowCount(sub_df_SNP_ns) # 29
 # examine if the SNPs at C were enriched in pause region with difference (KS test, fdr<=0.1)
 fisher.test(data.frame(
   UniqRowCount(sub_df_SNP),UniqRowCount(sub_df),
     c(UniqRowCount(sub_df_SNP_ns),UniqRowCount(sub_df_ns))))
-
+#p-value < 0.00000000000000022
 #####HERE#####
 
 ### What kind of SNPs?
