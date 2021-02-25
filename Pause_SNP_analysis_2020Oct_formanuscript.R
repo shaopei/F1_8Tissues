@@ -656,20 +656,20 @@ tempFunc <-function(bp.apart=1, upto=100, show.window=30){
   ## SNPs around early pause
   t1=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr<=0.1 
                                             & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart 
-                                            & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto
-                                            & df$dist_Indel_maxTSN > df$latePause,], 
+                                            & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto,], 
+                                            #& df$dist_Indel_maxTSN > df$latePause,], 
                                             show.window=show.window,
                                          name=paste("HSK, step=", step,", early and late at least ", bp.apart," bp apart, upto " ,upto, sep=""), col="red", step=step)
   abline(v=0, col="gray")
 
   t2=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9  
-                                               & (df$mat_maxPause_map3 == df$pat_maxPause_map3) 
-                                            & df$dist_Indel_maxTSN > df$latePause,], 
+                                               & (df$mat_maxPause_map3 == df$pat_maxPause_map3) ,], 
+                                            #& df$dist_Indel_maxTSN > df$latePause,], 
                                             show.window=show.window,
                                          col="blue", step=step, add=TRUE)
 
-  legend("topright", legend=c(paste("Early Pause, fdr <= 0.1, n= ", t1[[3]], sep=""),
-                              paste("Early Pause, fdr >  0.9, n= ", t2[[3]], sep="")),
+  legend("topright", legend=c(paste("Allelic pause difference, n= ", t1[[3]], sep=""),
+                              paste("No allelic pause difference, n= ", t2[[3]], sep="")),
          col=c("red", "blue"), 
          bty = "n", lty=1, pch=19)
 
@@ -680,8 +680,8 @@ tempFunc <-function(bp.apart=1, upto=100, show.window=30){
 step=1; bp.apart=1; upto=100
 e1=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr<=0.1 
                                              & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >= bp.apart 
-                                             & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto
-                                             & df$dist_Indel_maxTSN > df$latePause,], 
+                                             & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) <= upto,], 
+                                             #& df$dist_Indel_maxTSN > df$latePause,], 
                                           name=paste("HSK, step=", step,", early and late at least ", bp.apart," bp apart, upto " ,upto, sep=""), col="red", step=step,
                                           use.sum = TRUE)
 abline(v=0, col="gray")
@@ -689,8 +689,9 @@ abline(v=0, col="gray")
 # abline(v=-10, col="gray")
 
 e9=metaplot.SNPsLocation.aroundEarlyPause(df[df$map3.p.value.fdr>0.9
-                                             & (df$mat_maxPause_map3 == df$pat_maxPause_map3) 
-                                             & df$dist_Indel_maxTSN > df$latePause,], col="blue", step=step, use.sum = TRUE)
+                                             & (df$mat_maxPause_map3 == df$pat_maxPause_map3) ,], 
+                                             #& df$dist_Indel_maxTSN > df$latePause,], 
+                                            col="blue", step=step, use.sum = TRUE)
 # legend("topright", legend=c(paste("fdr <= 0.1, n= ", sum(df$map3.p.value.fdr<=0.1 & abs(df$mat_maxPause_map3 - df$pat_maxPause_map3) >0), sep=""), 
 #                             paste("fdr >  0.9, n= ", sum(df$map3.p.value.fdr>0.9), sep="")),
 #        col=c("red", "blue"), bty = "n", lty=1, pch=19)
@@ -786,7 +787,6 @@ useOnlySitesWithSNP_C2ATG=TRUE
 if(useOnlySitesWithSNP_C2ATG){
   bed6_SNP <- sub_df_SNP[,c('V1','V2','V3','earlyPause','V5','V6','AllelicMaxPauseDist','V1','V2','V3')]
   bed6_SNP = unique(bed6_SNP)  # remove duplicates with shared maxTSN, early pause, and AllelicMaxPauseDist
-  dim(bed6_SNP)
   bed6_SNP_copy = bed6_SNP
   # maxPause location +- window
   show.window=0
@@ -802,6 +802,7 @@ if(useOnlySitesWithSNP_C2ATG){
   write.table(bed6, file="sub_df_SNP.bed", quote = F, sep="\t", row.names = F, col.names = F)
   # find out the SNP at the early pause using shell script in F1_TSN_identifyTSS_SingleBaseRunOn_forManuscript.sh
 }
+dim(bed6_SNP)
 
 remove_duplicates_V2_earlyPause <- function(subdf){
   return(subdf[!duplicated(subdf[,c('V1','V2','earlyPause','V6')]),])
@@ -878,8 +879,10 @@ lines(ecdf(sub_df_SNP$AllelicMaxPauseDist), col="red", pch=10)
 
 
 legend("right", 
-       legend = c( paste("Control, n = ", dim(sub_df)[1], sep=""),  # paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep="")
-                   paste("SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
+       # legend = c( paste("Control, n = ", dim(sub_df)[1], sep=""), 
+       #             paste("SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
+       legend = c( paste("Allelic difference, n = ", dim(sub_df)[1], sep=""), 
+                   paste("+ SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
        title = ,
        #pch=c(15,15),
        #cex=2, 
@@ -894,8 +897,10 @@ legend("right",
        bty = "n"
 )
 legend("right", 
-       legend = c( paste("Control, n = ", dim(sub_df)[1], sep=""), 
-                   paste("SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
+       # legend = c( paste("Control, n = ", dim(sub_df)[1], sep=""), 
+       #             paste("SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
+       legend = c( paste("Allelic difference, n = ", dim(sub_df)[1], sep=""), 
+                   paste("+ SNP at short pause, n=", dim(sub_df_SNP)[1], sep="")),
        title = ,
        #pch=c(15,15),
        #lty=c(0,0),
@@ -950,27 +955,23 @@ lines(ecdf(sub_df_indel$AllelicMaxPauseDist), cex=1, col="dark green", pch=10)
 
 
 legend("right", 
-       legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
-                   #paste("Without Indel, n=", dim(sub_df_no_indel)[1], sep=""),
-                   paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       # legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
+       #             paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       legend = c( paste("Allelic difference, n = ", dim(sub_df)[1], sep=""), 
+                   paste("+ Indel, n=", dim(sub_df_indel)[1], sep="")),
        title = ,
-       #pch=c(15,15),
-       #lty=c(0,0),
-       #bty="n",
        lwd=1.5, 
-       #density=c(10000,25),
-       #angle=c(180,45),
-       #angle=45,
-       #fill=c("blue","dark organe","dark green")
        col=c("blue","dark green"),
        pch=c(19,10),
        bty = "n"
 )
 
 legend("right", 
-       legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
-                   #paste("Without Indel, n=", dim(sub_df_no_indel)[1], sep=""),
-                   paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       #legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
+       #            paste("Without Indel, n=", dim(sub_df_no_indel)[1], sep=""),                   paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       legend = c( paste("Allelic difference, n = ", dim(sub_df)[1], sep=""), 
+                   paste("+ Indel, n=", dim(sub_df_indel)[1], sep="")),
+       
        title = ,
        #pch=c(15,15),
        #cex=1.5, 
@@ -1085,28 +1086,8 @@ fisher.test(data.frame(
 df$earlyPause_parent = "M"
 df$earlyPause_parent[df$earlyPause==df$pat_maxPause_map3] = "P"
 df$earlyPause_parent[df$earlyPause==df$mat_maxPause_map3] = "M"
-sum(df$earlyPause_parent=="M")
+sum(df$earlyPause_parent=="M"); sum(df$earlyPause_parent=="P")
 show.window=0
-bed7 <- df[,1:6]
-bed7$V4 = df$earlyPause_parent
-bed7$earlyPause_parent = df$earlyPause_parent
-for (i in 1:NROW(bed7)){
-  if(bed7[i,6]=="-") {
-    bed7[i,3] <- df[i,3] - df$earlyPause[i] + show.window
-    bed7[i,2] <- df[i,2] - df$earlyPause[i] - show.window
-  } else {
-    bed7[i,2] <- df[i,2] + df$earlyPause[i] - show.window
-    bed7[i,3] <- df[i,3] + df$earlyPause[i] + show.window
-  }
-}
-# early and late pause with at least 1 bp apart AND map3 KS test fdr<=0.1
-bed7 = bed7[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,]
-bed7 = unique(bed7)
-dim(bed7)
-dim(df)
-write.table(bed7, file="Tissues3_EarlyPause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
-
-
 # early pause, background 
 bed0 <- df[,1:6]
 bed0$earlyPause_parent = df$earlyPause_parent
@@ -1121,10 +1102,31 @@ for (i in 1:NROW(bed0)){
     bed0[i,3] <- df[i,3] + df$earlyPause[i] + show.window
   }
 }
-bed0 = unique(bed0)
-dim(bed0)
-dim(df)
+bed0 = unique(bed0[df$map3.p.value.fdr>0.9 & (df$mat_maxPause_map3 == df$pat_maxPause_map3) ,])
+dim(bed0) #1396
 write.table(bed0, file="Tissues3_EarlyPause_BG.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+
+bed7 <- df[,1:6]
+bed7$V4 = df$earlyPause_parent
+bed7$earlyPause_parent = df$earlyPause_parent
+for (i in 1:NROW(bed7)){
+  if(bed7[i,6]=="-") {
+    bed7[i,3] <- df[i,3] - df$earlyPause[i] + show.window
+    bed7[i,2] <- df[i,2] - df$earlyPause[i] - show.window
+  } else {
+    bed7[i,2] <- df[i,2] + df$earlyPause[i] - show.window
+    bed7[i,3] <- df[i,3] + df$earlyPause[i] + show.window
+  }
+}
+# early and late pause with at least 1 bp apart AND map3 KS test fdr<=0.1
+#early
+bed7 = bed7[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,]
+bed7 = unique(bed7)
+dim(bed7)
+dim(df)
+#Figure 4G, left
+write.table(bed7, file="Tissues3_EarlyPause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
 
 
 
@@ -1140,11 +1142,14 @@ for (i in 1:NROW(bed9)){
     bed9[i,3] <- df[i,3] + df$latePause[i]  
   }
 }
-# early and late pause with at least 1 bp apart
+# early and late pause with at least 1 bp apart AND map3 KS test fdr<=0.1
+# late
 bed9 = unique(bed9[df$earlyPause != df$latePause & df$map3.p.value.fdr<=0.1,])
 dim(bed9)
 dim(df)
+#Figure 4G, right
 write.table(bed9, file="Tissues3_LatePause_1bpapart_KSfdr0.1.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
 
 # maxPause from all (mat, pat, ide) reads, combine all organs, duplicates removed 
 bed8 <- df[,1:6]
@@ -1160,6 +1165,7 @@ for (i in 1:NROW(bed8)){
 
 dim(bed8)
 bed8 = bed8[!duplicated(bed8$V2),]
+#Figure 4D bottom
 dim(bed8)
 write.table(bed8, file="combine_maxPause_noduplicate.bed", quote = F, sep="\t", row.names = F, col.names = F)
 
@@ -1216,33 +1222,24 @@ SeqLogo <- function(seq, output, range=NULL) {
   return (pwm)
 }
 
-
-seq=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-30_Early_LateAlleleSeq.bed")
-dim(seq)
-Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-30_early.pdf")
-Tissues3_EarlyPause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-30_late.pdf")
-
 # Panel58_short_pause_site_seqlogo
-seq=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
-dim(seq)
-Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_early.pdf")
-Tissues3_EarlyPause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_late.pdf")
+seq_a=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
+dim(seq_a)
+#Figure4G left, n=270
+Tissues3_EarlyPause_1bpapart_KSfdr0.1_early=SeqLogo(seq_a$V8, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_early.pdf")
+Tissues3_EarlyPause_1bpapart_KSfdr0.1_late=SeqLogo(seq_a$V9, "Tissues3_EarlyPause_1bpapart_KSfdr0.1_late.pdf")
 
-seq=read.table("Tissues3_LatePause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
-dim(seq)
-Tissues3_LatePause_1bpapart_KSfdr0.1_early=SeqLogo(seq$V8, "Tissues3_LatePause_1bpapart_KSfdr0.1_early.pdf")
-Tissues3_LatePause_1bpapart_KSfdr0.1_late=SeqLogo(seq$V9, "Tissues3_LatePause_1bpapart_KSfdr0.1_late.pdf")
-
-seq=read.table("Tissues3_EarlyPause_BG_+-10_Early_LateAlleleSeq.bed")
-dim(seq)
-Tissues3_EarlyPause_BG_early=SeqLogo(seq$V8, "Tissues3_EarlyPause_BG_early.pdf")
-Tissues3_EarlyPause_BG_late=SeqLogo(seq$V9, "Tissues3_EarlyPause_BG_late.pdf")
-
+seq_l=read.table("Tissues3_LatePause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
+dim(seq_l)
+#Figure4G right, n=278
+Tissues3_LatePause_1bpapart_KSfdr0.1_early=SeqLogo(seq_l$V8, "Tissues3_LatePause_1bpapart_KSfdr0.1_early.pdf")
+Tissues3_LatePause_1bpapart_KSfdr0.1_late=SeqLogo(seq_l$V9, "Tissues3_LatePause_1bpapart_KSfdr0.1_late.pdf")
 
 seq=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
 dim(seq)
+#Figure4D bottom
+#n=3456
 combine_maxPause_noduplicate= SeqLogo(seq$V7, "combine_maxPause_noduplicate_+-30_mm10_Se.pdf")
-
 
 
 acgt_col=c("dark green", "blue", "orange" , "red")
@@ -1260,6 +1257,7 @@ bin=10
 d=30
 #for (bin in c(10,12)){
 seq_df=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
+dim(seq_df)
 range1=(d-bin*2+1):(d-bin)
 range2=(d-bin+1):d
 range3=(d+2):(d+bin)
@@ -1283,6 +1281,8 @@ for (i in 1:NROW(seq)){
 
 library("vioplot")
 # panel57_GC_content_around_maxPause_noduplicate
+# Figure4E, n=3456
+dim(seq_df)
 pdf("GC_content_around_maxPause_noduplicate.pdf", width=7, height = 3.5, useDingbats=FALSE)
 par(mfrow=c(1,3))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -1315,8 +1315,13 @@ wilcox.test(seq_df$C_range1, seq_df$C_range2, paired = TRUE)
 wilcox.test(seq_df$C_range2, seq_df$C_range3, paired = TRUE)
 wilcox.test(seq_df$C_range1, seq_df$C_range3, paired = TRUE)
 
-dim(seq_df)
+# early background
+seq_bg=read.table("Tissues3_EarlyPause_BG_+-10_Early_LateAlleleSeq.bed")
+dim(seq_bg)
+Tissues3_EarlyPause_BG_early=SeqLogo(seq_bg$V8, "Tissues3_EarlyPause_BG_early.pdf")
+Tissues3_EarlyPause_BG_late=SeqLogo(seq_bg$V9, "Tissues3_EarlyPause_BG_late.pdf")
 
+#Sup Figure 4B
 pdf(paste(organ,"_pause_deltaATCG.pdf" ,sep=""), width =7, height = 7,useDingbats=FALSE)
 par(mfcol=c(3,1))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
@@ -1325,14 +1330,15 @@ par(cex.lab=2.2, cex.axis=2.2)
 #par(cex=1.5)
 pch_u=1
 w=10
-# background
+
+
 organ="3 Tissues" ; target=Tissues3_EarlyPause_BG_early - Tissues3_EarlyPause_BG_late
 plot(-w:w, target[1,] , col = acgt_col[1], type="o",
      ylim=c(-0.15,0.15), 
      pch=pch_u,
      ylab="Short Allele - Long Allele",
      xlab="Distance to short allelic maxPause",
-     main=paste(organ,"BG", sep=" "),
+     main=paste(organ,"BG, n=",dim(seq_bg)[1], sep=" "),
      las=1, frame=FALSE
 )
 abline(h=0, col="gray")
@@ -1349,7 +1355,7 @@ plot(-w:w, target[1,] , col = acgt_col[1], type="o",
      pch=pch_u,
      ylab="Short Allele - Long Allele",
      xlab="Distance to short allelic maxPause",
-     main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1", sep=" "),
+     main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1, n=",dim(seq_a)[1], sep=" "),
      las=1, frame=FALSE
 )
 abline(h=0, col="gray")
@@ -1364,7 +1370,7 @@ plot(-w:w, target[1,] , col = acgt_col[1], type="o",
      pch=pch_u,
      ylab="Short Allele - Long Allele",
      xlab="Distance to long allelic maxPause",
-     main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1", sep=" "),
+     main=paste(organ,"E L at least 1bp apart, KS test fdr<=0.1, n=", dim(seq_l)[1], sep=" "),
      las=1, frame=FALSE
 )
 abline(h=0, col="gray")
