@@ -173,6 +173,7 @@ hist(AT$pause.dist[AT$TSN.dist==0]
      , breaks=seq(-0.5,35,1), col="gray", las=1
 )
 dev.off()
+sum(AT$pause.dist==0)
 sum(AT$pause.dist==0 &AT$TSN.dist !=0)
 
 sum(AT$TSN.dist==0)
