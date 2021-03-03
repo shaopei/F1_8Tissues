@@ -9,21 +9,19 @@ ln -s ../Find_consistent_blocks/HMM_bed . # AlleleHMM blocks
 
 mkdir annotations
 cd annotations
-ln -s /workdir/sc2457/F1_Tissues/GeneAlleleSpecificity_old/gencode.vM20.annotation.bed
+ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/gencode.vM25.annotation.gtf .
 # mouse mm10_GRCm38
 # make bed from gtf from GENCODE
-# gtf2bed < gencode.vM20.annotation.gtf > gencode.vM20.annotation.bed
-cat gencode.vM20.annotation.bed |awk 'BEGIN {OFS="\t"} ($8=="transcript"){print $0}' | grep protein_coding |gzip > gencode.vM20.annotation_transcript_protein_coding.bed.gz
-
+cat gencode.vM25.annotation.gtf | grep protein_coding|  awk 'BEGIN{OFS="\t"} $3=="transcript" {split($12,a,"\""); split($16,b,"\""); print $1, $4-1, $5,a[2], b[2],$7}' | gzip > gencode.vM25.annotation_transcript_protein_coding.bed.gz
 
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
 # keep transcript annotations that are overlap with dREG sites
 # use sort-bed
-intersectBed -u -a <(zcat gencode.vM20.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) |sort-bed - | grep -v chrX | grep -v chrY | gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz
-zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_plus.bed.gz
-zcat ${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'| gzip > ${Head}_gencode.vM20.annotation_transcript_protein_coding_minus.bed.gz
+intersectBed -u -a <(zcat gencode.vM25.annotation_transcript_protein_coding.bed.gz | cut -f 1-6) -b <(zcat /workdir/sc2457/F1_Tissues/dREG/Browser/${Head}_all.dREG.peak.score.bed.gz) |sort-bed - | grep -v chrX | grep -v chrY | gzip > ${Head}_gencode.vM25.annotation_transcript_protein_coding.bed.gz
+zcat ${Head}_gencode.vM25.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="+"){print $0}'| gzip > ${Head}_gencode.vM25.annotation_transcript_protein_coding_plus.bed.gz
+zcat ${Head}_gencode.vM25.annotation_transcript_protein_coding.bed.gz | awk 'BEGIN {OFS="\t"} ($6=="-"){print $0}'| gzip > ${Head}_gencode.vM25.annotation_transcript_protein_coding_minus.bed.gz
 done
 
 cd ..
@@ -36,9 +34,19 @@ ln -s /workdir/sc2457/F1_Tissues/bigWig/tunit .
 for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 echo $Head
-intersectBed -u -s -a tunit/${Head}_all_h5.preds.full.bed -b <(zcat ../annotations/${Head}_gencode.vM20.annotation_transcript_protein_coding.bed.gz)  |grep -v chrX |grep -v chrY  \
+intersectBed -u -s -a tunit/${Head}_all_h5.preds.full.bed -b <(zcat ../annotations/${Head}_gencode.vM25.annotation_transcript_protein_coding.bed.gz)  |grep -v chrX |grep -v chrY  \
 > ${Head}_all_h5.preds.full_inProtein_coding.bed
 done
+
+// wc -l *
+//    19201 BN_all_h5.preds.full_inProtein_coding.bed
+//    21398 GI_all_h5.preds.full_inProtein_coding.bed
+//    18334 HT_all_h5.preds.full_inProtein_coding.bed
+//    21801 KD_all_h5.preds.full_inProtein_coding.bed
+//    21374 LV_all_h5.preds.full_inProtein_coding.bed
+//    14017 SK_all_h5.preds.full_inProtein_coding.bed
+//    18127 SP_all_h5.preds.full_inProtein_coding.bed
+//    21208 ST_all_h5.preds.full_inProtein_coding.bed
 
 cd ..
 for Head in BN HT  SK  SP  KD  LV  GI  ST
@@ -89,26 +97,24 @@ done
 
 
 # some tunits have two AlleleHMM blocks, one from MB6 the other from PB6
-  1093 BN_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
-   880 BN_AT_2tunitIntersectNativeHMM_tunit.bed
-   903 GI_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+  1091 BN_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   879 BN_AT_2tunitIntersectNativeHMM_tunit.bed
+   904 GI_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
    787 GI_AT_2tunitIntersectNativeHMM_tunit.bed
    591 HT_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
    559 HT_AT_2tunitIntersectNativeHMM_tunit.bed
-   996 KD_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
-   863 KD_AT_2tunitIntersectNativeHMM_tunit.bed
-  1541 LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
-  1234 LV_AT_2tunitIntersectNativeHMM_tunit.bed
+   998 KD_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   864 KD_AT_2tunitIntersectNativeHMM_tunit.bed
+  1537 LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+  1230 LV_AT_2tunitIntersectNativeHMM_tunit.bed
   1098 SK_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
    992 SK_AT_2tunitIntersectNativeHMM_tunit.bed
-  1189 SP_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
-  1004 SP_AT_2tunitIntersectNativeHMM_tunit.bed
-   407 ST_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
-   359 ST_AT_2tunitIntersectNativeHMM_tunit.bed
- 14496 total
+  1190 SP_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+  1005 SP_AT_2tunitIntersectNativeHMM_tunit.bed
+   408 ST_AT_2tunitIntersectNativeHMM_AlleleHMM.bed
+   360 ST_AT_2tunitIntersectNativeHMM_tunit.bed
+ 14493 total
 
-#cat LV_AT_2tunitIntersectNativeHMM_AlleleHMM.bed| awk 'BEGIN {OFS="\t"; m=":"; d="-"} {print $0, $1m$2d$3}'
-# HERE
 
 # the regions where tunit overlaps alleleHMM
 # tunits might have duplicates corresponding to AlleleHMM blocks from both MB6 and PB6
@@ -152,39 +158,30 @@ done
 
  wc -l *_4tunitIntersectNativeHMM_AlleleHMM.bed
    917 BN_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
-   641 GI_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   643 GI_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
    409 HT_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
-   743 KD_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
-  1152 LV_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   745 KD_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+  1150 LV_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
    869 SK_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
-   842 SP_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+   844 SP_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
    360 ST_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
-  5933 total
+  5937 total
 
 
 
 # how many tunits with AT in each organ and total (exclude overlapped)
 wc -l *_4tunitIntersectNativeHMM_tunits.bed
-  //  570 BN_AT_4tunitIntersectNativeHMM_tunits.bed  # has duplication, need to remove that
-  //  347 GI_AT_4tunitIntersectNativeHMM_tunits.bed
-  //  220 HT_AT_4tunitIntersectNativeHMM_tunits.bed
-  //  398 KD_AT_4tunitIntersectNativeHMM_tunits.bed
-  //  640 LV_AT_4tunitIntersectNativeHMM_tunits.bed
-  //  581 SK_AT_4tunitIntersectNativeHMM_tunits.bed
-  //  454 SP_AT_4tunitIntersectNativeHMM_tunits.bed
-  //  282 ST_AT_4tunitIntersectNativeHMM_tunits.bed
-  // 3492 total
-
-
    917 BN_AT_4tunitIntersectNativeHMM_tunits.bed
-   641 GI_AT_4tunitIntersectNativeHMM_tunits.bed
+   643 GI_AT_4tunitIntersectNativeHMM_tunits.bed
    409 HT_AT_4tunitIntersectNativeHMM_tunits.bed
-   743 KD_AT_4tunitIntersectNativeHMM_tunits.bed
-  1152 LV_AT_4tunitIntersectNativeHMM_tunits.bed
+   745 KD_AT_4tunitIntersectNativeHMM_tunits.bed
+  1150 LV_AT_4tunitIntersectNativeHMM_tunits.bed
    869 SK_AT_4tunitIntersectNativeHMM_tunits.bed
-   842 SP_AT_4tunitIntersectNativeHMM_tunits.bed
+   844 SP_AT_4tunitIntersectNativeHMM_tunits.bed
    360 ST_AT_4tunitIntersectNativeHMM_tunits.bed
-  5933 total
+  5937 total
+
+
 rm temp.txt
 for Head in BN HT  SK  SP  KD  LV  GI  ST
   do 
@@ -193,22 +190,13 @@ sort-bed ${Head}_AT_4tunitIntersectNativeHMM_tunits.bed |uniq |wc -l  >> temp.tx
 done
 
 cat temp.txt |paste - - 
-// BN_AT_4tunitIntersectNativeHMM_tunits.bed       475
-// HT_AT_4tunitIntersectNativeHMM_tunits.bed       211
-// SK_AT_4tunitIntersectNativeHMM_tunits.bed       518
-// SP_AT_4tunitIntersectNativeHMM_tunits.bed       402
-// KD_AT_4tunitIntersectNativeHMM_tunits.bed       351
-// LV_AT_4tunitIntersectNativeHMM_tunits.bed       536
-// GI_AT_4tunitIntersectNativeHMM_tunits.bed       311
-// ST_AT_4tunitIntersectNativeHMM_tunits.bed       246
-
 BN_AT_4tunitIntersectNativeHMM_tunits.bed       742
 HT_AT_4tunitIntersectNativeHMM_tunits.bed       390
 SK_AT_4tunitIntersectNativeHMM_tunits.bed       791
-SP_AT_4tunitIntersectNativeHMM_tunits.bed       721
-KD_AT_4tunitIntersectNativeHMM_tunits.bed       650
-LV_AT_4tunitIntersectNativeHMM_tunits.bed       931
-GI_AT_4tunitIntersectNativeHMM_tunits.bed       568
+SP_AT_4tunitIntersectNativeHMM_tunits.bed       723
+KD_AT_4tunitIntersectNativeHMM_tunits.bed       651
+LV_AT_4tunitIntersectNativeHMM_tunits.bed       929
+GI_AT_4tunitIntersectNativeHMM_tunits.bed       569
 ST_AT_4tunitIntersectNativeHMM_tunits.bed       317
 
 # merge the tunits from 8 organs with strandness
@@ -223,8 +211,7 @@ wc -l T8_temp
 bedtools merge -s -i <(sort-bed  T8_temp)  -d 0  > T8_${coreBody}
 
 wc -l T8_${coreBody}
-// #2278 T8_AT_4tunitIntersectNativeHMM_tunits.bed
-3450 T8_AT_4tunitIntersectNativeHMM_tunits.bed
+3451 T8_AT_4tunitIntersectNativeHMM_tunits.bed
 
 # legnth distribution of AT windows. combined all AT windows from all organs WITHOUT removing duplicates 
 rm T8_AT_4tunitIntersectNativeHMM_intersectRegion.bed 
@@ -233,15 +220,8 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed   >> T8_AT_4tunitIntersectNativeHMM_intersectRegion.bed 
 done
 
-
-
-
-
+#HERE
 ## scripts for panels
-
-draw-AllelelicTermination-heatmap.R
-draw-AllelelicTermination-metaplot.R
-poly-termination-analysis.R  # more analysis
-poly-termination-analysis-figures.R # analysis for figures chosen
+poly-termination-analysis-figures.R # analysis for figure 5B, 5C, sup_fig 5A, 5Bchosen
 
 

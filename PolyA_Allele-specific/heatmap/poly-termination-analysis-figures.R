@@ -42,7 +42,10 @@ read_read_mat2 <-function (file.plus.bw, file.minus.bw , bed6, step, navg = 20, 
 }
 
 
-heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, up_dist =20000, file.pdf="heatmap.pdf", hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 10, use.log=FALSE, times=1){
+heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,
+                       dist, step, up_dist =20000, file.pdf="heatmap.pdf", 
+                       hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, 
+                       bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 10, use.log=FALSE, times=1){
   AT <- AT[,1:6]
   length_order  <- order(AT$V3 - AT$V2, decreasing = T)
   AT <- AT[length_order  ,]
@@ -64,14 +67,13 @@ heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat 
   hmat.pat <- read_read_mat2 (file.bw.plus.pat, file.bw.minus.pat, bed6[,c(1:6)], step, times=times, use.log=use.log)
   hmat.mat <- read_read_mat2 (file.bw.plus.mat, file.bw.minus.mat, bed6[,c(1:6)],  step, times=times, use.log=use.log)     
   
-  
-  
   AT$start.steps <- up_dist%/%step+1
   AT$end.steps <- (AT$V3-AT$V2+up_dist)%/%step+1
   bin_number <- (up_dist + dist)/step
   
   if(is.null(hl.bw.plus.pat)) {
     # dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
+    # based on file.bw.plus.pat, file.bw.minus.pat, file.bw.plus.mat, file.bw.minus.mat
     hmat.pat.AT.rowSums <- NULL
     hmat.mat.AT.rowSums <- NULL
     for (i in 1:NROW(hmat.pat)){
@@ -79,6 +81,8 @@ heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat 
       hmat.mat.AT.rowSums[i] <- sum(hmat.mat[i,][AT$start.steps[i]:min(AT$end.steps[i],bin_number)]) 
     }
   } else {
+    # dertemine High/Low allele based on the reads count within the AT regions (Before adjust by dist)
+    # based on hl.bw.plus.pat, hl.bw.minus.pat, hl.bw.plus.mat, hl.bw.minus.mat
     hl.pat <- read_read_mat2 (hl.bw.plus.pat, hl.bw.minus.pat, bed6[,c(1:6)], step, times=times)
     hl.mat  <- read_read_mat2 (hl.bw.plus.mat, hl.bw.minus.mat, bed6[,c(1:6)],  step, times=times)
     hmat.pat.AT.rowSums <- NULL
@@ -186,7 +190,13 @@ heatmap.AT3 <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat 
   
 }
 
-heatmap.AT4_allreads <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,dist, step, up_dist =20000, file.pdf="heatmap.pdf", hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL, bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 10, use.log=FALSE, times=1){
+heatmap.AT4_allreads <-function(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat ,
+                                dist, step, up_dist =20000, file.pdf="heatmap.pdf", 
+                                hl.bw.plus.pat=NULL,hl.bw.minus.pat=NULL, hl.bw.plus.mat=NULL ,hl.bw.minus.mat=NULL,
+                                bl_wd=1, breaks=NULL, cols=NULL, show.AT.line=TRUE, navg = 10, use.log=FALSE, times=1){
+  # file.bw.plus.pat = file.bw.plus.mat AND , file.bw.minus.pat= file.bw.minus.mat
+  # used to get heatmap from all reads
+  
   AT <- AT[,1:6]
   length_order  <- order(AT$V3 - AT$V2, decreasing = T)
   AT <- AT[length_order  ,]
@@ -367,14 +377,14 @@ plot_colorByDensity = function(x1,x2,
   plot(x2~x1, data=df[order(df$dens),],
        ylim=ylim,xlim=xlim,pch=20,col=col,
        cex=2,xlab=xlab,ylab=ylab,
-       main=main, bty=bty)
+       main=main, bty=bty, las=1)
 }
 
-setwd(paste("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/tunitIntersectNativeHMM",Tversion,sep = "/"))
+setwd(paste("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/gencode.vM25/tunitIntersectNativeHMM",Tversion,sep = "/"))
 tissue_list_full <-c("BN","HT", "SK", "LV","GI", "ST" , "KD", "SP")
 
 ### the relationship between Tunit expression level and AT window length
-pdf("scatter_plot_logATRPKM_logTunitRPKM.pdf",width=16, height = 8 )
+pdf("scatter_plot_logATRPKM_logTunitRPKM.pdf",width=16, height = 8, useDingbats=FALSE)
 par(mfrow=c(2,4))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
@@ -383,8 +393,8 @@ for (at in tissue_list_full){
   #for (at in c("BN",  "SP", "LV")){
   tunit <-  read.table(paste("./",at,"_AT_",Tversion, "_tunits.bed", sep=""), header = F)
   AT <- read.table(paste("./",at,"_AT_",Tversion,"_intersectRegion.bed", sep=""), header = F)
-  file.plus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_all_plus.rpm.bw", sep="")
-  file.minus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_all_minus.rpm.bw", sep="")
+  file.plus.bw <- paste("~/Box Sync/IGV/bigWig_notBN/",at,"_all_plus.rpm.bw", sep="")
+  file.minus.bw <- paste("~/Box Sync/IGV/bigWig_notBN/",at,"_all_minus.rpm.bw", sep="")
   tunit_rpkm <- read_count(file.plus.bw, file.minus.bw, tunit) *1000/(tunit$V3 - tunit$V2) 
   AT_rpkm <- read_count(file.plus.bw, file.minus.bw, AT) *1000/(AT$V3 - AT$V2) 
   
@@ -404,94 +414,56 @@ tissues <- c("BN", "LV","SP")
 
 Tunit_BW_pairs <- function (at, t){
   tunit <-  read.table(paste("./",at,"_AT_",Tversion, "_tunits.bed", sep=""), header = F)
-  file.plus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_plus.rpm.bw", sep="")
-  file.minus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_minus.rpm.bw", sep="")
+  file.plus.bw <- paste("~/Box Sync/IGV/bigWig_notBN/",t,"_all_plus.rpm.bw", sep="")
+  file.minus.bw <- paste("~/Box Sync/IGV/bigWig_notBN/",t,"_all_minus.rpm.bw", sep="")
   log10(read_count(file.plus.bw, file.minus.bw, tunit)*1000/(tunit$V3 - tunit$V2)+0.01) # log10(rpkm+0.01)
 }
 
-for (at in tissues){
-  #at="SP"
-  for (t in tissues){
-    AT <- read.table(paste("./",at,"_AT_",Tversion,"_intersectRegion.bed", sep=""), header = F)
-    t.value <-Tunit_BW_pairs (at, t)
-    
-    
-    if (0){ # use MB6 (n=3)
-    file.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
-    file.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
-    file.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
-    file.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
-    hl.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.pat_1bp_plus.bw", sep="")
-    hl.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.pat_1bp_minus.bw", sep="")
-    hl.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.mat_1bp_plus.bw", sep="")
-    hl.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_MB6_all_R1.mat_1bp_minus.bw", sep="")
-    }
-    if(1){ # use PB6 (n=4)
-    file.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_PB6_all_R1.pat_1bp_plus.bw", sep="")
-    file.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_PB6_all_R1.pat_1bp_minus.bw", sep="")
-    file.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_PB6_all_R1.mat_1bp_plus.bw", sep="")
-    file.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_PB6_all_R1.mat_1bp_minus.bw", sep="")
-    hl.bw.plus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_PB6_all_R1.pat_1bp_plus.bw", sep="")
-    hl.bw.minus.pat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_PB6_all_R1.pat_1bp_minus.bw", sep="")
-    hl.bw.plus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_PB6_all_R1.mat_1bp_plus.bw", sep="")
-    hl.bw.minus.mat <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",at,"_PB6_all_R1.mat_1bp_minus.bw", sep="")
-    }
-    
-    file.plus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_plus.rpm.bw", sep="")
-    file.minus.bw <- paste("/Volumes/SPC_SD/IGV/bigWig_notBN/",t,"_all_minus.rpm.bw", sep="")
-    
-    # expression of all reads (not only allelic specific ones)
-    heatmap.AT4_allreads(AT, file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw, 
-                         dist=20000, step=500,
-                         file.pdf=paste(t,".bw_",1,".pdf",sep=""),
-                         bl_wd=1, show.AT.line=TRUE, navg=navg, times=30, use.log=FALSE, breaks=seq(0, 10, 0.01))
-    # expression of allelic specific reads
-    # only use tunits with  log10(rpkm+0.01) > -1
-    heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-                hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
-                dist=20000, step=500,
-                file.pdf=paste(at,".AT_",t,".bw_",2,".pdf",sep=""),
-                bl_wd=1, show.AT.line=TRUE, navg=navg, use.log=FALSE,
-                times=10, breaks = seq(0,20,0.01))
-    heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-                hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
-                dist=20000, step=500,
-                file.pdf=paste(at,".AT_",t,".bw_",2,"_noline.pdf",sep=""),
-                bl_wd=1, show.AT.line=FALSE, navg=navg, use.log=FALSE,
-                times=10, breaks = seq(0,20,0.01))
-  }
-}
-
-
-
-
-if(0){
-  heatmap.AT4_allreads(AT[t.value > -1,], file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw,
-                       dist=20000, step=500,
-                       file.pdf=paste(t,".bw_",1,".pdf",sep=""),
-                       bl_wd=1, show.AT.line=TRUE, navg=navg, times=30, use.log=FALSE, breaks=seq(0, 10, 1))
-  heatmap.AT4_allreads(AT[t.value <= -1,], file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw,
-                       dist=20000, step=500,
-                       file.pdf=paste(t,".bw_",2,".pdf",sep=""),
-                       bl_wd=1, show.AT.line=TRUE, navg=navg, times=30, use.log=FALSE, breaks=seq(0, 10, 1))
+# Fig 5B
+at="LV"
+for (t in tissues){
+  AT <- read.table(paste("./",at,"_AT_",Tversion,"_intersectRegion.bed", sep=""), header = F)
+  t.value <-Tunit_BW_pairs (at, t)
   
+  # use MB6 and PB6 (n=7) BN_map2ref_1bpbed_map5_B6_minus.bw
+  file.bw.plus.pat  <- paste("~/Box Sync/BN_IGV/",t,"_map2ref_1bpbed_map5_CAST_plus.bw", sep="")
+  file.bw.minus.pat <- paste("~/Box Sync/BN_IGV/",t,"_map2ref_1bpbed_map5_CAST_minus.bw", sep="")
+  file.bw.plus.mat  <- paste("~/Box Sync/BN_IGV/",t,"_map2ref_1bpbed_map5_B6_plus.bw", sep="")
+  file.bw.minus.mat <- paste("~/Box Sync/BN_IGV/",t,"_map2ref_1bpbed_map5_B6_minus.bw", sep="")
+  hl.bw.plus.pat    <- paste("~/Box Sync/BN_IGV/",at,"_map2ref_1bpbed_map5_CAST_plus.bw", sep="")
+  hl.bw.minus.pat   <- paste("~/Box Sync/BN_IGV/",at,"_map2ref_1bpbed_map5_CAST_minus.bw", sep="")
+  hl.bw.plus.mat    <- paste("~/Box Sync/BN_IGV/",at,"_map2ref_1bpbed_map5_B6_plus.bw", sep="")
+  hl.bw.minus.mat   <- paste("~/Box Sync/BN_IGV/",at,"_map2ref_1bpbed_map5_B6_minus.bw", sep="")
+  file.plus.bw      <- paste("~/Box Sync/BN_IGV/",at,"_map2ref_1bpbed_map5_plus.bw", sep="")
+  file.minus.bw     <- paste("~/Box Sync/BN_IGV/",at,"_map2ref_1bpbed_map5_minus.bw", sep="")
+  
+  
+  # expression of all reads (not only allelic specific ones)
+  heatmap.AT4_allreads(AT, file.plus.bw,file.minus.bw, file.plus.bw ,file.minus.bw, 
+                       dist=20000, step=500,
+                       file.pdf=paste(at,".bw_",1,".pdf",sep=""),
+                       bl_wd=1, show.AT.line=TRUE, navg=navg, times=1, use.log=FALSE, breaks=seq(0, 20, 0.01))
+  # expression of allelic specific reads
+  # only use tunits with  log10(rpkm+0.01) > -1
+  # high low allele based on at (the ChRO-seq reads)
   heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
-              hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
-              dist=20000, step=500,
-              file.pdf=paste(at,".AT_",t,".bw_",1,".pdf",sep=""),
-              bl_wd=1, show.AT.line=TRUE, navg=navg, use.log=FALSE,
-              times=10, breaks = seq(0,5,0.01))
-  heatmap.AT3(AT[t.value <= -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
               hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
               dist=20000, step=500,
               file.pdf=paste(at,".AT_",t,".bw_",2,".pdf",sep=""),
               bl_wd=1, show.AT.line=TRUE, navg=navg, use.log=FALSE,
-              times=1000, breaks = seq(0,5,0.01))
+              times=10, breaks = seq(0,20,0.01))
+  heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+              hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
+              dist=20000, step=500,
+              file.pdf=paste(at,".AT_",t,".bw_",2,"_noline.pdf",sep=""),
+              bl_wd=1, show.AT.line=FALSE, navg=navg, use.log=FALSE,
+              times=10, breaks = seq(0,20,0.01))
 }
 
+# Fig 5C
 # get the length distribution of AT windows from all organs
 f1_p = "T8_AT_4tunitIntersectNativeHMM_intersectRegion.bed"
-pdf("T8_ATwindow_length.pdf", width=5, height = 5)
+pdf("T8_ATwindow_length.pdf", width=5, height = 5, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
@@ -517,8 +489,9 @@ axis(1, at=seq(0,7,1), labels=c(0,"10","102","103","104","105","106","107"), las
 
 dev.off()
 
+# Sup Fig 5B
 tussue_list <-c("BN","HT", "SK", "LV","GI", "ST" , "KD", "SP")
-pdf("Organs_ATwindow_length_violin.pdf", width=10, height = 8)
+pdf("Organs_ATwindow_length_violin.pdf", width=10, height = 8, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
