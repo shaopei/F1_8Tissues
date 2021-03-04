@@ -446,13 +446,13 @@ for (t in tissues){
   # expression of allelic specific reads
   # only use tunits with  log10(rpkm+0.01) > -1
   # high low allele based on at (the ChRO-seq reads)
-  heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+  heatmap.AT3(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
               hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
               dist=20000, step=500,
               file.pdf=paste(at,".AT_",t,".bw_",2,".pdf",sep=""),
               bl_wd=1, show.AT.line=TRUE, navg=navg, use.log=FALSE,
               times=10, breaks = seq(0,20,0.01))
-  heatmap.AT3(AT[t.value > -1,], file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
+  heatmap.AT3(AT, file.bw.plus.pat,file.bw.minus.pat, file.bw.plus.mat ,file.bw.minus.mat,
               hl.bw.plus.pat=hl.bw.plus.pat ,hl.bw.minus.pat=hl.bw.minus.pat, hl.bw.plus.mat = hl.bw.plus.mat ,hl.bw.minus.mat=hl.bw.minus.mat,
               dist=20000, step=500,
               file.pdf=paste(at,".AT_",t,".bw_",2,"_noline.pdf",sep=""),
@@ -468,7 +468,7 @@ par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 f1=read.table(f1_p,header=F)
-h<- hist(log10(f1$V3-f1$V2),
+h<- hist(log10(f1$V3-f1$V2)
          , breaks = seq(0,7,1)
          ,plot =FALSE
          ,right = FALSE)
