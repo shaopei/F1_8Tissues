@@ -220,7 +220,6 @@ for Head in BN HT  SK  SP  KD  LV  GI  ST
 cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion.bed   >> T8_AT_4tunitIntersectNativeHMM_intersectRegion.bed 
 done
 
-#HERE
 ## scripts for panels
 poly-termination-analysis-figures.R # analysis for figure 5B, 5C, sup_fig 5A, 5Bchosen
 
