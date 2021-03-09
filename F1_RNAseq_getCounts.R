@@ -79,9 +79,9 @@ plot(counts$sB6, counts$sCAST,
      xlim=c(0,200), ylim = c(0,200))
 
 
-geneID_withATwindow <- read.table("geneID_withATwindow", header=F)
+geneID_withATwindow <- read.table("BN_geneID_withATwindow", header=F)
 geneID_withATwindow$ATwindow = TRUE
-geneID_withATwindow_withRNAAlleleHMMBlocks <- read.table("geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks", header=F)
+geneID_withATwindow_withRNAAlleleHMMBlocks <- read.table("BN_geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks", header=F)
 geneID_withATwindow_withRNAAlleleHMMBlocks$AlleleHMM <- 1
 
 target = merge(geneID_withATwindow, geneID_withATwindow_withRNAAlleleHMMBlocks, by = "V1", all.x = T)
@@ -97,7 +97,7 @@ target$deltaS = abs(target$sB6-target$sCAST)
 
 sum(target$AlleleHMM==0)
 sum(target$AlleleHMM==1)
-pdf("Allelic_Termination_Gene_Stablility.pdf", width=7, height = 3.5, useDingbats=FALSE)
+pdf("BN_Allelic_Termination_Gene_Stablility.pdf", width=7, height = 3.5, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
@@ -133,6 +133,7 @@ legend("right",
 dev.off()
 
 # KS test 
-ks.test(target$deltaS[target$AlleleHMM==1] ,target$deltaS[target$AlleleHMM==0], alternative = "less")
-
+ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "two.sided")
+ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "greater")
+ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "less")
 

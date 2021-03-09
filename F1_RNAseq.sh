@@ -515,7 +515,7 @@ wc -l BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed
 for t in {1..9}
 do
 echo $t
-intersectBed -u -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) > BN_t1E-0${t}_AT_AlleleHMM.bed #| wc -l 
+intersectBed -u -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../AlleleHMM_Blocks/BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../AlleleHMM_Blocks/BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) > BN_t1E-0${t}_AT_AlleleHMM.bed #| wc -l 
 intersectBed -v -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) | wc -l 
 done
 
@@ -527,7 +527,7 @@ intersectBed -wao -s -a BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <(
 # strandness -s, ignore downstream -id
 # -fu	Choose first from features in B that are upstream of features in A.
 t=9
-bedtools closest -s -D a -id -fu -t first -a <(sort-bed BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed) -b <( cat ../BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed | sort-bed -) \
+bedtools closest -s -D a -id -fu -t first -a <(sort-bed BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed) -b <( cat ../AlleleHMM_Blocks/BN_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../AlleleHMM_Blocks/BN_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed | sort-bed -) \
 | awk '{OFS="\t"} ($13+0 < -1 && $13+0 >-100000) {print $0}' > BN_t1E-0${t}_AT_AlleleHMM_within10K.bed
 
 cat BN_AT_4tunitIntersectNativeHMM_intersectRegion.bed  | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}' | sort |uniq |wc -l

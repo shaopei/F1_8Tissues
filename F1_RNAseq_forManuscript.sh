@@ -1,5 +1,23 @@
+# use star aligner
+
+cd /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/
+cat P.CAST_M.B6_F1hybrid.snps.forAlleleSeq.vcf | awk '{OFS="\t"; c="_maternal"} {print $1c,$2,$3,$4,$5,$6,$7,$8,$9,$12}' > P.CAST_M.B6_F1hybrid.snps.forSTAR.mat.vcf
+
+cd /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam
+mkdir STAR_index_P.CAST.EiJ_M.C57BL.6J_paternal
+mkdir STAR_index_P.CAST.EiJ_M.C57BL.6J_maternal
+
+
+export PATH=/programs/STAR-2.7.5a/bin/Linux_x86_64_static:$PATH
+
+#withou annotation
+STAR --runThreadN 20 \
+--runMode genomeGenerate \
+--genomeDir STAR_index_P.CAST.EiJ_M.C57BL.6J_maternal \
+--genomeFastaFiles *_P.CAST.EiJ_M.C57BL.6J_maternal.fa
 
 ####### 
+cd /workdir/sc2457/F1_Tissues/RNA-seq/
 mkdir STAR_LV
 cd STAR_LV
 ln -s ../LV*fastq.gz .
@@ -8,7 +26,7 @@ FASTQ=LV_MB6
 export PATH=/programs/STAR-2.7.5a/bin/Linux_x86_64_static:$PATH
 
 # map1 without annotation
-#mat
+#mat B6 mm10
 STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/STAR_index_P.CAST.EiJ_M.C57BL.6J_maternal \
 --readFilesCommand zcat \
 --readFilesIn ${FASTQ}_BOTH_RNA.fastq.gz \
@@ -18,18 +36,9 @@ STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/
 --outSAMunmapped Within \
 --outSAMattributes All
 
-# paternal 
-STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/STAR_index_P.CAST.EiJ_M.C57BL.6J_paternal \
---readFilesCommand zcat \
---readFilesIn ${FASTQ}_BOTH_RNA.fastq.gz \
---runThreadN 20 \
---outFileNamePrefix ${FASTQ}_pat1 \
---outSAMtype BAM SortedByCoordinate \
---outSAMunmapped Within \
---outSAMattributes All
-
 #map2 with sj list from map1
 #mat with vcf
+
 STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/STAR_index_P.CAST.EiJ_M.C57BL.6J_maternal \
 --readFilesCommand zcat \
 --readFilesIn ${FASTQ}_BOTH_RNA.fastq.gz \
@@ -40,18 +49,6 @@ STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/
 --outSAMattributes All \
 --sjdbFileChrStartEnd ${FASTQ}_mat1SJ.out.tab \
 --varVCFfile /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/P.CAST_M.B6_F1hybrid.snps.forSTAR.mat.vcf
-
-
-# paternal 
-STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/STAR_index_P.CAST.EiJ_M.C57BL.6J_paternal \
---readFilesCommand zcat \
---readFilesIn ${FASTQ}_BOTH_RNA.fastq.gz \
---runThreadN 20 \
---outFileNamePrefix ${FASTQ}_pat2 \
---outSAMtype BAM SortedByCoordinate \
---outSAMunmapped Within \
---outSAMattributes All \
---sjdbFileChrStartEnd ${FASTQ}_pat1SJ.out.tab 
 
 
 #mat3 with sj list from mat2v, wasp
@@ -79,6 +76,12 @@ STAR --genomeDir /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/
 --waspOutputMode SAMtag
 #done
 
+# STAR three stage mapping
+# map1 without annotation
+# map2 with sj list from map1, mm10 (mat) + vcf files
+# map3 b6(mat) with sj list from mat2v, add wasp
+
+#vW:i:1 means alignment passed WASP filtering, and all other values mean it did not pass:
 samtools view LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.bam |grep vW:i:1 -c
 #14,380,436
 
@@ -97,7 +100,8 @@ samtools view $f |grep  vW:i:1 | awk '{OFS="\t"}{print $0 >> "'${j}'/"$20 }' &
 
 cd $j
 rm cast b6
-# remove chrX
+# get the allele specific reads 
+# remove chrX and chrY
 for v in `ls vA:B:c,1* |grep -v 2 | grep -v 3`
 do cat $v |grep -v X_maternal|grep -v Y_maternal | grep -v  MT_maternal >> cast
 done
@@ -152,6 +156,7 @@ samtools view -H ${j}.b6.sorted.bam |grep @SQ|sed 's/@SQ\tSN:\|LN://g' > genome.
 # -g	Specify a genome file the defines the expected chromosome order in the input files for use with the -sorted option.
 for p in b6 cast
 do 
+  # the read coverage of each SNP position
 bedtools coverage -s -split -counts -a <(cat P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.sorted.bed| awk '{OFS="\t"; s="+"} {print $0, ".", s}') -b ${j}.${p}.sorted.bam > ${j}.${p}.plus.snpReadCounts.bed &
 bedtools coverage -s -split -counts -a <(cat P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.sorted.bed| awk '{OFS="\t"; s="-"} {print $0, ".", s}') -b ${j}.${p}.sorted.bam > ${j}.${p}.minus.snpReadCounts.bed &
 done
@@ -171,6 +176,7 @@ done
 
 ln -s /workdir/sc2457/F1_Tissues/AlleleHMM/AlleleHMM.py .
 #j=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out
+# use alleleHMM to identify allelic bias block from RNA-seq data
 python2 AlleleHMM.py -p ${j}.AlleleHMM_input_plus.txt -m ${j}.AlleleHMM_input_minus.txt -o LV_MB6_BOTH_RNA -
 # HERE
 
@@ -191,16 +197,13 @@ do
 done
 
 
-
-
-
 # make bigwig files
 export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
 export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
 
 for p in cast b6
 do
-	# switch plus amd minus strand
+	# switch plus and minus strand
 bedtools genomecov -split -bg -ibam ${j}.${p}.sorted.bam -strand - |LC_COLLATE=C sort -k1,1 -k2,2n >  ${j}.${p}_plus.bedGraph &
 bedtools genomecov -split -bg -ibam ${j}.${p}.sorted.bam -strand + |LC_COLLATE=C sort -k1,1 -k2,2n > ${j}.${p}_minus.bedGraph &
 done
@@ -215,7 +218,7 @@ echo $k
 done
 
 # all reads
-# switch plus amd minus strand
+# switch plus and minus strand
 bedtools genomecov -split -bg -ibam ${j}.bam -strand -  >  ${j}.all_plus.bedGraph &
 bedtools genomecov -split -bg -ibam ${j}.bam -strand +  > ${j}.all_minus.bedGraph &
 wait
@@ -260,15 +263,15 @@ done
   bedGraphToBigWig $k\_plus.bedGraph ${mouse_chinfo} $k\_plus.bw &
 
 
-# the intersect between AT window and AlleleHMM blocks
-# -s	Force “strandedness”
+
 ln -s /local/storage/projects/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/LV_AT_4tunitIntersectNativeHMM* .
 wc -l LV_AT_4tunitIntersectNativeHMM_*
-  1152 LV_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
-  1152 LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed
-  1152 LV_AT_4tunitIntersectNativeHMM_tunits.bed
-  3456 total
+  1150 LV_AT_4tunitIntersectNativeHMM_AlleleHMM.bed
+  1150 LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed
+  1150 LV_AT_4tunitIntersectNativeHMM_tunits.bed
 
+# the intersect between AT window and AlleleHMM blocks
+# -s  Force “strandedness”
 t=9
 intersectBed -u -s -a LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat AlleleHMM_Blocks/LV_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed AlleleHMM_Blocks/LV_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) > LV_t1E-0${t}_AT_AlleleHMM.bed #| wc -l 
 #intersectBed -v -s -a LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( cat ../LV_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed ../LV_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed ) | wc -l 
@@ -283,15 +286,18 @@ bedtools closest -s -D a -id -fu -t first -a <(sort-bed LV_AT_4tunitIntersectNat
 | awk '{OFS="\t"} ($13+0 < -1 && $13+0 >-100000) {print $0}' > LV_t1E-0${t}_AT_AlleleHMM_within10K.bed
 
 cat LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed  | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}' | sort |uniq |wc -l
-#1128
+#1126
 cat LV_t1E-0${t}_AT_AlleleHMM.bed  LV_t1E-0${t}_AT_AlleleHMM_within10K.bed | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}'  | sort |uniq |wc -l
-#463 #          intersect ones                       with AlleleHMM block upstream <10Kb
+#462 #          intersect ones                       with AlleleHMM block upstream <10Kb
 
-# identify the tunits that contain the AT window of interests
+cat gencode.vM25.annotation.gtf | awk 'BEGIN{OFS="\t"} $3=="gene" {split($10,a,"\""); split($14,b,"\""); print $1, $4-1, $5, a[2], b[2], $7}' > gencode.vM25.annotation.gene.bed
+# use the tunits that contain the AT window of interests to identify geneID
+
 intersectBed -wao -s -a LV_AT_4tunitIntersectNativeHMM_tunits.bed -b gencode.vM25.annotation.gene.bed  > LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed
 cat LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed | cut -f 10 |sort |uniq > geneID_withATwindow
-#intersectBed -s -a ../gencode.vM25.annotation.gene.bed -b LV_AT_4tunitIntersectNativeHMM_tunits.bed > gencode.vM25.annotation.geneWithATwindow.bed
-# use the tunits to identify the geneID within that tunits
+
+# -a use the tunit # use the tunits to identify the geneID within that tunits 
+# -b LV_t1E-0${t}_AT_AlleleHMM.bed use the LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed that insect with RNA-seq alleleHMM blocks
 intersectBed -u -s -a LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed -b <(cat LV_t1E-0${t}_AT_AlleleHMM.bed LV_t1E-0${t}_AT_AlleleHMM_within10K.bed|cut -f 1-6 | sort | uniq ) | cut -f 10 |sort |uniq \
 > geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks
 
@@ -319,8 +325,6 @@ done
 
 # calculate the stability of mRNA
 # reads counts of proseq in gene body / read counts of mRNA-seq in exon
-
-cat gencode.vM25.annotation.gtf | awk 'BEGIN{OFS="\t"} $3=="gene" {split($10,a,"\""); split($14,b,"\""); print $1, $4-1, $5,a[2], b[2],$7}' > gencode.vM25.annotation.gene.bed
 
 # htseq-count [options] alignment_file gff_file
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out
