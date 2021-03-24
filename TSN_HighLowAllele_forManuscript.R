@@ -229,10 +229,11 @@ for (i in 1:3){
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyWeakInr", sep="")]]=v_list[[paste(name,SNP_orBackground[k], lower_bound,"_",uper_bound,"_OnlyWeakInr", sep="")]]
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyCA", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,"_OnlyCA", sep="")]] 
       }
-     # w_test = wilcox.test(v_list_withNewName[[paste(name,SNP_orBackground_name[1],Inr_name[i], sep="")]], v_list_withNewName[[paste(name,SNP_orBackground_name[2],Inr_name[i], sep="")]])
+     w_test = c(w_test, wilcox.test(v_list_withNewName[[paste(name,SNP_orBackground_name[1],Inr_name[i], sep="")]], v_list_withNewName[[paste(name,SNP_orBackground_name[2],Inr_name[i], sep="")]])$p.value)
     }
   }
 }
+p.adjust(w_test, method = "fdr")<=0.05
 str(v_list_withNewName)
 # for sup figure
 pdf("ShootingGallery_Inr_comparison.pdf", width = 16, height = 8, useDingbats=FALSE)
