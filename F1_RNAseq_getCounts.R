@@ -90,7 +90,14 @@ target$AlleleHMM[is.na(target$AlleleHMM)] = 0
 target = merge(target, counts, by = "geneID", all.x = T)
 target$deltaS = abs(target$sB6-target$sCAST)
 
-
+BN_t=target
+View(BN_t)
+View(LV_t)
+BN_t$tissue="BN"
+colnames(BN_t)
+LV_t$tissue="LV"
+BL=rbind.data.frame(BN_t[,c(1:11,16:21)], LV_t)
+View(BL)
 
 #hist(target$sB6, breaks = seq(0,14,0.01),col="blue")
 #hist(target$sCAST, breaks = seq(0,14,0.01), col="red")

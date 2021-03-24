@@ -96,7 +96,7 @@ target$deltaS = abs(target$sB6-target$sCAST)
 dim(counts)
 dim(target)
 
-
+LV_t=target
 #hist(target$sB6, breaks = seq(0,14,0.01),col="blue")
 #hist(target$sCAST, breaks = seq(0,14,0.01), col="red")
 
@@ -138,6 +138,6 @@ legend("right",
 dev.off()
 
 # KS test 
-ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "two.sided")
+#ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "two.sided")
 ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "greater")
-ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "less")
+#ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "less")

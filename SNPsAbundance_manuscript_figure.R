@@ -360,14 +360,14 @@ TSSwithSNPsAroundMaxTSN <-function(d=50, bin=5,times=1, use.log=FALSE, use.sum=F
     #par(cex=1.5)
     pch_u=15
     plot(x, b,col="black",  xlab="distance to maxTSN", ylab="TSS with SNPs", 
-         main=name, type="o", ylim=c(0,max(a,b,s_plot,m_plot)), pch=pch_u, las=1, frame=FALSE)
+         main=name, type="o", ylim=c(0,max(b,s_plot,m_plot)), pch=pch_u, las=1, frame=FALSE)
     points(x, s_plot, col="red", type="o", pch=pch_u)
     
     legend("topleft", legend=c(paste("Single, n=", dim(s)[1],sep=""), paste("NS, n=", dim(g9)[1])),
            col=c("red", "black"), bty = "n", lty=1, pch=pch_u)
     
     plot(x, m_plot, col="blue", xlab="distance to maxTSN", ylab="TSS with SNPs", main="", type="o", 
-         ylim=c(0,max(a,b,s_plot,m_plot)), las=1, pch=pch_u, frame=FALSE)
+         ylim=c(0,max(b,s_plot,m_plot)), las=1, pch=pch_u, frame=FALSE)
     points(x, b,col="black", type="o", pch=pch_u)
     
     legend("topleft", legend=c(paste("Multiple, n=", dim(m)[1],sep=""), paste("NS, n=", dim(g9)[1])),
