@@ -7,7 +7,7 @@
 ## getCounts.R - Counts reads in each gene.
 require(bigWig)
 
-tus <- read.table("gencode.vM25.annotation.gene.bed", header=F)
+tus <- read.table("gencode.vM25.annotation.transcript.bed", header=F)
 tus <- tus[(tus$V3-tus$V2)>10000,]  #use TRX size >10K
 
 
@@ -61,8 +61,9 @@ for(f in filenames) {
 	counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE))
 }
 colnames(counts) <- filenames
-save.image("data-counts.vM25.transcript.RData") #transcript
-save.image("data-counts.vM25.gene.RData") #gene
+save.image("data-counts.vM25.transcript_withSingle.RData") #transcript
+#save.image("data-counts.vM25.transcript.RData") #transcript
+#save.image("data-counts.vM25.gene.RData") #gene
 remove(counts)
 
 
@@ -73,8 +74,9 @@ for(f in filenames) {
 }
 colnames(rpkm) <- filenames
 
-save.image("data-rpkms.vM25.transcript.RData")
-save.image("data-rpkms.vM25.gene.RData")
+#save.image("data-rpkms.vM25.transcript.RData")
+save.image("data-rpkms.vM25.transcript_withSingle.RData")
+#save.image("data-rpkms.vM25.gene.RData")
 remove(rpkm)
 
 
@@ -110,5 +112,19 @@ sub_rpkm <- rpkm[indx,colnames_keep]
 write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.vM25.transcript.txt", quote =FALSE, sep="\t", col.names = TRUE) 
 write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_noLG_noSingleBase.vM25.gene.txt", quote =FALSE, sep="\t", col.names = TRUE) 
 
+## make cluster WITH single base run-on 
+load("data-counts.vM25.transcript_withSingle.RData")
+load("data-rpkms.vM25.transcript_withSingle.RData")
+min_count = 5
+colnames_keep = colnames(counts)[grep("LG", colnames(counts),invert = T)]
+colnames_keep = colnames_keep[grep("TH", colnames_keep,invert = T)]
+
+counts <- counts[,colnames_keep ]
+indx_counts <- rowSums(counts>=min_count) >= dim(counts)[2]  #every sample has at least min_count reads
+indx_trxSize<- (bodies[,3]-bodies[,2])>10000  # to get a robost signal
+indx <- indx_counts #& indx_trxSize
+sub_rpkm <- rpkm[indx,colnames_keep]
+
+write.table(sub_rpkm , file = "rpkm_5reads_trx10K_bodyafter500bp_withSingleBase.vM25.transcript.txt", quote =FALSE, sep="\t", col.names = TRUE) 
 
 
