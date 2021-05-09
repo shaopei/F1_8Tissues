@@ -1,0 +1,215 @@
+# scripts to organize files fro GEO submission
+cd /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/bowtie_diploid_genome
+ln -s ../allelicbias-PersonalGenome_P.CAST_M.B6-*/*_all_R1.mat.bowtie.gz_AMBremoved_sorted .
+ln -s ../allelicbias-PersonalGenome_P.CAST_M.B6-*/*_all_R1.pat.bowtie.gz_AMBremoved_sorted .
+
+for f in *.mat.bowtie.gz_AMBremoved_sorted
+do j=`echo $f| cut -d . -f 1`
+echo "mv" $f $j".B6.bowtie.gz"
+done
+
+for f in *.pat.bowtie.gz_AMBremoved_sorted
+do j=`echo $f| cut -d . -f 1`
+echo "mv" $f $j".CAST.bowtie.gz"
+done
+
+cd /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5/
+mkdir bigwig_mm10
+cd bigwig_mm10
+ln -s ../*map2ref.map5.1bp_*us.bw .  #*/
+
+for f in *.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp_minus.bw
+	# LV_MB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp_minus.bw
+do j=`echo $f | cut -d . -f 1`
+echo "mv" $f $j".identical.5prime.1bp.map2ref_minus.bw"
+done
+
+for f in *.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp_plus.bw
+do j=`echo $f | cut -d . -f 1`
+echo "mv" $f $j".identical.5prime.1bp.map2ref_plus.bw"
+done
+
+for f in *.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp_minus.bw
+do j=`echo $f | cut -d . -f 1`
+echo "mv" $f $j".B6.specific.5prime.1bp.map2ref_minus.bw"
+done
+
+for f in *.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp_plus.bw
+do j=`echo $f | cut -d . -f 1`
+echo "mv" $f $j".B6.specific.5prime.1bp.map2ref_plus.bw"
+done
+
+for f in *.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp_minus.bw
+do j=`echo $f | cut -d . -f 1`
+echo "mv" $f $j".CAST.specific.5prime.1bp.map2ref_minus.bw"
+done
+
+for f in *.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp_plus.bw
+do j=`echo $f | cut -d . -f 1`
+echo "mv" $f $j".CAST.specific.5prime.1bp.map2ref_plus.bw"
+done
+
+cd /fs/cbsubscb17/storage/data/GEOSubmission/F1_8Organs_GEO_submission/bigwig_multipleBaseRunOn
+cp /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5/bigwig_mm10/* .   #*/
+
+
+while read p; do
+j=`echo ${p}| cut -d . -f 1 `
+echo ${j}.B6.specific.5prime.1bp.map2ref_plus.bw ${j}.B6.specific.5prime.1bp.map2ref_minus.bw ${j}.CAST.specific.5prime.1bp.map2ref_plus.bw ${j}.CAST.specific.5prime.1bp.map2ref_minus.bw ${j}.identical.5prime.1bp.map2ref_plus.bw ${j}.identical.5prime.1bp.map2ref_minus.bw			
+#  echo "mv F1${p}*.gz ../. "
+done <text
+
+# SingleBase run on one
+cd /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate
+mkdir bigwig_mm10_single
+cd bigwig_mm10_single
+ln -s ../*PB6_F5N6_map2ref_1bpbe* .  #*/
+
+for f in *_PB6_F5N6_map2ref_1bpbed_map3_*.bw
+do o=`echo $f | cut -d _ -f 1`
+s=`echo $f | cut -d _ -f 7`
+strand=`echo $f | rev| cut -d . -f 2 | cut -d _ -f 1 |rev`
+echo "mv" $f ${o}_PB6_F5F6_R1_${s}.specific.3prime.1bp.map2ref_${strand}.bw
+done
+
+for f in *_PB6_F5N6_map2ref_1bpbed_map5_*.bw
+do o=`echo $f | cut -d _ -f 1`
+s=`echo $f | cut -d _ -f 7`
+strand=`echo $f | rev| cut -d . -f 2 | cut -d _ -f 1 |rev`
+echo "mv" $f ${o}_PB6_F5F6_R1_${s}.specific.5prime.1bp.map2ref_${strand}.bw
+done
+
+
+cd /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map3_old
+# merge bigwig files from mouse F5 and F6
+export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
+export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+
+for Tissue in HT KD SK
+do
+    for strand in plus minus
+    do
+    	# identical reads
+    echo "bash mergeBigWigs.bsh --chrom-info=${mouse_chinfo} ${Tissue}_PB6_F5F6_R1.identical.3prime.1bp.map2ref_${strand}.bw   ${Tissue}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.1bp_${strand}.bw" 
+
+done
+done
+
+cd /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate/bigwig_mm10_single
+ln -s /workdir/sc2457/F1_Tissues/SingleBaseRunOn/map2ref_1bpbed_map3_old/*F5F6*.bw .
+ln -s ../*identical.map5*bw .  #*/
+
+
+
+for f in *.identical.map5.map2ref.1bp_*us.bw
+	do o=`echo $f|cut -d . -f 1`
+strand=`echo $f|rev|cut -d . -f 2| cut -d _ -f 1 | rev`
+echo "mv" ${f} ${o}_PB6_F5F6_R1.identical.5prime.1bp.map2ref_${strand}.bw
+done
+
+
+for f in *_PB6_F5F6_R1_*
+do
+h=`echo $f|cut -d _ -f -4`
+t=`echo $f|cut -d _ -f 5`
+echo "mv" $f ${h}.${t}
+done
+
+
+
+for Tissue in HT KD SK
+do
+j=${Tissue}_PB6_F5F6_R1
+    for strand in plus minus
+    do
+echo ${j}.B6.specific.5prime.1bp.map2ref_plus.bw ${j}.B6.specific.5prime.1bp.map2ref_minus.bw ${j}.CAST.specific.5prime.1bp.map2ref_plus.bw ${j}.CAST.specific.5prime.1bp.map2ref_minus.bw ${j}.identical.5prime.1bp.map2ref_plus.bw ${j}.identical.5prime.1bp.map2ref_minus.bw ${j}.B6.specific.3prime.1bp.map2ref_plus.bw ${j}.B6.specific.3prime.1bp.map2ref_minus.bw ${j}.CAST.specific.3prime.1bp.map2ref_plus.bw ${j}.CAST.specific.3prime.1bp.map2ref_minus.bw ${j}.identical.3prime.1bp.map2ref_plus.bw ${j}.identical.3prime.1bp.map2ref_minus.bw
+done
+done
+
+HT_PB6_F5F6_R1_B6.specific.3prime.1bp.map2ref_minus.bw  HT_PB6_F5F6_R1_CAST.specific.3prime.1bp.map2ref_minus.bw  HT_PB6_F5F6_R1.identical.3prime.1bp.map2ref_minus.bw
+HT_PB6_F5F6_R1_B6.specific.3prime.1bp.map2ref_plus.bw   HT_PB6_F5F6_R1_CAST.specific.3prime.1bp.map2ref_plus.bw   HT_PB6_F5F6_R1.identical.3prime.1bp.map2ref_plus.bw
+HT_PB6_F5F6_R1_B6.specific.5prime.1bp.map2ref_minus.bw  HT_PB6_F5F6_R1_CAST.specific.5prime.1bp.map2ref_minus.bw  HT_PB6_F5F6_R1.identical.5prime.1bp.map2ref_minus.bw
+HT_PB6_F5F6_R1_B6.specific.5prime.1bp.map2ref_plus.bw   HT_PB6_F5F6_R1_CAST.specific.5prime.1bp.map2ref_plus.bw   HT_PB6_F5F6_R1.identical.5prime.1bp.map2ref_plus.bw
+
+
+
+mkdir sep_Raw_In_sample_list
+cd sep_Raw_In_sample_list
+while read p; do
+  echo "$p"
+ls ../../temp/sep_raw/${p}*
+  ln -s ../../temp/sep_raw/${p}* .
+done <../sample_list2.txt
+
+while read f1 f2 f3 f4; do
+  mv ${f1}_R1.fastq.gz ${f2}_${f4}_${f3}_R1.fastq.gz
+  mv ${f1}_R2.fastq.gz ${f2}_${f4}_${f3}_R2.fastq.gz
+done <sample_list.txt
+
+
+while read f1 f2 f3 ; do
+  echo "mv ${f1}_R1.fastq.gz KD_${f2}_${f3}_R1.fastq.gz"
+  echo "mv ${f1}_R2.fastq.gz KD_${f2}_${f3}_R2.fastq.gz"
+done <KD_sample_list.txt
+
+while read f1; do
+  echo ${f1}_R1.fastq.gz ${f1}_R2.fastq.gz
+  done <sample
+
+
+### test, didn't use below ###
+f=A_5_Kidney_R1.fastq.gz
+j=`echo $f|rev| cut -d _ -f 2- |rev`
+echo $j
+zcat ${f} | paste - - - - | awk 'BEGIN{FS="\t"; OFS="\t"}{print >> "'$j'_" substr($2,5,6) ".fastq"}' &
+
+zcat ${f} | paste - - - - | awk 'BEGIN{FS="\t"; OFS="\t"}(substr($2,5,6)==TTGCAG){print }'
+
+awk '{OFS="\t"}{FS="\t"}{ print >> "'$i'." $3 ".bowtie" }' $i &
+
+zcat ${f} | paste - - - -  | head |tr '\t' '\n'
+
+### test, idn't use above ###
+
+sftp geoftp@sftp-private.ncbi.nlm.nih.gov
+password: rebUzyi1
+cd uploads/sc2457@cornell.edu_U9wD8YQ2
+mkdir geo_submission_may9
+cd geo_submission_may9
+put file_name
+
+
+
+
+
+
+
+
+## seperate the raw reads based on J-barcode
+for name in `ls *.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 2- | cut -d _ -f2- | rev| sort | uniq`
+   do
+echo "#!/bin/bash -l" >  ${name}.sbatch.sh
+echo "#SBATCH --ntasks=1" >> ${name}.sbatch.sh
+echo "#SBATCH --mem=5000" >> ${name}.sbatch.sh
+echo "#SBATCH --time=24:00:00" >> ${name}.sbatch.sh
+echo "#SBATCH --partition=regular,long7,long30" >> ${name}.sbatch.sh
+echo "#SBATCH --account=danko_0001" >> ${name}.sbatch.sh
+echo "#SBATCH --job-name=sepIndex-${name}" >> ${name}.sbatch.sh
+echo "#SBATCH --output=sepIndex-${name}.out.%j" >> ${name}.sbatch.sh
+echo "#SBATCH --mail-user=sc2457@cornell.edu" >> ${name}.sbatch.sh
+echo "#SBATCH --mail-type=ALL" >> ${name}.sbatch.sh
+echo "#SBATCH --chdir=/home/sc2457/multi" >> ${name}.sbatch.sh
+
+echo "cd /workdir/" >> ${name}.sbatch.sh
+echo "mkdir sc2457" >> ${name}.sbatch.sh
+echo "cd sc2457" >> ${name}.sbatch.sh
+echo "mkdir sep_raw" >> ${name}.sbatch.sh
+echo "/programs/bin/labutils/mount_server cbsubscb17 /storage" >> ${name}.sbatch.sh
+echo "cp /home/sc2457/multi/sepIndex_beforeDeduplicate.py ." >> ${name}.sbatch.sh
+
+echo "cp /fs/cbsubscb17/storage/data/GEOSubmission/F1_8Organs_GEO_submission/geo_submission_May6/ChRO-seq/fastq/multi/${name}_*.fastq.gz . " >> ${name}.sbatch.sh
+echo "echo cp done" >> ${name}.sbatch.sh
+echo "echo python2 sepIndex_beforeDeduplicate.py start" >> ${name}.sbatch.sh
+echo "python2 sepIndex_beforeDeduplicate.py ${name}_R1.fastq.gz ${name}_R2.fastq.gz sep_raw/${name} | tee sep_raw/${name}_sep_raw.log " >> ${name}.sbatch.sh
+echo "cp /workdir/sc2457/sep_raw/${name}* /home/sc2457/multi/sep_raw/." >> ${name}.sbatch.sh
+done

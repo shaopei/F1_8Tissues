@@ -43,6 +43,7 @@ CHINFO=/local/storage/data/mm10/mm10.chromInfo
 output=proseqHT_0
 mkdir ${output}
 bash proseqHT_multiple_adapters_sequencial.bsh -I \*.fastq.gz -i $mouse_genome -c $mouse_chinfo -T  ${output} -O  ${output} 
+#https://github.com/Danko-Lab/utils/blob/master/proseq_HT/proseqHT_multiple_adapters_sequencial.bsh
 
 ####F1_NASA 
 output=Myproseq2.0Output-3
@@ -106,7 +107,7 @@ for name in `ls ${TMPDIR}/noadapt/*.fastq | awk -F"/" '{print $NF}' | rev | cut 
    #wait
    ## Separate into distinct fastq files.  Also trims off specified lengths of sequence.
    # use the sepIndex.py without Trims 3-prime UMI and J-barcode 
-   python sepIndex_beforeDeduplicate.py ${TMPDIR}/noadapt/${name}_R1.fastq ${TMPDIR}/noadapt/${name}_R2.fastq ${TMPDIR}/sep_withdups/${name} | tee ${TMPDIR}/${name}_sep_withdups.log &
+   python2 sepIndex_beforeDeduplicate.py ${TMPDIR}/noadapt/${name}_R1.fastq ${TMPDIR}/noadapt/${name}_R2.fastq ${TMPDIR}/sep_withdups/${name} | tee ${TMPDIR}/${name}_sep_withdups.log &
  done
 
 wait
@@ -128,7 +129,7 @@ join -1 1 -2 1 -o 1.1,2.2 sample_list.sort sep_withdedup_read_counts.sort
 ## seperate the raw reads based on J-barcode
 for name in `ls *.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 2- | cut -d _ -f2- | rev| sort | uniq`
    do
-   python sepIndex_beforeDeduplicate.py ${name}_R1.fastq.gz ${name}_R2.fastq.gz sep_raw/${name} | tee sep_raw/${name}_sep_raw.log &
+   python2 sepIndex_beforeDeduplicate.py ${name}_R1.fastq.gz ${name}_R2.fastq.gz sep_raw/${name} | tee sep_raw/${name}_sep_raw.log &
  done
 
 rm sep_withdedup_read_counts.txt

@@ -89,9 +89,11 @@ colnames(target)[1]="geneID"
 target$AlleleHMM[is.na(target$AlleleHMM)] = 0
 target = merge(target, counts, by = "geneID", all.x = T)
 target$deltaS = abs(target$sB6-target$sCAST)
+target=target[!(is.na(target$V1)),]
 
 BN_t=target
 View(BN_t)
+write.table(BN_t, file="BN_geneWithInATwindows_stability.txt", quote = F, sep="\t", col.names = T, row.names = F)
 View(LV_t)
 BN_t$tissue="BN"
 colnames(BN_t)
