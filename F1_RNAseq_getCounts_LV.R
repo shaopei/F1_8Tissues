@@ -95,8 +95,11 @@ target = merge(target, counts, by = "geneID", all.x = T)
 target$deltaS = abs(target$sB6-target$sCAST)
 dim(counts)
 dim(target)
+target=target[!(is.na(target$V1)),]
+dim(target)
 
 LV_t=target
+write.table(LV_t, file="LV_geneWithInATwindows_stability.txt", quote = F, sep="\t", col.names = T, row.names = F)
 #hist(target$sB6, breaks = seq(0,14,0.01),col="blue")
 #hist(target$sCAST, breaks = seq(0,14,0.01), col="red")
 
