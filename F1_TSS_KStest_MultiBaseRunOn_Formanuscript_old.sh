@@ -171,7 +171,7 @@ Rscript SNPsAbundance_manuscript_figure.R
 
 
 
-
+#### Determined High/Low allele based on the transcrition level at TSS
 ### Binomial test of  TSS 
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSS_BinomialTest_MultiBaseRunOn
 ln -s ../identifyTSS_MultiBaseRunOn/*_allReads_TSS.bed .
@@ -292,20 +292,19 @@ done
 #cat ${j}_binomtest_Rfdr0.2.bed         | awk 'BEGIN{OFS="\t"} NR>1 {print $1, $2, $3, $4, "111", $10}'  > ${j}_binomtest_Rfdr0.2_IGV.bed  
 #done
 
-#### Determined High/Low allele based on the transcription level at maxTSN
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSN_BinomialTest_MultiBaseRunOn
+
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/maxTSN_TSS_TID_combine_analysis_MultiBaseRunOn
+ln -s ../TSS_BinomialTest_MultiBaseRunOn/*_allReads_TSS_binomtest_Rfdr1.bed .
 ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_paternal_all.fa .
 ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_maternal_all.fa .
 ln -s ../TSS_KStest_MultiBaseRunOn/*_allReads_TSS_5mat5pat_uniq_maskedVSunmasked_pValue_maxTSNs.bed .
-ln -s ../TSN_ShootingGallery/*_allReads_TSS_maxTSNs_binomtest.bed .
-ln -s ../maxTSN_TSS_TID_combine_analysis_MultiBaseRunOn/getGC_content_HighLowAllele.R .
 
 # one TSS might contain more than 1 maxTSN
-for Head in BN LV
+for Head in BN HT  SK  SP  KD  LV  GI  ST
 do 
 bedtools intersect -wo -s -a ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_pValue_maxTSNs.bed \
--b <(cat ${Head}_allReads_TSS_maxTSNs_binomtest.bed| awk '{OFS="\t"} NR>1 {print $1, $2, $3, $4, $9, $10}')\
-| awk '{OFS="\t"} ($12==$19 && $13==$20) {print $1, $2, $3, $4, $5, $6, $7,$8,$9,$10, $21,$22, $11,$12,$13}' |sort-bed - \
+-b <(cat ${Head}_allReads_TSS_binomtest_Rfdr1.bed| awk '{OFS="\t"} NR>1 {print $1, $2, $3, $4, $11, $10}')\
+| awk '{OFS="\t"} ($2==$19 && $3==$20) {print $1, $2, $3, $4, $5, $6, $7,$8,$9,$10, $21,$22, $11,$12,$13}' |sort-bed - \
 > ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_BinomialTest_maxTSNs.bed &
 
 # col 1-12  TSS 
@@ -314,14 +313,13 @@ bedtools intersect -wo -s -a ${Head}_${studyBed}_5mat5pat_uniq_maskedVSunmasked_
 # col 6 strand
 # col 7-10 maksed pvalue, masked fdr, unmasked p value, unmasked fdr
 # col 11, P is Cast, M is B6. P,53,87 = Cast has more reads (might not be significant) , 53 B6 reads, 87 Cast reads
-# col 12 Binomial test p-value
+# col 12 Binomial test fdr
 # col 13-15 maxTNS location, 
 
 done
 
 wait
 
-#### High/Low allele were based on the transcription level at maxTSN
 GC_content_TSS(){
  Head=$1
  j=$2
