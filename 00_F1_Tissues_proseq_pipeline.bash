@@ -129,7 +129,7 @@ join -1 1 -2 1 -o 1.1,2.2 sample_list.sort sep_withdedup_read_counts.sort
 ## seperate the raw reads based on J-barcode
 for name in `ls *.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 2- | cut -d _ -f2- | rev| sort | uniq`
    do
-   python2 sepIndex_beforeDeduplicate.py ${name}_R1.fastq.gz ${name}_R2.fastq.gz sep_raw/${name} | tee sep_raw/${name}_sep_raw.log &
+   echo "python2 sepIndex_beforeDeduplicate.py ${name}_R1.fastq.gz ${name}_R2.fastq.gz sep_raw/${name} | tee sep_raw/${name}_sep_raw.log &"
  done
 
 rm sep_withdedup_read_counts.txt

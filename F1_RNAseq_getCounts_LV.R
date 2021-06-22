@@ -143,4 +143,4 @@ dev.off()
 # KS test 
 #ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "two.sided")
 ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "greater")
-#ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "less")
+ks.test(target$deltaS[target$AlleleHMM==0] ,target$deltaS[target$AlleleHMM==1], alternative = "less")

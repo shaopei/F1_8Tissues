@@ -179,7 +179,9 @@ cd geo_submission_may9
 put file_name
 
 
-
+while read f1 ; do
+  echo "cp ../${f1} ."
+done <../temp_list.txt
 
 
 
@@ -188,7 +190,7 @@ put file_name
 ## seperate the raw reads based on J-barcode
 for name in `ls *.fastq.gz | awk -F"/" '{print $NF}' | rev | cut -d \. -f 2- | cut -d _ -f2- | rev| sort | uniq`
    do
-echo "#!/bin/bash -l" >  ${name}.sbatch.sh
+echo '#!/bin/bash -l' >  ${name}.sbatch.sh
 echo "#SBATCH --ntasks=1" >> ${name}.sbatch.sh
 echo "#SBATCH --mem=5000" >> ${name}.sbatch.sh
 echo "#SBATCH --time=24:00:00" >> ${name}.sbatch.sh
