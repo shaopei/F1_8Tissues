@@ -157,6 +157,116 @@ getInr2N_Dist_Delta_Signal_aroundMaxTSN <- function(df, name, d, WithCAatHighAll
   return (data.frame(dist=Dist, Delta_Signal= Delta_Signal))
 }
 
+
+getInr2N_Delta_Signal_atMaxTSN <- function(df, name, d, allele1="CA", allele2="TA", plot=FALSE){
+  Delta_Signal<-NULL
+  cat ("all df ",dim(df), "\n")
+  colnames(df)[12:13] = c("HighAlleleSeq", "LowAlleleSeq")
+  colnames(df)[9]="Bino_p_value"
+  colnames(df)[10] = "strand"
+  colnames(df)[11] = "winP"
+  
+  old_df=df
+  for (strand in c("+", "-")){  
+    df = old_df[old_df$strand == strand,]
+    # keep rows with total allelic reads > 5
+    df = df[df$V6+df$V7 >= 5,]
+    cat ("df read count >5,  strand= ", strand, "," ,dim(df), "\n")
+    
+    df$InrAtHighTSN =  sapply(df$HighAlleleSeq, getTSN_2N, d=d)
+    df$InrAtLowTSN =  sapply(df$LowAlleleSeq, getTSN_2N, d=d)
+    
+    df$HighAllele1 = df$InrAtHighTSN == allele1
+    df$HighAllele2 = df$InrAtHighTSN == allele2
+    df$LowAllele1 = df$InrAtLowTSN == allele1
+    df$LowAllele2 = df$InrAtLowTSN == allele2
+    
+    
+    
+    # keep those with both allele1 and allele 2
+    df = df[(df$HighAllele1|df$LowAllele1)&(df$HighAllele2|df$LowAllele2),]
+    cat ("df read count >5, with both allele1 and allele 2, strand= ", strand, "," ,dim(df), "\n")
+    if (dim(df)[1]>0) {
+    # the transcription level near the TSN
+    TSS = df[,c(1,2,3,4,5,10)]
+    
+    step=1; times=1; use.log=FALSE
+    
+    file.bw.plus.pat=paste(file_dir,organ, "_map2ref_1bpbed_map5_CAST_plus.bw", sep="")
+    file.bw.minus.pat=paste(file_dir,organ, "_map2ref_1bpbed_map5_CAST_minus.bw", sep="")
+    file.bw.plus.mat=paste(file_dir,organ, "_map2ref_1bpbed_map5_B6_plus.bw", sep="")
+    file.bw.minus.mat=paste(file_dir,organ, "_map2ref_1bpbed_map5_B6_minus.bw", sep="")
+    readCount.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, TSS[,c(1:6)], step, times=times, use.log=use.log)
+    readCount.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, TSS[,c(1:6)],  step, times=times, use.log=use.log) 
+    readCount.combined <- readCount.pat + readCount.mat
+    dim(readCount.pat)
+    t=1
+    df$delta_reads_high_low = ((readCount.pat+t)/(readCount.mat+t))
+    df$delta_reads_high_low[which(df$winP=="M"),] = ((readCount.mat+t )/( readCount.pat+t))[which(df$winP=="M"),]
+    
+    df$delta_reads_allele1_2 = df$delta_reads_high_low
+    df$delta_reads_allele1_2[(df$LowAllele1),] = 1/df$delta_reads_high_low[(df$LowAllele1),]
+    Delta_Signal <- c(Delta_Signal, log2(df$delta_reads_allele1_2))
+    cat("Delta_Signal legnth", length(Delta_Signal), "\n")
+    }
+    
+  }
+  return (data.frame(Delta_Signal= Delta_Signal))
+}
+
+# Look at the magnitude of difference between strings in different initiator combinations: 
+# CA - vs - TA - vs - TG - vs - CG.
+d=50
+x_list <- NULL
+asTSS=""
+SNP_orBackground = "_SNP_"
+diNu = c("CA", "TA", "TG", "CG")
+#allele1="CA"
+#allele2="CG"
+#organ="BN"
+asTSS_name = asTSS
+for (i in 1:3){
+  for (j in (i+1):4){
+    for (organ in c("BN", "LV")){
+      name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+      df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      cat ("\n")
+      
+      cat (i, diNu[i], "\t", j, diNu[j], "\n")
+      allele1 = diNu[i]
+      allele2 = diNu[j]
+      
+      temp=getInr2N_Delta_Signal_atMaxTSN(df, name, d, allele1=allele1, allele2=allele2)
+      
+      x_list[[paste(name,paste(allele1,allele2, sep="/"), sep="")]] = temp$Delta_Signal
+    }
+  }
+}
+str(x_list)
+
+
+
+#pdf("ShootingGallery.pdf", width = 5, height = 5, useDingbats=FALSE)
+par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+
+#par(mgp=c(3,1,0))
+vioplot(x_list, las=2, 
+        #ylim=c(-6,6),
+        ylab = "log2(Allele 1 + 1 / Allele 2 + 1)",
+        col=c("purple", "gray"),
+        frame.plot=F
+)
+#stripchart(x_list, vertical = TRUE, add = TRUE, method = "jitter", pch=1, col="black",jitter = 0.5, offset = 0.5, cex=1)
+
+abline(h=0, lty=2)
+legend("topleft", legend=c("BN", "LV"),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
+
+dev.off()
+####
 ###
 library("vioplot")
 
@@ -301,6 +411,8 @@ wilcox.test(new_v_list$BN_SNP_, new_v_list$BN_NoSNP_)
 wilcox.test(new_v_list$LV_SNP_, new_v_list$LV_NoSNP_)
 
 wilcox.test(v_list_withNewName$BN_Single_SNP_AllInr, v_list_withNewName$BN_Single_NoSNP_AllInr)
+
+
 
 
 
@@ -647,4 +759,6 @@ for (lower_bound in seq(-25,20,step)){
 }
 
 p.adjust(w_p_value, method = "fdr")
+
+
 
