@@ -158,7 +158,7 @@ getInr2N_Dist_Delta_Signal_aroundMaxTSN <- function(df, name, d, WithCAatHighAll
 }
 
 
-getInr2N_Delta_Signal_atMaxTSN <- function(df, name, d, allele1="CA", allele2="TA", plot=FALSE){
+getInr2N_Delta_Signal_atMaxTSN_HighLow <- function(df, name, d, allele1="CA", allele2="TA"){
   Delta_Signal<-NULL
   cat ("all df ",dim(df), "\n")
   colnames(df)[12:13] = c("HighAlleleSeq", "LowAlleleSeq")
@@ -214,8 +214,70 @@ getInr2N_Delta_Signal_atMaxTSN <- function(df, name, d, allele1="CA", allele2="T
   return (data.frame(Delta_Signal= Delta_Signal))
 }
 
+getInr2N_Delta_Signal_atMaxTSN_matpat <- function(df, name, d, allele1="CA", allele2="TA"){
+  Delta_Signal<-NULL
+  cat ("all df ",dim(df), "\n")
+  colnames(df)[11:12] = c("matAlleleSeq", "patAlleleSeq")
+  df$winP = unlist(strsplit(as.character(df$V4), split=","))[seq(1,(length(df$V4)*3)-2,3)]
+  colnames(df)[9]="Bino_p_value"
+  colnames(df)[10] = "strand"
+
+  old_df=df
+  for (strand in c("+", "-")){  
+    df = old_df[old_df$strand == strand,]
+    # keep rows with total allelic reads > 5
+    df = df[df$V6+df$V7 >= 5,]
+    cat ("df read count >5,  strand= ", strand, "," ,dim(df), "\n")
+    
+    df$InrAtMatTSN =  sapply(df$matAlleleSeq, getTSN_2N, d=d)
+    df$InrAtPatTSN =  sapply(df$patAlleleSeq, getTSN_2N, d=d)
+    
+    df$matAllele1 = df$InrAtMatTSN == allele1
+    df$matAllele2 = df$InrAtMatTSN == allele2
+    df$patAllele1 = df$InrAtPatTSN == allele1
+    df$patAllele2 = df$InrAtPatTSN == allele2
+    
+    
+    
+    # keep those with both allele1 and allele 2
+    df = df[(df$matAllele1|df$patAllele1)&(df$matAllele2|df$patAllele2),]
+    cat ("df read count >5, with both allele1 and allele 2, strand= ", strand, "," ,dim(df), "\n")
+    if (dim(df)[1]>0) {
+      # the transcription level near the TSN
+      TSS = df[,c(1,2,3,4,5,10)]
+      
+      step=1; times=1; use.log=FALSE
+      
+      file.bw.plus.pat=paste(file_dir,organ, "_map2ref_1bpbed_map5_CAST_plus.bw", sep="")
+      file.bw.minus.pat=paste(file_dir,organ, "_map2ref_1bpbed_map5_CAST_minus.bw", sep="")
+      file.bw.plus.mat=paste(file_dir,organ, "_map2ref_1bpbed_map5_B6_plus.bw", sep="")
+      file.bw.minus.mat=paste(file_dir,organ, "_map2ref_1bpbed_map5_B6_minus.bw", sep="")
+      readCount.pat <- read_read_mat_S (file.bw.plus.pat, file.bw.minus.pat, TSS[,c(1:6)], step, times=times, use.log=use.log)
+      readCount.mat <- read_read_mat_S (file.bw.plus.mat, file.bw.minus.mat, TSS[,c(1:6)],  step, times=times, use.log=use.log) 
+      readCount.combined <- readCount.pat + readCount.mat
+      df$readCount.mat = readCount.mat
+      df$readCount.pat = readCount.pat
+
+      dim(readCount.pat)
+      t=1
+      df$delta_reads_mat_pat = ((readCount.mat+t)/(readCount.pat+t))
+      #df$delta_reads_high_low[which(df$winP=="M"),] = ((readCount.mat+t )/( readCount.pat+t))[which(df$winP=="M"),]
+      
+      df$delta_reads_allele1_2 = df$delta_reads_mat_pat 
+      df$delta_reads_allele1_2[(df$patAllele1),] = 1/df$delta_reads_mat_pat[(df$patAllele1),]
+      Delta_Signal <- c(Delta_Signal, log2(df$delta_reads_allele1_2))
+      cat("Delta_Signal legnth", length(Delta_Signal), "\n")
+    }
+    
+  }
+  return (data.frame(Delta_Signal= Delta_Signal))
+}
+
+
 # Look at the magnitude of difference between strings in different initiator combinations: 
 # CA - vs - TA - vs - TG - vs - CG.
+# EXclude TSS within AlleleHMM blocks
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_TSSNotInAlleleHMMBlocks/")
 d=50
 x_list <- NULL
 asTSS=""
@@ -229,21 +291,24 @@ for (i in 1:3){
   for (j in (i+1):4){
     for (organ in c("BN", "LV")){
       name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
-      df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
-      cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      #df=read.table(file = "BN_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks_binomtest_+-50_mat_patSeq.bed")
+      #df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_mat_patSeq",asTSS, ".bed", sep=""))
+      cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_mat_patSeq",asTSS, ".bed", sep=""))
       cat ("\n")
       
       cat (i, diNu[i], "\t", j, diNu[j], "\n")
       allele1 = diNu[i]
       allele2 = diNu[j]
       
-      temp=getInr2N_Delta_Signal_atMaxTSN(df, name, d, allele1=allele1, allele2=allele2)
+      temp=getInr2N_Delta_Signal_atMaxTSN_matpat(df, name, d, allele1=allele1, allele2=allele2)
       
       x_list[[paste(name,paste(allele1,allele2, sep="/"), sep="")]] = temp$Delta_Signal
     }
   }
 }
 str(x_list)
+
 
 
 
@@ -257,7 +322,7 @@ vioplot(x_list, las=2,
         col=c("purple", "gray"),
         frame.plot=F
 )
-#stripchart(x_list, vertical = TRUE, add = TRUE, method = "jitter", pch=1, col="black",jitter = 0.5, offset = 0.5, cex=1)
+stripchart(x_list, vertical = TRUE, add=T, method = "jitter", pch=19, col="black", jitter = 0.1, offset = 0, cex=1, las=2)
 
 abline(h=0, lty=2)
 legend("topleft", legend=c("BN", "LV"),
@@ -267,6 +332,40 @@ legend("topleft", legend=c("BN", "LV"),
 
 dev.off()
 ####
+# include TSS within AlleleHMM blocks
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_NoAlleleHMMFilter/")
+d=50
+x_list <- NULL
+asTSS=""
+SNP_orBackground = "_SNP_"
+diNu = c("CA", "TA", "TG", "CG")
+#allele1="CA"
+#allele2="CG"
+#organ="BN"
+asTSS_name = asTSS
+for (i in 1:3){
+  for (j in (i+1):4){
+    for (organ in c("BN", "LV")){
+      name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
+      #df=read.table(file = "BN_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter_binomtest_+-50_mat_patSeq.bed")
+      #df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
+      df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNoAlleleHMMFilter_binomtest_+-",d,"_mat_patSeq",asTSS, ".bed", sep=""))
+      cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNoAlleleHMMFilter_binomtest_+-",d,"_mat_patSeq",asTSS, ".bed", sep=""))
+      cat ("\n")
+      
+      cat (i, diNu[i], "\t", j, diNu[j], "\n")
+      allele1 = diNu[i]
+      allele2 = diNu[j]
+      
+      temp=getInr2N_Delta_Signal_atMaxTSN_matpat(df, name, d, allele1=allele1, allele2=allele2)
+      
+      x_list[[paste(name,paste(allele1,allele2, sep="/"), sep="")]] = temp$Delta_Signal
+    }
+  }
+}
+str(x_list)
+###
+
 ###
 library("vioplot")
 
