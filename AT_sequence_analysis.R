@@ -51,14 +51,13 @@ SeqLogo <- function(seq, output, range=NULL) {
   return (pwm)
 }
 
-seq_a=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-30_Long_ShortAlleleSeq.bed")
+seq_a=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-100_Long_ShortAlleleSeq.bed")
 dim(seq_a)
 BN_AT_1stbp_LongAllele=SeqLogo(seq_a$V8, "BN_AT_1stbp_LongAllele.pdf")
 BN_AT_1stbp_ShortAllele=SeqLogo(seq_a$V9, "BN_AT_1stbp_ShortAllele.pdf")
 
-plot(BN_AT_1stbp_LongAllele[])
 
-seq_a=read.table("LV_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-30_Long_ShortAlleleSeq.bed")
+seq_a=read.table("LV_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-100_Long_ShortAlleleSeq.bed")
 dim(seq_a)
 LV_AT_1stbp_LongAllele=SeqLogo(seq_a$V8, "LV_AT_1stbp_LongAllele.pdf")
 LV_AT_1stbp_ShortAllele=SeqLogo(seq_a$V9, "LV_AT_1stbp_ShortAllele.pdf")
@@ -75,13 +74,14 @@ acgt=c("A","C","G","T")
 #par(cex=1.5)
 pch_u=1
 #d=s_gc[[4]]
-d=30
-range=(d+1-w): (d+1+w)
-w=30
+d=100
+w1=10
+w2=50
+range=(d+1-w1): (d+1+w2)
 organ="LV"
 s_l=LV_AT_1stbp_LongAllele
 s_h=LV_AT_1stbp_ShortAllele
-plot(-w:w,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+plot(-w1:w2,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
      ylim=c(-0.12,0.12), pch=pch_u,
      ylab="ShortAllele - LongAllele",
      xlab="Distance to maxTSN",
@@ -90,37 +90,95 @@ plot(-w:w,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
 )
 abline(h=0, col="gray")
 for (i in 4:1){
-  points(-w:w,s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+  points(-w1:w2,s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
 }
 legend("topleft", legend=acgt,
        col=acgt_col, bty = "n", lty=1, pch=pch_u)
 
+# check SNP2 when SNP1 is C in Short ATC in Long allele
+seq_a=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_SNP2_+-100_Long_ShortAlleleSeq.bed")
+dim(seq_a)
+BN_AT_1stbp_LongAllele_SNP2=SeqLogo(seq_a$V9, "BN_AT_1stbp_LongAllele_SNP2.pdf")
+BN_AT_1stbp_ShortAllele_SNP2=SeqLogo(seq_a$V10, "BN_AT_1stbp_ShortAllele_SNP2.pdf")
+
+
+seq_a=read.table("LV_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_SNP2_+-100_Long_ShortAlleleSeq.bed")
+dim(seq_a)
+LV_AT_1stbp_LongAllele_SNP2=SeqLogo(seq_a$V9, "LV_AT_1stbp_LongAllele_SNP2.pdf")
+LV_AT_1stbp_ShortAllele_SNP2=SeqLogo(seq_a$V10, "LV_AT_1stbp_ShortAllele_SNP2.pdf")
+
+d=100
+w1=30
+w2=30
+range=(d+1-w1): (d+1+w2)
+organ="BN"
+s_l=BN_AT_1stbp_LongAllele_SNP2
+s_h=BN_AT_1stbp_ShortAllele_SNP2
+plot(-w1:w2,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+     ylim=c(-0.3,0.5), pch=pch_u,
+     ylab="ShortAllele - LongAllele",
+     xlab="Distance to maxTSN",
+     main=organ,
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+abline(v=0, col="gray")
+for (i in 4:1){
+  points(-w1:w2,s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+legend("topleft", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+
+
+
+
+
+
+
+
 d=30
-bin=30
+bin=13
 seq_df=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-30_Long_ShortAlleleSeq.bed")
 dim(seq_df)
-#range1=(d-bin*2+1):(d-bin)
+for (bin in seq(8,13)){
+range1=(d-bin*2+1):(d-bin)
 range2=(d-bin+1):d
-range3=(d+2):(d+bin)
+range3=(d+2):(d+bin+1)
+range4=(d+bin+2):(d+bin*2+1)
 
 for (i in 1:NROW(seq_df)){
   a=s2c(as.character(seq_df$V8[i]))
-#  a1=a[range1]
+  a1=a[range1]
   a2=a[range2]
   a3=a[range3]
-#  seq_df$GC_range1[i]= GC(a1)
+  a4=a[range4]
+  seq_df$LGC_range1[i]= GC(a1)
   seq_df$LGC_range2[i]= GC(a2)
   seq_df$LGC_range3[i]= GC(a3)
+  seq_df$LGC_range4[i]= GC(a4)
 }
 for (i in 1:NROW(seq_df)){
   a=s2c(as.character(seq_df$V9[i]))
-  #  a1=a[range1]
+    a1=a[range1]
   a2=a[range2]
   a3=a[range3]
-  #  seq_df$GC_range1[i]= GC(a1)
+  a4=a[range4]
+    seq_df$SGC_range1[i]= GC(a1)
   seq_df$SGC_range2[i]= GC(a2)
   seq_df$SGC_range3[i]= GC(a3)
+  seq_df$SGC_range4[i]= GC(a4)
 }
+
+vioplot(seq_df$SGC_range1, seq_df$SGC_range2, seq_df$SGC_range3, seq_df$SGC_range4,
+        main= paste("short ","bin size = ", bin, sep=""),
+        ylab="GC content", ylim=c(0,100), las=1, frame.plot = F)
+}
+
+vioplot(seq_df$LGC_range1, seq_df$LGC_range2, seq_df$LGC_range3, seq_df$LGC_range4,
+        main= paste("long ","bin size = ", bin, sep=""),
+        ylab="GC content", ylim=c(0,100), las=1, frame.plot = F)
+
 
 vioplot(seq_df$LGC_range2, seq_df$SGC_range2, #seq_df$GC_range3, 
         main= paste("long short beforeAT","bin size = ", bin, sep=""),
