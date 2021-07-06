@@ -285,10 +285,10 @@ for (s in 1:5){
       }
   
 }
-
+y=1
 plot(0:5,unlist(acgt_SminusL[[acgt[1]]]), col = acgt_col[1], type="o",
      xlim=c(0,5),
-     ylim=c(-1,1), pch=pch_u,
+     ylim=c(-y,y), pch=pch_u,
      ylab="ShortAllele - LongAllele",
      xlab="SNP",
      main=organ,

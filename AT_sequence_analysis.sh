@@ -199,6 +199,74 @@ d=100
  ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
 
 
+##### only use SNP with in AT window #####
+#2nd SNP
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP2"}($16 <= $3-$2){print $12, $13, $14, $4c, $5, $6 ,$10, $15}'  \
+>   ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP2.bed
+
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP2
+d=100
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_B6_CAST_Seq.bed 
+ cat ${j}_+-${d}_B6_CAST_Seq.bed  | awk '{OFS="\t"} ($5=="B6")  {print $1,$2,$3,$4,$5, $6,$7, $8, $9, $10} 
+ ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
+
+#3rd SNP
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP3
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP3"} ($16+$21 <= $3-$2){print $17, $18, $19, $4c, $5, $6 ,$10, $20}'  \
+>   ${j}.bed
+
+d=100
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_B6_CAST_Seq.bed 
+ cat ${j}_+-${d}_B6_CAST_Seq.bed  | awk '{OFS="\t"} ($5=="B6") {print $1,$2,$3,$4,$5, $6,$7, $8, $9, $10} 
+ ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
+
+#4th SNP
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP4
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP4"} ($16+$21+$26 <= $3-$2) {print $22, $23, $24, $4c, $5, $6 ,$10, $25}'  \
+>   ${j}.bed
+
+d=100
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_B6_CAST_Seq.bed 
+ cat ${j}_+-${d}_B6_CAST_Seq.bed  | awk '{OFS="\t"} ($5=="B6") {print $1,$2,$3,$4,$5, $6,$7, $8, $9, $10} 
+ ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
+
+#5th SNP
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP5
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP5"} ($16+$21+$26+$31 <= $3-$2){print $27, $28, $29, $4c, $5, $6 ,$10, $30}'  \
+>   ${j}.bed
+
+d=100
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_B6_CAST_Seq.bed 
+ cat ${j}_+-${d}_B6_CAST_Seq.bed  | awk '{OFS="\t"} ($5=="B6") {print $1,$2,$3,$4,$5, $6,$7, $8, $9, $10} 
+ ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
 
 
 
