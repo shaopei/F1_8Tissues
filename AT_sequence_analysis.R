@@ -51,17 +51,13 @@ SeqLogo <- function(seq, output, range=NULL) {
   return (pwm)
 }
 
-seq_a=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-100_Long_ShortAlleleSeq.bed")
+
+### check 2nd SNP, regardless what's in SNP1
+organ="BN"
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_SNP2_+-100_Long_ShortAlleleSeq.bed", sep=""))
 dim(seq_a)
-BN_AT_1stbp_LongAllele=SeqLogo(seq_a$V8, "BN_AT_1stbp_LongAllele.pdf")
-BN_AT_1stbp_ShortAllele=SeqLogo(seq_a$V9, "BN_AT_1stbp_ShortAllele.pdf")
-
-
-seq_a=read.table("LV_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_+-100_Long_ShortAlleleSeq.bed")
-dim(seq_a)
-LV_AT_1stbp_LongAllele=SeqLogo(seq_a$V8, "LV_AT_1stbp_LongAllele.pdf")
-LV_AT_1stbp_ShortAllele=SeqLogo(seq_a$V9, "LV_AT_1stbp_ShortAllele.pdf")
-
+AT_1stbp_LongAllele=SeqLogo(seq_a$V7, paste(organ, "_AT_2ndSNP_LongAllele.pdf", sep=""))
+AT_1stbp_ShortAllele=SeqLogo(seq_a$V8, paste(organ, "_AT_2ndSNP_ShortAllele.pdf", sep=""))
 
 acgt_col=c("dark green", "blue", "orange" , "red")
 acgt=c("A","C","G","T")
@@ -75,13 +71,93 @@ acgt=c("A","C","G","T")
 pch_u=1
 #d=s_gc[[4]]
 d=100
-w1=10
-w2=50
+w1=30
+w2=30
+s=0
 range=(d+1-w1): (d+1+w2)
+s_l=AT_1stbp_LongAllele
+s_h=AT_1stbp_ShortAllele
+plot((-w1+s):(w2+s),s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+     ylim=c(-0.2,0.2), pch=pch_u,
+     ylab="ShortAllele - LongAllele",
+     xlab="Distance to maxTSN",
+     main=organ,
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+for (i in 4:1){
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+legend("topleft", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+### check 2nd SNP, SNP1 short allele ==C, long allele != C
+organ="BN"
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP2_+-100_Long_ShortAlleleSeq.bed", sep=""))
+dim(seq_a)
+AT_1stbp_LongAllele=SeqLogo(seq_a$V9, paste(organ, "_AT_2ndSNP_LongAllele.pdf", sep=""))
+AT_1stbp_ShortAllele=SeqLogo(seq_a$V10, paste(organ, "_AT_2ndSNP_ShortAllele.pdf", sep=""))
+
+acgt_col=c("dark green", "blue", "orange" , "red")
+acgt=c("A","C","G","T")
+
+#pdf(paste(organ,"_deltaATCG_single.pdf" ,sep=""), width =7, height = 7)
+#par(mfcol=c(2,1))
+#par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+#par(mgp=c(3,1,0))
+#par(cex.lab=2.2, cex.axis=2.2)
+#par(cex=1.5)
+pch_u=1
+#d=s_gc[[4]]
+d=100
+w1=30
+w2=30
+s=0
+range=(d+1-w1): (d+1+w2)
+s_l=AT_1stbp_LongAllele
+s_h=AT_1stbp_ShortAllele
+plot((-w1+s):(w2+s),s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+     ylim=c(-0.20,0.20), pch=pch_u,
+     ylab="ShortAllele - LongAllele",
+     xlab="Distance to maxTSN",
+     main=organ,
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+for (i in 4:1){
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+legend("topleft", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+
+### check 1st SNP
 organ="LV"
-s_l=LV_AT_1stbp_LongAllele
-s_h=LV_AT_1stbp_ShortAllele
-plot(-w1:w2,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_+-30_Long_ShortAlleleSeq.bed", sep=""))
+dim(seq_a)
+AT_1stbp_LongAllele=SeqLogo(seq_a$V8, paste(organ, "_AT_1stbp_LongAllele.pdf", sep=""))
+AT_1stbp_ShortAllele=SeqLogo(seq_a$V9, paste(organ, "_AT_1stbp_ShortAllele.pdf", sep=""))
+
+acgt_col=c("dark green", "blue", "orange" , "red")
+acgt=c("A","C","G","T")
+
+#pdf(paste(organ,"_deltaATCG_single.pdf" ,sep=""), width =7, height = 7)
+#par(mfcol=c(2,1))
+#par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+#par(mgp=c(3,1,0))
+#par(cex.lab=2.2, cex.axis=2.2)
+#par(cex=1.5)
+pch_u=1
+#d=s_gc[[4]]
+d=30
+w1=0
+w2=0
+s=1
+range=(d+1-w1): (d+1+w2)
+s_l=AT_1stbp_LongAllele
+s_h=AT_1stbp_ShortAllele
+plot((-w1+s):(w2+s),s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+     xlim=c(0,5),
      ylim=c(-0.12,0.12), pch=pch_u,
      ylab="ShortAllele - LongAllele",
      xlab="Distance to maxTSN",
@@ -90,52 +166,162 @@ plot(-w1:w2,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
 )
 abline(h=0, col="gray")
 for (i in 4:1){
-  points(-w1:w2,s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
 }
 legend("topleft", legend=acgt,
        col=acgt_col, bty = "n", lty=1, pch=pch_u)
 
 # check SNP2 when SNP1 is C in Short ATC in Long allele
-seq_a=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_SNP2_+-100_Long_ShortAlleleSeq.bed")
+organ="BN"
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP2_+-100_Long_ShortAlleleSeq.bed", sep=""))
 dim(seq_a)
-BN_AT_1stbp_LongAllele_SNP2=SeqLogo(seq_a$V9, "BN_AT_1stbp_LongAllele_SNP2.pdf")
-BN_AT_1stbp_ShortAllele_SNP2=SeqLogo(seq_a$V10, "BN_AT_1stbp_ShortAllele_SNP2.pdf")
-
-
-seq_a=read.table("LV_AT_4tunitIntersectNativeHMM_intersectRegion_strain_temp1_SNP2_+-100_Long_ShortAlleleSeq.bed")
-dim(seq_a)
-LV_AT_1stbp_LongAllele_SNP2=SeqLogo(seq_a$V9, "LV_AT_1stbp_LongAllele_SNP2.pdf")
-LV_AT_1stbp_ShortAllele_SNP2=SeqLogo(seq_a$V10, "LV_AT_1stbp_ShortAllele_SNP2.pdf")
+AT_1stbp_LongAllele_SNP2=SeqLogo(seq_a$V9, paste(organ, "_AT_1stBpShortC_LongAllele_SNP2.pdf", sep=""))
+AT_1stbp_ShortAllele_SNP2=SeqLogo(seq_a$V10, paste(organ, "_AT_1stBpShortC_ShortAllele_SNP2.pdf", sep=""))
 
 d=100
-w1=30
-w2=30
+w1=0
+w2=0
+s=2
 range=(d+1-w1): (d+1+w2)
-organ="BN"
-s_l=BN_AT_1stbp_LongAllele_SNP2
-s_h=BN_AT_1stbp_ShortAllele_SNP2
-plot(-w1:w2,s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
-     ylim=c(-0.3,0.5), pch=pch_u,
+s_l=AT_1stbp_LongAllele_SNP2
+s_h=AT_1stbp_ShortAllele_SNP2
+
+for (i in 4:1){
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+
+# check SNP3 when SNP1 is C in Short ATC in Long allele
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP3_+-100_Long_ShortAlleleSeq.bed", sep=""))
+dim(seq_a)
+AT_1stbp_LongAllele_SNP3=SeqLogo(seq_a$V9, paste(organ, "_AT_1stBpShortC_LongAllele_SNP3.pdf", sep=""))
+AT_1stbp_ShortAllele_SNP3=SeqLogo(seq_a$V10, paste(organ, "_AT_1stBpShortC_ShortAllele_SNP3.pdf", sep=""))
+
+s=3
+s_l=AT_1stbp_LongAllele_SNP3
+s_h=AT_1stbp_ShortAllele_SNP3
+
+for (i in 4:1){
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+
+# check SNP4 when SNP1 is C in Short ATC in Long allele
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP4_+-100_Long_ShortAlleleSeq.bed", sep=""))
+dim(seq_a)
+AT_1stbp_LongAllele_SNP4=SeqLogo(seq_a$V9, paste(organ, "_AT_1stBpShortC_LongAllele_SNP4.pdf", sep=""))
+AT_1stbp_ShortAllele_SNP4=SeqLogo(seq_a$V10, paste(organ, "_AT_1stBpShortC_ShortAllele_SNP4.pdf", sep=""))
+
+s=4
+s_l=AT_1stbp_LongAllele_SNP4
+s_h=AT_1stbp_ShortAllele_SNP4
+
+for (i in 4:1){
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+
+
+# check SNP5 when SNP1 is C in Short ATC in Long allele
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP5_+-100_Long_ShortAlleleSeq.bed", sep=""))
+dim(seq_a)
+AT_1stbp_LongAllele_SNP5=SeqLogo(seq_a$V9, paste(organ, "_AT_1stBpShortC_LongAllele_SNP5.pdf", sep=""))
+AT_1stbp_ShortAllele_SNP5=SeqLogo(seq_a$V10, paste(organ, "_AT_1stBpShortC_ShortAllele_SNP5.pdf", sep=""))
+
+s=5
+s_l=AT_1stbp_LongAllele_SNP5
+s_h=AT_1stbp_ShortAllele_SNP5
+
+for (i in 4:1){
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+}
+
+
+## check SNP1 to SNP5 ####################
+organ="LV"
+seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_+-30_Long_ShortAlleleSeq.bed", sep=""))
+dim(seq_a)
+AT_1stbp_LongAllele=SeqLogo(seq_a$V8, paste(organ,"_AT_1stbp_LongAllele.pdf",sep=""))
+AT_1stbp_ShortAllele=SeqLogo(seq_a$V9, paste(organ,"_AT_1stbp_ShortAllele.pdf",sep=""))
+
+acgt_col=c("dark green", "blue", "orange" , "red")
+acgt=c("A","C","G","T")
+acgt_SminusL <-NULL 
+pch_u=1
+d=30
+w1=0
+w2=0
+s=0
+range=(d+1-w1): (d+1+w2)
+s_h=AT_1stbp_ShortAllele
+s_l=AT_1stbp_LongAllele
+plot((-w1+s):(w2+s),s_h[1,range] - s_l[1,range], col = acgt_col[1], type="o",
+     xlim=c(0,5),
+     ylim=c(-0.12,0.12), pch=pch_u,
      ylab="ShortAllele - LongAllele",
-     xlab="Distance to maxTSN",
+     xlab="SNP",
      main=organ,
      las=1, frame=FALSE
 )
 abline(h=0, col="gray")
-abline(v=0, col="gray")
 for (i in 4:1){
-  points(-w1:w2,s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+  points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
+  acgt_SminusL[[acgt[i]]] <-list(s_h[i,range] - s_l[i,range])
+  }
+legend("topright", legend=acgt,
+       col=acgt_col, bty = "n", lty=1, pch=pch_u)
+
+d=100
+w1=0
+w2=0
+range=(d+1-w1): (d+1+w2)
+for (s in 1:5){
+  seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP",s,"_+-100_Long_ShortAlleleSeq.bed", sep=""))
+  cat ("SNP", s , dim(seq_a),"\n")
+  LongAllele=SeqLogo(seq_a$V9, paste(organ, "_AT_1stBpShortC_LongAllele_SNP",s,".pdf", sep=""))
+  ShortAllele=SeqLogo(seq_a$V10, paste(organ, "_AT_1stBpShortC_ShortAllele_SNP",s,".pdf", sep=""))
+  shortMinusLong= ShortAllele - LongAllele
+  
+  for (i in 4:1){
+    points((-w1+s):(w2+s), shortMinusLong[i,range] , col = acgt_col[i], type="o", pch=pch_u)
+    acgt_SminusL[[acgt[i]]] <-list(unlist(acgt_SminusL[[acgt[i]]]), shortMinusLong[i,range])
+      }
+  
+}
+
+plot(0:5,unlist(acgt_SminusL[[acgt[1]]]), col = acgt_col[1], type="o",
+     xlim=c(0,5),
+     ylim=c(-1,1), pch=pch_u,
+     ylab="ShortAllele - LongAllele",
+     xlab="SNP",
+     main=organ,
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+for (i in 4:1){
+  points(0:5,unlist(acgt_SminusL[[acgt[i]]]), col = acgt_col[i], type="o", pch=pch_u)
 }
 legend("topleft", legend=acgt,
        col=acgt_col, bty = "n", lty=1, pch=pch_u)
 
 
+## combine A with T, C with G
+#acgt=c("A","C","G","T")
+plot(1:5,unlist(acgt_SminusL[[acgt[1]]])+unlist(acgt_SminusL[[acgt[4]]]), col = acgt_col[1], type="o",
+     xlim=c(0,5),
+     ylim=c(-0.15,0.15), pch=pch_u,
+     ylab="ShortAllele - LongAllele",
+     xlab="SNP",
+     main=organ,
+     las=1, frame=FALSE
+)
+abline(h=0, col="gray")
+points(1:5,unlist(acgt_SminusL[[acgt[2]]])+unlist(acgt_SminusL[[acgt[3]]]), col = acgt_col[2], type="o", pch=pch_u)
+legend("topleft", legend=c("AT", "CG"),
+       col=c("dark green", "blue"), bty = "n", lty=1, pch=pch_u)
 
 
 
 
 
-
+#######################
 
 d=30
 bin=13
