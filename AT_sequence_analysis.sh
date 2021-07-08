@@ -200,12 +200,18 @@ d=100
 
 
 ##### only use SNP with in AT window #####
-#2nd SNP
-cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
-| awk 'BEGIN {OFS="\t";c="_SNP2"}($16 <= $3-$2){print $12, $13, $14, $4c, $5, $6 ,$10, $15}'  \
->   ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP2.bed
+# remove the filter that "ATs with 1st bp short allele C, long allele A,T,G"
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2ndSNP_3rdSNP_4thSNP_5thSNP.bed \
+| cut -f 7- \
+> ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2345thSNP.bed
 
-j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP2
+
+#2nd SNP
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP2"}($16+1 > 0 && $16 <= $3-$2){print $12, $13, $14, $4c, $5, $6 ,$10, $15}'  \
+>   ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_SNP2.bed
+
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_SNP2
 d=100
 #if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
  # get sequence from maternal genome
@@ -218,9 +224,9 @@ d=100
  ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
 
 #3rd SNP
-j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP3
-cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
-| awk 'BEGIN {OFS="\t";c="_SNP3"} ($16+$21 <= $3-$2){print $17, $18, $19, $4c, $5, $6 ,$10, $20}'  \
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_SNP3
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP3"} ($21+1 > 0 && $16+$21 <= $3-$2){print $17, $18, $19, $4c, $5, $6 ,$10, $20}'  \
 >   ${j}.bed
 
 d=100
@@ -235,9 +241,9 @@ d=100
  ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
 
 #4th SNP
-j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP4
-cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
-| awk 'BEGIN {OFS="\t";c="_SNP4"} ($16+$21+$26 <= $3-$2) {print $22, $23, $24, $4c, $5, $6 ,$10, $25}'  \
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_SNP4
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP4"} ($26+1 > 0 &&$16+$21+$26 <= $3-$2) {print $22, $23, $24, $4c, $5, $6 ,$10, $25}'  \
 >   ${j}.bed
 
 d=100
@@ -252,9 +258,9 @@ d=100
  ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $7 ,$8, $10, $9} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
 
 #5th SNP
-j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_SNP5
-cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBpShortC_2345thSNP.bed \
-| awk 'BEGIN {OFS="\t";c="_SNP5"} ($16+$21+$26+$31 <= $3-$2){print $27, $28, $29, $4c, $5, $6 ,$10, $30}'  \
+j=${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_SNP5
+cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2345thSNP.bed \
+| awk 'BEGIN {OFS="\t";c="_SNP5"} ($31+1 > 0 && $16+$21+$26+$31 <= $3-$2){print $27, $28, $29, $4c, $5, $6 ,$10, $30}'  \
 >   ${j}.bed
 
 d=100
