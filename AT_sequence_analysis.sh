@@ -2,7 +2,7 @@ cd /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript
 
 # get the M,P identify fi AlleleHMMblocks to B6 and CAST
 
-Organ=LV
+Organ=SP
 # annotate which stran the AlleleHMM blocks biased to
 # from MB6
 # -f 1 -r require complete overlap of -a and -b
@@ -102,8 +102,6 @@ d=100
  cat ${j}_+-${d}_B6_CAST_Seq.bed  | awk '{OFS="\t"} ($5=="B6") {print $1,$2,$3,$4,$5, $6,$7, $8} 
  ($5=="CAST") {print  $1,$2,$3,$4,$5, $6, $8 ,$7} ' > ${j}_+-${d}_Long_ShortAlleleSeq.bed 
 
-
-#HERE
 
 # identify ATs with 1st bp short allele C, long allele A,T,G
 cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_2ndSNP_3rdSNP_4thSNP_5thSNP.bed \

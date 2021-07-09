@@ -132,7 +132,7 @@ legend("topleft", legend=acgt,
 
 
 ### check 1st SNP
-organ="LV"
+organ="SP"
 seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_+-30_Long_ShortAlleleSeq.bed", sep=""))
 dim(seq_a)
 AT_1stbp_LongAllele=SeqLogo(seq_a$V8, paste(organ, "_AT_1stbp_LongAllele.pdf", sep=""))
@@ -233,9 +233,9 @@ for (i in 4:1){
   points((-w1+s):(w2+s),s_h[i,range] - s_l[i,range], col = acgt_col[i], type="o", pch=pch_u)
 }
 
-
+### use this one !!!
 ## check SNP1 to SNP5 ####################
-organ="BN"
+organ="SP"
 seq_a=read.table(paste(organ, "_AT_4tunitIntersectNativeHMM_intersectRegion_strain_1stBp_+-30_Long_ShortAlleleSeq.bed", sep=""))
 dim(seq_a)
 AT_1stbp_LongAllele=SeqLogo(seq_a$V8, paste(organ,"_AT_1stbp_LongAllele.pdf",sep=""))
