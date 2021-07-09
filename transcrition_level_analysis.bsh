@@ -1,0 +1,19 @@
+# use /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/tunit_protein_coding
+//    19201 BN_all_h5.preds.full_inProtein_coding.bed
+//    21398 GI_all_h5.preds.full_inProtein_coding.bed
+//    18334 HT_all_h5.preds.full_inProtein_coding.bed
+//    21801 KD_all_h5.preds.full_inProtein_coding.bed
+//    21374 LV_all_h5.preds.full_inProtein_coding.bed
+//    14017 SK_all_h5.preds.full_inProtein_coding.bed
+//    18127 SP_all_h5.preds.full_inProtein_coding.bed
+//    21208 ST_all_h5.preds.full_inProtein_coding.bed
+# from PolyA_Allele-specific-manuscript_2021updates
+# tunits that DO overlap with the gene transcript (gencode.vM25.annotation_transcript_protein_coding) with dREG sites 
+# exclude chrX and chrY
+
+cd /workdir/sc2457/F1_Tissues/transcription_level_analysis
+# Tunits
+ln -s /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/tunit_protein_coding .
+
+# reads location
+ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
