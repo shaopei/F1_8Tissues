@@ -46,6 +46,11 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
   dim(g1); max(g1$unmasked_p_value); min(g1$unmasked_p_value)
   dim(g9); max(g9$unmasked_p_value); min(g9$unmasked_p_value)
   
+  write.table(g9, file=paste(name, "_initiation_g9.bed", sep=""), quote = F, sep = "\t",
+              row.names =F, col.names = F)
+  write.table(g1, file=paste(name, "_initiation_g1.bed", sep=""), quote = F, sep = "\t",
+              row.names =F, col.names = F)
+  
   g1$chrmStart = g1$chrmStart-d
   g1$chrmEnd = g1$chrmEnd+d
   g9$chrmStart = g9$chrmStart-d
@@ -75,6 +80,11 @@ SNPsAbundanceAroundMaxTSNInTSS <-function(d=50, step=1,times=1, use.log=FALSE, u
   # asTSS driven by single base
   s = AsTSS_maxTSN[AsTSS_maxTSN$masked_p_value > p_value_cut,c(11:16,7)]
   
+  write.table(m, file=paste(name, "_initiation_m.bed", sep=""), quote = F, sep = "\t",
+              row.names =F, col.names = F)
+  write.table(s, file=paste(name, "_initiation_s.bed", sep=""), quote = F, sep = "\t",
+              row.names =F, col.names = F)
+
   # if (dim(s)[1] > dim(m)[1]){
   # s = s[order(s$masked_p_value, decreasing = TRUE),][1:dim(m)[1],c(11:16,7)]
   # }else{
@@ -303,6 +313,7 @@ TSSwithSNPsAroundMaxTSN <-function(d=50, bin=5,times=1, use.log=FALSE, use.sum=F
   m = AsTSS_maxTSN[AsTSS_maxTSN$masked_p_value <= p_value_cut,c(11:16,7)]
   # asTSS driven by single base
   s = AsTSS_maxTSN[AsTSS_maxTSN$masked_p_value > p_value_cut,c(11:16,7)]
+  
   
   # if (dim(s)[1] > dim(m)[1]){
   # s = s[order(s$masked_p_value, decreasing = TRUE),][1:dim(m)[1],c(11:16,7)]

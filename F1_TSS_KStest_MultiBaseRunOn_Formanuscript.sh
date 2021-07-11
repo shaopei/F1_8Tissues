@@ -156,7 +156,9 @@ do
 done
 ln -s ../P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw .
 #Rscript getSNPsAbundance.R
+# cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/maxTSN_TSS_TID_combine_analysis_MultiBaseRunOn
 Rscript SNPsAbundance_manuscript_figure.R
+
 
 # Organ=c("BN","LV","HT", "SK", "KD", "SP", "GI", "ST")
 # s_count <- NULL
