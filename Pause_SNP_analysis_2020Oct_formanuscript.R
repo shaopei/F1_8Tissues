@@ -48,7 +48,9 @@ combine_pause0.1 <- NULL
 for (t in c("HT","SK","KD")){
   show.window=100
   pause_window_0.1 <- read.table(paste(file_dir,t,"_dREG_5mat5pat_uniq_pValue_fdr0.1.bed", sep =""), header = F)
+  cat (t, dim(pause_window_0.1), "\n")
   pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
+  cat (dim(pause_window_0.1), "\n")
   end=".rpm.bw"; times=10
   #end=".bw"; times=1
   # allelic reads (map3) #mapped position of the 3 prime end of reads
@@ -451,6 +453,14 @@ for (i in 1:dim(df)[1]){
 }
 
 df$map3.p.value.fdr = p.adjust(df$map3.p.value, method = "fdr")
+
+df$earlyPauseAllele = "CAST"
+df$earlyPauseAllele[df$earlyPause==df$mat_maxPause_map3] = "CAST"
+
+write.table(df[,c("V1","V2", "V3", "V4", "V5", "V6", "Tissue" ,"earlyPause", "latePause", "map3.p.value.fdr", "earlyPauseAllele")], file="T3_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed", quote = F, sep="\t",
+            row.names = F, col.names = T)
+
+getwd()
 
 metaplot.SNPsLocation.aroundMaxPause <-function(df, name="", use.sum=FALSE, col="red", show.window = 49, step=1 ,add=FALSE, pch_u=19){
   bed6 <- df[,1:6]
