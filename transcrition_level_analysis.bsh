@@ -83,3 +83,26 @@ intersectBed -wb -s -a ${Organ}_allelicPauseWithSharedMaxTSN_shareMaxpauses_fdr0
 intersectBed -v -s -a ${Organ}_allelicPauseWithSharedMaxTSN_shareMaxpauses_fdr0.9_tunits.temp.bed -b <(cat ${Organ}_allelicPauseWithSharedMaxTSN_distinctMaxpauses_fdr0.1.bed | cut -f 10-) \
 > ${Organ}_allelicPauseWithSharedMaxTSN_shareMaxpauses_fdr0.9_tunits.bed
 done
+
+#transcrition_level_analysis_getCounts.R
+
+
+### allelic termination
+cd /workdir/sc2457/F1_Tissues/transcription_level_analysis/AT_AllelicTermination
+ ln -s  /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/*_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed .
+# col 1-6 AT window
+# col 7-12 AlleleHMM blocks
+# col 13-18 Tunit 
+# col 19 B6 or CAST which strain AT bias toward
+#*/
+
+for Organ in BN LV SP
+do
+# identify the tunits without AT window
+# -b  col 13-18 Tunit
+intersectBed -v -s -a ../tunit_protein_coding/${Organ}_all_h5.preds.full_inProtein_coding.bed \
+-b <(cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) \ 
+> ${Organ}_all_h5.preds.full_inProtein_coding_withoutATwindow.bed
+done
+
+

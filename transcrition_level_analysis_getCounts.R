@@ -54,10 +54,10 @@ tus$change=log2((tus$B6_counts+1)/(tus$CAST_counts+1))
 library("vioplot")
 vioplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$group,
         main=organ)
-abline(h=0)
+abline(h=0, col="red")
 boxplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$group,
         main=organ)
-abline(h=0)
+abline(h=0, col="red")
 
 cat("g9, N=" , sum(tus$group=="g9"))
 cat("m, N=" , sum(tus$group=="m"))
@@ -152,17 +152,17 @@ tus$log2_early_late_ratio[tus$earlyPauseAllele=="CAST"] = log2((tus$CAST_counts+
 library("vioplot")
 vioplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$group,
         main=organ)
-abline(h=0)
+abline(h=0, col="red")
 boxplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$group,
         main=organ)
-abline(h=0)
+abline(h=0, col="red")
 
 vioplot(tus$log2_early_late_ratio ~ tus$group,
         main=organ)
-abline(h=0)
+abline(h=0, col="red")
 boxplot(tus$log2_early_late_ratio ~ tus$group,
         main=organ)
-abline(h=0)
+abline(h=0, col="red")
 
 cat("g9, N=" , sum(tus$group=="g9"))
 cat("g1, N=" , sum(tus$group=="g1"))
@@ -177,3 +177,126 @@ testor <-  matrix(c(sum(abs(tus$change)>=change_ratio & tus$group=="g1"), sum(tu
 
 f = fisher.test(testor, alternative = "g" ); f
 
+
+# AT, Allelic termination 
+file_dir="~/Box Sync/BN_IGV/"
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/AT_AllelicTermination/")
+organ="SP"
+tus=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed") 
+tus_noAT=read.table(file = paste(organ,"_all_h5.preds.full_inProtein_coding_withoutATwindow.bed",sep=""), header=FALSE)
+tus_noAT = tus_noAT[,1:6] 
+tus_noAT$AT_long = "NoAT"
+tus_noAT$group = "NoAT"
+dim(tus_noAT)
+
+tus_withAT=read.table(file = paste(organ,"_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed",sep=""), header=FALSE)
+tus_withAT = tus_withAT[,13:19]  #tunits
+tus_withAT$group = "AT"
+colnames(tus_withAT)[1:8] = colnames(tus_noAT)[1:8]
+tus=rbind(tus_noAT, tus_withAT)
+dim(tus)
+#View(tus)
+tus=unique(tus)
+
+colnames(tus)[2] = "TXSTART"
+colnames(tus)[3] = "TXEND"
+colnames(tus)[6] = "TXSTRAND"
+tus <- tus[(tus$TXEND-tus$TXSTART)>500,]
+
+dim(tus)
+# body exclude the first 250bp of transcript
+bodies <- tus[,1:6]
+bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
+bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
+
+b6.bw=paste(organ, "_map2ref_1bpbed_map5_B6", sep="")
+cast.bw=paste(organ, "_map2ref_1bpbed_map5_CAST", sep="")
+filenames <- c(b6.bw, cast.bw)
+## Gets counts
+counts <- NULL
+for(f in filenames) {
+    counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE, path=file_dir))
+}
+
+
+tus$B6_counts = counts[,1]
+tus$CAST_counts = counts[,2]
+tus$log2_B6_CAST_ratio=log2((tus$B6_counts+1)/(tus$CAST_counts+1))
+tus$log2_long_short_ratio=log2((tus$B6_counts+1)/(tus$CAST_counts+1))
+tus$log2_long_short_ratio[tus$AT_long=="CAST"] = log2((tus$CAST_counts+1)/(tus$B6_counts+1))[tus$AT_long=="CAST"] 
+
+library("vioplot")
+vioplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$AT_long,
+        main=organ)
+abline(h=0, col="red")
+boxplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$AT_long,
+        main=organ)
+abline(h=0, col="red")
+
+vioplot(tus$log2_long_short_ratio ~ tus$group,
+        main=organ)
+abline(h=0, col="red")
+boxplot(tus$log2_long_short_ratio ~ tus$group,
+        main=organ)
+abline(h=0, col="red")
+
+cat("NoAT, N=" , sum(tus$group=="NoAT"))
+cat("WithAT, N=" , sum(tus$group=="AT"))
+
+# withAT
+tus_withAT=read.table(file = paste(organ,"_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed",sep=""), header=FALSE)
+colnames(tus_withAT)[4]="intersect"
+colnames(tus_withAT)[16]="tunit"
+colnames(tus_withAT)[19]="AT_long"
+colnames(tus_withAT)[14] = "TXSTART"
+colnames(tus_withAT)[15] = "TXEND"
+colnames(tus_withAT)[18] = "TXSTRAND"
+tus_withAT <- tus_withAT[(tus_withAT$TXEND-tus_withAT$TXSTART)>500,]
+dim(tus_withAT)
+# remove dupplicated tus, keep one of the intersect
+tus_withAT = tus_withAT[!duplicated(tus_withAT$tunit),]
+dim(tus_withAT)
+b6.bw=paste(organ, "_map2ref_1bpbed_map5_B6", sep="")
+cast.bw=paste(organ, "_map2ref_1bpbed_map5_CAST", sep="")
+filenames <- c(b6.bw, cast.bw)
+
+bodies <- tus_withAT[,13:18]
+colnames(bodies)[6]="TXSTRAND"
+bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
+bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
+## Gets counts
+counts <- NULL
+for(f in filenames) {
+    counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE, path=file_dir))
+}
+
+
+tus_withAT$tunit_B6_counts = counts[,1]
+tus_withAT$tunit_CAST_counts = counts[,2]
+
+bodies <- tus_withAT[,1:6]  #intersect region, AT window
+## Gets counts
+counts <- NULL
+for(f in filenames) {
+    counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE, path=file_dir))
+}
+
+tus_withAT$it_B6_counts = counts[,1]
+tus_withAT$it_CAST_counts = counts[,2]
+
+tus_withAT$B6_counts = tus_withAT$tunit_B6_counts - tus_withAT$it_B6_counts
+tus_withAT$CAST_counts =tus_withAT$tunit_CAST_counts - tus_withAT$it_CAST_counts
+tus_withAT$log2_B6_CAST_ratio=log2((tus_withAT$B6_counts+1)/(tus_withAT$CAST_counts+1))
+tus_withAT$log2_long_short_ratio=log2((tus_withAT$B6_counts+1)/(tus_withAT$CAST_counts+1))
+tus_withAT$log2_long_short_ratio[tus_withAT$AT_long=="CAST"] = log2((tus_withAT$CAST_counts+1)/(tus_withAT$B6_counts+1))[tus_withAT$AT_long=="CAST"] 
+
+hist(tus_withAT$log2_long_short_ratio, 
+     breaks = seq(-5.0025,5,0.05), 
+     main=organ)
+abline(v=0, col="red")
+
+vioplot(tus_withAT$log2_long_short_ratio, tus$log2_long_short_ratio[tus$group=="AT"],tus$log2_long_short_ratio[tus$group=="NoAT"],
+        names=c("exclude AT", "include AT", "tunit without AT"),
+        ylab="log2(long+1/short+1)",
+        main=organ)
+abline(h=0, col="red")
