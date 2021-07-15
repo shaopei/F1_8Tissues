@@ -75,6 +75,20 @@ counts = counts[counts$CAST.proseq > 10,]
 counts$sB6 <- counts$B6.exon/counts$B6.proseq
 counts$sCAST <- counts$CAST.exon/counts$CAST.proseq
 
+
+plot(counts$All.exon, counts$All.rna)
+cor(counts$All.exon, counts$All.rna)
+plot(counts$All.proseq, counts$All.rna)
+cor.test(counts$All.proseq, counts$All.rna)
+plot(log(counts$All.proseq+1), log(counts$All.rna+1))
+cor.test(log(counts$All.proseq+1), log(counts$All.rna+1))
+plot(counts$All.proseq, counts$All.exon)
+cor.test(counts$All.proseq, counts$All.exon)
+plot(log(counts$All.proseq+1), log(counts$All.exon+1))
+cor.test(log(counts$All.proseq+1), log(counts$All.exon+1))
+
+
+
 plot(counts$sB6, counts$sCAST,
      xlim=c(0,200), ylim = c(0,200))
 
@@ -92,14 +106,14 @@ target$deltaS = abs(target$sB6-target$sCAST)
 target=target[!(is.na(target$V1)),]
 
 BN_t=target
-View(BN_t)
+#View(BN_t)
 write.table(BN_t, file="BN_geneWithInATwindows_stability.txt", quote = F, sep="\t", col.names = T, row.names = F)
-View(LV_t)
-BN_t$tissue="BN"
-colnames(BN_t)
-LV_t$tissue="LV"
-BL=rbind.data.frame(BN_t[,c(1:11,16:21)], LV_t)
-View(BL)
+#View(LV_t)
+#BN_t$tissue="BN"
+#colnames(BN_t)
+#LV_t$tissue="LV"
+#BL=rbind.data.frame(BN_t[,c(1:11,16:21)], LV_t)
+#View(BL)
 
 #hist(target$sB6, breaks = seq(0,14,0.01),col="blue")
 #hist(target$sCAST, breaks = seq(0,14,0.01), col="red")
@@ -114,7 +128,7 @@ plot(ecdf(target$deltaS[target$AlleleHMM==0]),
      #pch=10, 
      col="dark blue",
      #xlim=c(0,2),
-     ylim=c(0.8,1),
+     ylim=c(0.6,1),
      xlab="|Stability B6 - Stability CAST|",
      ylab="CDF",
      las=1,cex=1,

@@ -75,6 +75,17 @@ counts$sB6 <- counts$B6.exon/counts$B6.proseq
 counts$sCAST <- counts$CAST.exon/counts$CAST.proseq
 dim(counts)
 
+plot(counts$All.exon, counts$All.rna)
+cor(counts$All.exon, counts$All.rna)
+plot(counts$All.proseq, counts$All.rna)
+cor.test(counts$All.proseq, counts$All.rna)
+plot(log(counts$All.proseq+1), log(counts$All.rna+1))
+cor.test(log(counts$All.proseq+1), log(counts$All.rna+1))
+plot(counts$All.proseq, counts$All.exon)
+cor.test(counts$All.proseq, counts$All.exon)
+plot(log(counts$All.proseq+1), log(counts$All.exon+1))
+cor.test(log(counts$All.proseq+1), log(counts$All.exon+1))
+
 #plot(counts$All.proseq, counts$All.exon)
 #plot(log10(counts$All.proseq), log10(counts$All.exon))
 #cor(counts$All.proseq, counts$All.exon)
