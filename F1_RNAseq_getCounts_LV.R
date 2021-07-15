@@ -1,4 +1,4 @@
-## cd /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5
+## cd /workdir/sc2457/F1_Tissues/RNA-seq/STAR_LV/
 # R
 ## getCounts.R - Counts reads in each gene.
 require(bigWig)
@@ -25,9 +25,7 @@ filenames <- c("LV_map2ref_1bpbed_map5", "LV_map2ref_1bpbed_map5_B6", "LV_map2re
 ## Gets counts
 counts <- NULL
 for(f in filenames) {
-	counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE))
-    #pause_counts <- cbind(pause_counts, countBigWig(f, pause, rpkm=FALSE))
-	#postcps_counts <- cbind(postcps_counts, countBigWig(f, postcps, rpkm=FALSE)) 
+	counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE, path="/workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5/"))
 }
 
 colnames(counts) <- c("All.proseq", "B6.proseq", "CAST.proseq")
@@ -35,8 +33,8 @@ counts <- cbind(bodies, counts)
 colnames(counts)[4]="geneID"
 colnames(counts)[5]="geneName"
 
-#exon.filenames <- c("LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.exon.read.count",
-exon.filenames <- c(	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.exon.read.count", 
+exon.filenames <- c("LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.exon.read.count",
+                    "LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.exon.read.count", 
 	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.nsorted.exon.read.count")
 exon.counts <- NULL
 for(f in exon.filenames) {
@@ -45,10 +43,9 @@ for(f in exon.filenames) {
 	exon.counts <- cbind(exon.counts, r[,2])
 }
 exon.counts <- cbind.data.frame(r$V1, exon.counts)
-#colnames(exon.counts) <- c("geneID","All.exon", "B6.exon", "CAST.exon")
-colnames(exon.counts) <- c("geneID","B6.exon", "CAST.exon")
+colnames(exon.counts) <- c("geneID","All.exon", "B6.exon", "CAST.exon")
+#colnames(exon.counts) <- c("geneID","B6.exon", "CAST.exon")
 
-if(0){
 rna.filenames <- c("LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.gene.read.count",
 	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.gene.read.count", 
 	"LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast.nsorted.gene.read.count")
@@ -60,10 +57,9 @@ for(f in rna.filenames) {
 }
 rna.counts <- cbind.data.frame(r$V1, rna.counts)
 colnames(rna.counts) <- c("geneID","All.rna", "B6.rna", "CAST.rna")
-}
 
-#merge.counts <- merge(counts, rna.counts, by="geneID", all.x=TRUE) 
-merge.counts <- merge(counts, exon.counts, by="geneID", all.x=TRUE) 
+merge.counts <- merge(counts, rna.counts, by="geneID", all.x=TRUE) 
+merge.counts <- merge(merge.counts, exon.counts, by="geneID", all.x=TRUE) 
 
 save.image("LV_gencode.vM25.annotation.gene-Readcounts.RData")
 
@@ -72,11 +68,17 @@ load("LV_gencode.vM25.annotation.gene-Readcounts.RData")
 
 counts = merge.counts
 dim(counts)
+#counts = counts[counts$All.proseq >= 10,]
 counts = counts[counts$B6.proseq >= 10,]
 counts = counts[counts$CAST.proseq >= 10,]
 counts$sB6 <- counts$B6.exon/counts$B6.proseq
 counts$sCAST <- counts$CAST.exon/counts$CAST.proseq
 dim(counts)
+
+#plot(counts$All.proseq, counts$All.exon)
+#plot(log10(counts$All.proseq), log10(counts$All.exon))
+#cor(counts$All.proseq, counts$All.exon)
+
 
 plot(counts$sB6, counts$sCAST,
      xlim=c(0,200), ylim = c(0,200))
@@ -112,8 +114,8 @@ par(cex.lab=2.2, cex.axis=2.2)
 plot(ecdf(target$deltaS[target$AlleleHMM==0]),
      #pch=10, 
      col="dark blue",
-     xlim=c(0,2),
-     ylim=c(0.9,1),
+     #xlim=c(0,2),
+     ylim=c(0.6,1),
      xlab="|Stability B6 - Stability CAST|",
      ylab="CDF",
      las=1,cex=1,

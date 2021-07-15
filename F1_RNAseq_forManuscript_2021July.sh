@@ -326,22 +326,29 @@ done
 # calculate the stability of mRNA
 # reads counts of proseq in gene body / read counts of mRNA-seq in exon
 
+# switch the strand for gencode.vM25.annotation.mat.gtf and gencode.vM25.annotation.gtf, 
+# because mRNA were mapped to the opposite strand
+cat gencode.vM25.annotation.mat.gtf | awk 'BEGIN{FS="\t"; OFS="\t"}($7=="+") {print $1,$2,$3,$4,$5,$6,"-",$8,$9} ($7=="-") {print $1,$2,$3,$4,$5,$6,"+",$8,$9} ($7!="+" && $7 != "-") {print $0}' > gencode.vM25.annotation.mat_strandswitched.gtf &
+cat gencode.vM25.annotation.gtf | awk 'BEGIN{FS="\t"; OFS="\t"}($7=="+") {print $1,$2,$3,$4,$5,$6,"-",$8,$9} ($7=="-") {print $1,$2,$3,$4,$5,$6,"+",$8,$9} ($7!="+" && $7 != "-") {print $0}' > gencode.vM25.annotation_strandswitched.gtf &
+
+ ln -s ../STAR_BN/gencode.vM25.*strandswitched.gtf .
+
 # htseq-count [options] alignment_file gff_file
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out
-samtools sort -O SAM -n -@ 20 ${b}.bam > ${b}.nsorted.sam
-htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.exon.read.count &
-htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.gene.read.count &
+#samtools sort -O SAM -n -@ 20 ${b}.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat_strandswitched.gtf > ${b}.exon.read.count &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat_strandswitched.gtf > ${b}.gene.read.count &
 
-samtools sort -O SAM -n -@ 20 LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted.bam > LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.sam
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6
-htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count &
-htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count &
+#samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.exon.read.count &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.gene.read.count &
 
 
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
-samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
-htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count &
-htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count &
+#samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.exon.read.count &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.gene.read.count &
 
 
 # determine the gene thats in 

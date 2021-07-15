@@ -1,4 +1,4 @@
-##
+##cd /workdir/sc2457/F1_Tissues/RNA-seq/STAR_BN/
 ## getCounts.R - Counts reads in each gene.
 require(bigWig)
 
@@ -24,7 +24,7 @@ filenames <- c("BN_map2ref_1bpbed_map5", "BN_map2ref_1bpbed_map5_B6", "BN_map2re
 ## Gets counts
 counts <- NULL
 for(f in filenames) {
-	counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE))
+	counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE, path="/workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5/"))
     #pause_counts <- cbind(pause_counts, countBigWig(f, pause, rpkm=FALSE))
 	#postcps_counts <- cbind(postcps_counts, countBigWig(f, postcps, rpkm=FALSE)) 
 }
@@ -113,8 +113,8 @@ par(cex.lab=2.2, cex.axis=2.2)
 plot(ecdf(target$deltaS[target$AlleleHMM==0]),
      #pch=10, 
      col="dark blue",
-     xlim=c(0,2),
-     ylim=c(0.9,1),
+     #xlim=c(0,2),
+     ylim=c(0.8,1),
      xlab="|Stability B6 - Stability CAST|",
      ylab="CDF",
      las=1,cex=1,
