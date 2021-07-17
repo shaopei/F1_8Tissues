@@ -282,8 +282,12 @@ intersectBed -u -s -a LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed -b <( c
 # strandness -s, ignore downstream -id
 # -fu	Choose first from features in B that are upstream of features in A.
 t=9
-bedtools closest -s -D a -id -fu -t first -a <(sort-bed LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed) -b <( cat AlleleHMM_Blocks/LV_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed AlleleHMM_Blocks/LV_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed | sort-bed -) \
-| awk '{OFS="\t"} ($13+0 < -1 && $13+0 >-100000) {print $0}' > LV_t1E-0${t}_AT_AlleleHMM_within10K.bed
+bedtools closest -s -D a -id -fu -t first -a <(sort-bed LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed) \
+-b <( cat AlleleHMM_Blocks/LV_MB6_BOTH_RNA_plus_regions_t1E-0${t}_filtered_minus.bed AlleleHMM_Blocks/LV_MB6_BOTH_RNA_minus_regions_t1E-0${t}_filtered_plus.bed | sort-bed -) \
+| awk '{OFS="\t"} ($13+0 < -1 && $13+0 >-100000) {print $0}' \
+> LV_t1E-0${t}_AT_AlleleHMM_within10K.bed 
+# col 1-6 LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed
+# col 7-12 AlleleHMM_Blocks from LV_MB6_BOTH_RNA
 
 cat LV_AT_4tunitIntersectNativeHMM_intersectRegion.bed  | awk '{OFS="\t"} ($6=="+") {print $1, $2, $6} ($6=="-") {print $1, $3, $6}' | sort |uniq |wc -l
 #1126
@@ -293,7 +297,12 @@ cat LV_t1E-0${t}_AT_AlleleHMM.bed  LV_t1E-0${t}_AT_AlleleHMM_within10K.bed | awk
 cat gencode.vM25.annotation.gtf | awk 'BEGIN{OFS="\t"} $3=="gene" {split($10,a,"\""); split($14,b,"\""); print $1, $4-1, $5, a[2], b[2], $7}' > gencode.vM25.annotation.gene.bed
 # use the tunits that contain the AT window of interests to identify geneID
 
-intersectBed -wao -s -a LV_AT_4tunitIntersectNativeHMM_tunits.bed -b gencode.vM25.annotation.gene.bed  > LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed
+intersectBed -wao -s -a LV_AT_4tunitIntersectNativeHMM_tunits.bed -b gencode.vM25.annotation.gene.bed  \
+> LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed
+# col 1-6 LV_AT_4tunitIntersectNativeHMM_tunits.bed
+# col 7-12 gencode.vM25.annotation.gene.bed
+# col 13 intersect length 
+
 cat LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed | cut -f 10 |sort |uniq > geneID_withATwindow
 
 # -a use the tunit # use the tunits to identify the geneID within that tunits 
@@ -326,22 +335,29 @@ done
 # calculate the stability of mRNA
 # reads counts of proseq in gene body / read counts of mRNA-seq in exon
 
+# switch the strand for gencode.vM25.annotation.mat.gtf and gencode.vM25.annotation.gtf, 
+# because mRNA were mapped to the opposite strand
+cat gencode.vM25.annotation.mat.gtf | awk 'BEGIN{FS="\t"; OFS="\t"}($7=="+") {print $1,$2,$3,$4,$5,$6,"-",$8,$9} ($7=="-") {print $1,$2,$3,$4,$5,$6,"+",$8,$9} ($7!="+" && $7 != "-") {print $0}' > gencode.vM25.annotation.mat_strandswitched.gtf &
+cat gencode.vM25.annotation.gtf | awk 'BEGIN{FS="\t"; OFS="\t"}($7=="+") {print $1,$2,$3,$4,$5,$6,"-",$8,$9} ($7=="-") {print $1,$2,$3,$4,$5,$6,"+",$8,$9} ($7!="+" && $7 != "-") {print $0}' > gencode.vM25.annotation_strandswitched.gtf &
+
+ ln -s ../STAR_BN/gencode.vM25.*strandswitched.gtf .
+
 # htseq-count [options] alignment_file gff_file
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out
-samtools sort -O SAM -n -@ 20 ${b}.bam > ${b}.nsorted.sam
-htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.exon.read.count &
-htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat.gtf > ${b}.gene.read.count &
+#samtools sort -O SAM -n -@ 20 ${b}.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat_strandswitched.gtf > ${b}.exon.read.count &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.mat_strandswitched.gtf > ${b}.gene.read.count &
 
-samtools sort -O SAM -n -@ 20 LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.sorted.bam > LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6.nsorted.sam
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.b6
-htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count &
-htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count &
+#samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.exon.read.count &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.gene.read.count &
 
 
 b=LV_MB6_BOTH_RNA_mat3waspAligned.sortedByCoord.out.cast
-samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
-htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.exon.read.count &
-htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation.gtf > ${b}.nsorted.gene.read.count &
+#samtools sort -O SAM -n -@ 20 ${b}.sorted.bam > ${b}.nsorted.sam
+htseq-count --stranded yes -t exon -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.exon.read.count &
+htseq-count --stranded yes -t gene -f sam ${b}.nsorted.sam gencode.vM25.annotation_strandswitched.gtf > ${b}.nsorted.gene.read.count &
 
 
 # determine the gene thats in 
