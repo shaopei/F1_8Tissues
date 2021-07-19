@@ -312,25 +312,7 @@ str(x_list)
 
 
 
-#pdf("ShootingGallery.pdf", width = 5, height = 5, useDingbats=FALSE)
-par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 
-#par(mgp=c(3,1,0))
-vioplot(x_list, las=2, 
-        #ylim=c(-6,6),
-        ylab = "log2(Allele 1 + 1 / Allele 2 + 1)",
-        col=c("purple", "gray"),
-        frame.plot=F
-)
-stripchart(x_list, vertical = TRUE, add=T, method = "jitter", pch=19, col="black", jitter = 0.1, offset = 0, cex=1, las=2)
-
-abline(h=0, lty=2)
-legend("topleft", legend=c("BN", "LV"),
-       #title = "SNPs",
-       fill = c("purple", "gray"), 
-       bty = "n")
-
-dev.off()
 ####
 # include TSS within AlleleHMM blocks
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_NoAlleleHMMFilter/")
@@ -347,12 +329,10 @@ for (i in 1:3){
   for (j in (i+1):4){
     for (organ in c("BN", "LV")){
       name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
-      #df=read.table(file = "BN_allReads_TSS_maxTSNs_SNP_TSSNoAlleleHMMFilter_binomtest_+-50_mat_patSeq.bed")
-      #df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNotInAlleleHMMBlocks_binomtest_+-",d,"_High_LowAlleleSeq",asTSS, ".bed", sep=""))
       df=read.table(paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNoAlleleHMMFilter_binomtest_+-",d,"_mat_patSeq",asTSS, ".bed", sep=""))
       cat (paste(organ, "_allReads_TSS_maxTSNs",SNP_orBackground,"TSSNoAlleleHMMFilter_binomtest_+-",d,"_mat_patSeq",asTSS, ".bed", sep=""))
-      cat ("\n")
-      
+      cat ("\n")    
+
       cat (i, diNu[i], "\t", j, diNu[j], "\n")
       allele1 = diNu[i]
       allele2 = diNu[j]
@@ -364,6 +344,34 @@ for (i in 1:3){
   }
 }
 str(x_list)
+new_x_list <- NULL
+new_x_list[["CA/TA"]] = c(x_list[["BN_SNP_CA/TA"]],x_list[["LV_SNP_CA/TA"]])
+new_x_list[["CA/TG"]] = c(x_list[["BN_SNP_CA/TG"]],x_list[["LV_SNP_CA/TG"]])
+new_x_list[["CA/CG"]] = c(x_list[["BN_SNP_CA/CG"]],x_list[["LV_SNP_CA/CG"]])
+new_x_list[["TA/TG"]] = c(x_list[["BN_SNP_TA/TG"]],x_list[["LV_SNP_TA/TG"]])
+new_x_list[["TG/CG"]] = c(x_list[["BN_SNP_TG/CG"]],x_list[["LV_SNP_TG/CG"]])
+
+str(new_x_list)
+pdf("BNandLV_CA_TA_TG_CG_NoAlleleHMMFilter.pdf", width = 5, height = 5, useDingbats=FALSE)
+par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+
+#par(mgp=c(3,1,0))
+vioplot(new_x_list, las=2, 
+        #ylim=c(-6,6),
+        ylab = "log2(Allele 1 + 1 / Allele 2 + 1)",
+        col=c("purple"),
+        frame.plot=F
+)
+#stripchart(new_x_list, vertical = TRUE, add=T, method = "jitter", pch=19, col="black", jitter = 0.1, offset = 0, cex=1, las=2)
+
+abline(h=0, lty=2)
+dev.off()
+legend("topleft", legend=c("BN", "LV"),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
+
+
 ###
 
 ###
