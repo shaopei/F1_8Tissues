@@ -181,26 +181,33 @@ f = fisher.test(testor, alternative = "g" ); f
 # AT, Allelic termination 
 file_dir="~/Box Sync/BN_IGV/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/AT_AllelicTermination/")
-organ="SP"
-tus=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed") 
-tus_noAT=read.table(file = paste(organ,"_all_h5.preds.full_inProtein_coding_withoutATwindow.bed",sep=""), header=FALSE)
-tus_noAT = tus_noAT[,1:6] 
+organ="BN"
+#tus=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed") 
+tus_noAT=read.table(file = paste(organ,"_all_h5.preds.full_inProtein_coding_withoutATwindow_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
+# tus_noAT col1-6 tunits 7-12 gene col13 overlap base counts
+#tus_noAT = tus_noAT[,1:6] 
 tus_noAT$AT_long = "NoAT"
 tus_noAT$group = "NoAT"
+tus_noAT=unique(tus_noAT)
 dim(tus_noAT)
 
-tus_withAT=read.table(file = paste(organ,"_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed",sep=""), header=FALSE)
-tus_withAT = tus_withAT[,13:19]  #tunits
+tus_withAT=read.table(file = paste(organ,"_AT_4tunitIntersectNativeHMM_intersectRegion_strain_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
+tus_withAT = tus_withAT[,c(13:18,20:26,19)]  #tunits
 tus_withAT$group = "AT"
-colnames(tus_withAT)[1:8] = colnames(tus_noAT)[1:8]
+colnames(tus_withAT)[1:15] = colnames(tus_noAT)[1:15]
+tus_withAT=unique(tus_withAT)
+dim(tus_withAT)
+
 tus=rbind(tus_noAT, tus_withAT)
 dim(tus)
 #View(tus)
-tus=unique(tus)
+tus=unique(tus)  #remove duplicates
+dim(tus)
 
 colnames(tus)[2] = "TXSTART"
 colnames(tus)[3] = "TXEND"
 colnames(tus)[6] = "TXSTRAND"
+colnames(tus)[10] = "geneID"
 tus <- tus[(tus$TXEND-tus$TXSTART)>500,]
 
 dim(tus)
@@ -225,6 +232,54 @@ tus$log2_B6_CAST_ratio=log2((tus$B6_counts+1)/(tus$CAST_counts+1))
 tus$log2_long_short_ratio=log2((tus$B6_counts+1)/(tus$CAST_counts+1))
 tus$log2_long_short_ratio[tus$AT_long=="CAST"] = log2((tus$CAST_counts+1)/(tus$B6_counts+1))[tus$AT_long=="CAST"] 
 
+load(paste(organ, "_gencode.vM25.annotation.gene-Readcounts.RData", sep=""))
+View(merge.counts)
+dim(merge.counts)
+tus_gene = merge(tus , merge.counts, by = "geneID")
+dim(tus_gene)
+
+plot(tus_gene$log2_B6_CAST_ratio, log2((tus_gene$B6.proseq+1)/(tus_gene$CAST.proseq+1)),
+     xlab="log2((B6+1)/(CAST+1)) Proseq in Tunit gene body",
+     ylab="log2((B6+1)/(CAST+1)) Proseq in gene annotation",
+     pch=19, col = rgb(0, 0 , 0, alpha=0.3), main=organ
+     )
+cor.test(tus_gene$log2_B6_CAST_ratio, log2((tus_gene$B6.proseq+1)/(tus_gene$CAST.proseq+1)),)
+
+boxplot(log2((tus_gene$B6.rna+1)/(tus_gene$CAST.rna+1)) ~ tus_gene$AT_long,
+        ylim=c(-1.2,1.2),
+        outline=F,las=1,
+        main=organ)
+
+pdf(paste(organ,"_AT_GeneAnnotation_RNA-seq-exon-read_ratio.pdf", sep=""), width=7, height = 7)
+#par(mfrow=c(1,3))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+# gene annotation, doesn't remove the AT window.
+
+boxplot(log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1)) ~ tus_gene$AT_long,
+        ylim=c(-1.2,1.2),
+        outline=F,las=1,
+        main=organ)
+
+abline(h=0, col="red")
+dev.off()
+
+sum(tus_gene$AT_long=="B6")
+sum(tus_gene$AT_long=="CAST")
+sum(tus_gene$group=="NoAT")
+temp=log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1))
+wilcox.test(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
+            tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"])   
+wilcox.test(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
+            tus$log2_B6_CAST_ratio[tus$group=="NoAT"])  
+wilcox.test(tus$log2_B6_CAST_ratio[tus$group=="NoAT"], 
+            tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"])
+
+
+
+
+if(0){
 library("vioplot")
 vioplot(log2((tus$B6_counts+1)/(tus$CAST_counts+1)) ~ tus$AT_long,
         main=organ)
@@ -242,8 +297,9 @@ abline(h=0, col="red")
 
 cat("NoAT, N=" , sum(tus$group=="NoAT"))
 cat("WithAT, N=" , sum(tus$group=="AT"))
-
+}
 # withAT
+# Tunit need to remove reads in AT window
 tus_withAT=read.table(file = paste(organ,"_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed",sep=""), header=FALSE)
 colnames(tus_withAT)[4]="intersect"
 colnames(tus_withAT)[16]="tunit"
@@ -260,7 +316,7 @@ b6.bw=paste(organ, "_map2ref_1bpbed_map5_B6", sep="")
 cast.bw=paste(organ, "_map2ref_1bpbed_map5_CAST", sep="")
 filenames <- c(b6.bw, cast.bw)
 
-bodies <- tus_withAT[,13:18]
+bodies <- tus_withAT[,13:18] # tunit
 colnames(bodies)[6]="TXSTRAND"
 bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
 bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
@@ -290,6 +346,7 @@ tus_withAT$log2_B6_CAST_ratio=log2((tus_withAT$B6_counts+1)/(tus_withAT$CAST_cou
 tus_withAT$log2_long_short_ratio=log2((tus_withAT$B6_counts+1)/(tus_withAT$CAST_counts+1))
 tus_withAT$log2_long_short_ratio[tus_withAT$AT_long=="CAST"] = log2((tus_withAT$CAST_counts+1)/(tus_withAT$B6_counts+1))[tus_withAT$AT_long=="CAST"] 
 
+if(0){
 hist(tus_withAT$log2_long_short_ratio, 
      breaks = seq(-5.0025,5,0.05), 
      main=organ)
@@ -300,3 +357,112 @@ vioplot(tus_withAT$log2_long_short_ratio, tus$log2_long_short_ratio[tus$group=="
         ylab="log2(long+1/short+1)",
         main=organ)
 abline(h=0, col="red")
+}
+pdf(paste(organ,"_AT_Proseq_read_ratio.pdf", sep=""), width=7, height = 7)
+#par(mfrow=c(1,3))
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+boxplot(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
+        tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"],
+        tus$log2_B6_CAST_ratio[tus$group=="NoAT"],
+        names=c("B6", "CAST", "No AT"),
+        xlab="AT long allele",
+        ylab="log2(B6+1/CAST+1)",
+        ylim=c(-1.2,1.2),
+        outline=F,las=1,
+        main=organ)
+abline(h=0, col="red") # remove the outliner
+dev.off()
+
+sum(tus_withAT$AT_long=="B6")
+sum(tus_withAT$AT_long=="CAST")
+sum(tus$group=="NoAT")
+wilcox.test(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
+            tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"])   
+wilcox.test(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
+            tus$log2_B6_CAST_ratio[tus$group=="NoAT"])  
+wilcox.test(tus$log2_B6_CAST_ratio[tus$group=="NoAT"], 
+            tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"])
+
+
+
+plot(ecdf(tus$log2_B6_CAST_ratio[tus$group=="NoAT"]),
+     #pch=10, 
+     col="dark blue",
+     #xlim=c(0,2),
+     #ylim=c(0.6,1),
+     xlab="log2(B6+1/CAST+1)",
+     ylab="CDF",
+     las=1,cex=1,
+     main=organ
+)
+plot(ecdf(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"]),
+     #pch=10, 
+     col="red",
+     #xlim=c(0,2),
+     #ylim=c(0.6,1),
+     xlab="log2(B6+1/CAST+1)",
+     ylab="CDF",
+     las=1,cex=1,
+     main=organ
+)
+lines(ecdf(tus_withAT$log2_B6_CAST_ratio), cex=1, col="dark orange")
+lines(ecdf(tus$log2_B6_CAST_ratio[tus$group=="NoAT"]), cex=1, col="darkblue")
+
+
+lines(ecdf(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"]), cex=1, col="red")
+
+lines(ecdf(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"]), cex=1, col="dark green")
+
+legend("right", 
+       legend = c("B6","CAST" ),
+       title = ,
+       #pch=c(15,15),
+       #lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       #density=c(10000,25),
+       #angle=c(180,45),
+       #angle=45,
+       #fill=c("blue","dark organe","dark green")
+       col=c("red","dark green"),
+       pch=c(19,19),
+       bty = "n"
+)
+
+
+
+
+# relationship between pro-seq and rna-seq 
+# from F1_RNAseq_getCounts.R
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/RNA-seq")
+load("BN_gencode.vM25.annotation.gene-Readcounts.RData")
+
+counts = merge.counts
+counts = counts[counts$All.proseq > 10,]
+counts = counts[counts$B6.proseq > 10,]
+counts = counts[counts$CAST.proseq > 10,]
+counts = counts[counts$All.rna > 10,]
+counts = counts[counts$B6.rna > 10,]
+counts = counts[counts$CAST.rna > 10,]
+
+plot(counts$All.proseq, counts$All.rna)
+plot(log(counts$All.proseq), log(counts$All.rna))
+cor.test(log(counts$All.proseq), log(counts$All.rna))
+plot(counts$B6.proseq, counts$B6.rna)
+plot(log(counts$B6.proseq), log(counts$B6.rna))
+
+
+#plot(counts$All.exon, counts$All.rna)
+#cor(counts$All.exon, counts$All.rna)
+plot(counts$All.proseq, counts$All.rna)
+cor.test(counts$All.proseq, counts$All.rna)
+plot(log(counts$All.proseq+1), log(counts$All.rna+1))
+cor.test(log(counts$All.proseq+1), log(counts$All.rna+1))
+plot(counts$All.proseq, counts$All.exon)
+cor.test(counts$All.proseq, counts$All.exon)
+plot(log(counts$All.proseq+1), log(counts$All.exon+1))
+cor.test(log(counts$All.proseq+1), log(counts$All.exon+1))
+
+

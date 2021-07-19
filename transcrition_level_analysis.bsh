@@ -101,8 +101,31 @@ do
 # identify the tunits without AT window
 # -b  col 13-18 Tunit
 intersectBed -v -s -a ../tunit_protein_coding/${Organ}_all_h5.preds.full_inProtein_coding.bed \
--b <(cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) \ 
-> ${Organ}_all_h5.preds.full_inProtein_coding_withoutATwindow.bed
+-b <(cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) > ${Organ}_all_h5.preds.full_inProtein_coding_withoutATwindow.bed
 done
+
+ln -s /workdir/sc2457/F1_Tissues/RNA-seq/STAR_BN/gencode.vM25.annotation.gene.bed .
+# identify the geneID in tunits without AT windows
+# -f 0.5 Minimum overlap required as a fraction of A
+# -F 0.8 Minimum overlap required as a fraction of B. 
+
+for Organ in BN LV SP
+do
+intersectBed -f 0.5 -F 0.8 -wao -s -a <(cat ${Organ}_all_h5.preds.full_inProtein_coding_withoutATwindow.bed |cut -f 1-6) -b gencode.vM25.annotation.gene.bed \
+> ${Organ}_all_h5.preds.full_inProtein_coding_withoutATwindow_f0.5F0.8gencode.vM25.annotation.gene.bed
+done
+
+# identify geneID within tunits WITH AT windows
+# -f 0.5 Minimum overlap required as a fraction of A
+# -F 0.8 Minimum overlap required as a fraction of B. 
+for Organ in BN LV SP
+do
+intersectBed -f 0.5 -F 0.8 -wao -s -a <(cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed |awk 'BEGIN {OFS="\t"} {print $13,$14,$15,$16,$17,$18, $0}' ) -b gencode.vM25.annotation.gene.bed \
+|cut -f 7- > ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_f0.5F0.8gencode.vM25.annotation.gene.bed
+done
+
+#transcrition_level_analysis_getCounts.R
+
+# tunit and gene annotation
 
 
