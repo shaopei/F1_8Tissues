@@ -1,7 +1,7 @@
 file_dir="~/Box Sync/BN_IGV/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/initiation_CA_nonCA/")
 
-organ="SP"
+organ="LV"
 #tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq.bed",sep=""), header=FALSE)
 tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
 
@@ -10,13 +10,17 @@ colnames(tus)[13:14] = c("B6_allele", "CAST_allele")
 tus=tus[(tus$B6_allele == "CA" | tus$CAST_allele == "CA"),]
 # two group
 # One CA, one nonCA
-tus$group = "1CA"
-tus$group[(tus$B6_allele == "CA" & tus$CAST_allele == "CA")] = "2CA"
+tus$group = "2CA"
+tus$nonCA=tus$CAST_allele
+tus$nonCA[tus$CAST_allele=="CA"] = tus$B6_allele[tus$CAST_allele=="CA"]
+tus$group[(tus$nonCA!= "CA")] = "1CA"
 dim(tus)
 #dim(unique(tus[,c(7:10,22)]))
 tus=tus[!duplicated(tus[,c(7:10,22)]),]
+# keep only -1 is "C"
+tus=tus[(tus$nonCA=="CT"|tus$nonCA=="CC"|tus$nonCA=="CG" | tus$nonCA =="CA"),]
 dim(tus)
-sum(tus$group == "1CA")
+sum(tus$group == "1CA") 
 sum(tus$group == "2CA")
 
 #View(tus)
@@ -26,6 +30,8 @@ colnames(tus)[9] = "TXEND"
 colnames(tus)[12] = "TXSTRAND"
 tus <- tus[(tus$TXEND-tus$TXSTART)>=500,]
 dim(tus)
+sum(tus$group == "1CA") 
+sum(tus$group == "2CA")
 # body exclude the first 250bp of transcript
 bodies <- tus[,7:12]
 bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
