@@ -181,7 +181,7 @@ f = fisher.test(testor, alternative = "g" ); f
 # AT, Allelic termination 
 file_dir="~/Box Sync/BN_IGV/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/AT_AllelicTermination/")
-organ="BN"
+organ="LV"
 #tus=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed") 
 tus_noAT=read.table(file = paste(organ,"_all_h5.preds.full_inProtein_coding_withoutATwindow_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
 # tus_noAT col1-6 tunits 7-12 gene col13 overlap base counts
@@ -269,13 +269,12 @@ sum(tus_gene$AT_long=="B6")
 sum(tus_gene$AT_long=="CAST")
 sum(tus_gene$group=="NoAT")
 temp=log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1))
-wilcox.test(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
-            tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"])   
-wilcox.test(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
-            tus$log2_B6_CAST_ratio[tus$group=="NoAT"])  
-wilcox.test(tus$log2_B6_CAST_ratio[tus$group=="NoAT"], 
-            tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"])
-
+wilcox.test(temp[tus_gene$AT_long=="B6"], 
+            temp[tus_gene$AT_long=="CAST"])   
+wilcox.test(temp[tus_gene$AT_long=="B6"], 
+            temp[tus_gene$AT_long=="NoAT"])   
+wilcox.test(temp[tus_gene$AT_long=="CAST"], 
+            temp[tus_gene$AT_long=="NoAT"]) 
 
 
 
