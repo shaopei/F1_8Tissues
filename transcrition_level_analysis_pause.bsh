@@ -1,0 +1,87 @@
+
+cd /workdir/sc2457/F1_Tissues/transcription_level_analysis/pause
+
+from # https://github.com/shaopei/F1_8Tissues/blob/master/F1_Pausing_whole_dREG.sh
+studyBed=dREG
+# Use dREG sites with  mat reads >=5 AND pat reads >=5 (strand specific) (above was non-strand specific, here furthur restrict 5 mat reads AND 5 pat reads per strand)
+# one dREG can be plus only, minus only, or both plus and minus with  mat reads >=5 AND pat reads >=5
+ln -s /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate/*_${studyBed}_5mat5pat_uniq.bed .
+ln -s /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate/map2ref_1bpbed/ .
+#*/
+
+# identify the abundance of PolII at each position
+# strand specific
+for Head in HT KD SK
+do
+  bedtools coverage -d -s -a ${Head}_${studyBed}_5mat5pat_uniq.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*.map2ref.1bp.sorted.bed.gz ) > ${Head}_AllReads_temp.bed &
+done
+wait 
+
+ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/getMaxTSNs_frombedtools_coverage_strandSpecific.py .
+# report more than one maxPause if multiple base share the same max read count
+for Head in HT KD SK
+do
+   python2 getMaxTSNs_frombedtools_coverage_strandSpecific.py ${Head}_AllReads_temp.bed ${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPause_Col7_minusStrandSameDirection.bed &
+done
+wait
+
+for Head in HT KD SK
+do
+   #cat ${Head}_allReads_TSS_maxTSNsCol7.bed | awk '{OFS="\t"} ($6=="+"){print $1, $2+$7-1, $2+$7, $8, "111", $6} ($6=="-"){print $1, $3-$7, $3-$7+1, $8, "111", $6}' >  ${Head}_allReads_TSS_maxTSNs.bed &
+   cat ${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPause_Col7_minusStrandSameDirection.bed | awk '{OFS="\t"} {print $1, $2+$7-1, $2+$7, $8, "111", $6}' \
+   >  ${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPause.bed &
+   #col 4 maxPause read counts (all)
+done
+
+
+ln -s /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/tunit_protein_coding .
+
+# use the first 500bp of tunits to find the tunit which the maxPause (of the dREG site) reside
+for Head in HT KD SK
+do
+intersectBed -s -wb -a ${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPause.bed -b <(cat tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed \
+    | awk 'BEGIN{OFS="\t"} ($3-$2 >=500) {print $0}' \
+  | awk 'BEGIN{OFS="\t"} ($6=="+"){print $1, $2, $2+500, $4, $5, $6, $2, $3} ($6=="-"){print $1, $3-500, $3, $4, $5, $6, $2, $3} ') \
+    | awk 'BEGIN{OFS="\t"} {print $1, $2, $3, $4, $5, $6, $7, $13, $14, $10, $11, $12}' \
+> ${Head}_temp1.bed
+done
+
+ln -s ../initiation_CA_nonCA/transcrition_level_analysis_getMaxTSNs.py .
+# keep only one maxPause (of the tunit) (the maxTSN with most read counts, if multiple maxPause with max read counts, than more than 1 maxPause) per Tunits
+# some tunits in ${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPauseinProteinCodingTunit.bed still have multiple maxPause
+for Head in HT KD SK
+do
+Organ=$Head
+python2 transcrition_level_analysis_getMaxTSNs.py ${Head}_temp1.bed ${Organ}_temp2.bed 
+sort-bed ${Organ}_temp2.bed  > ${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPauseinProteinCodingTunit.bed
+done
+
+
+## get the nucleotide at maxPause
+# col4 is ReadCountOfthemaxPause
+
+ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_paternal_all.fa .
+ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/PersonalGenome_P.CAST_M.B6_snps_CAST.subsample.bam/P.CAST.EiJ_M.C57BL.6J_maternal_all.fa .
+ 
+# get the sequence from fasta
+# -s  Force strandedness. If the feature occupies the antisense strand, the sequence will be reverse complemented. Default: strand information is ignored.
+
+for Head in HT KD SK
+do
+ j=${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPauseinProteinCodingTunit
+
+ # bedtools getfasta -s -fi mm10.fa -bed <(cat ${j}.bed|cut -f 1-6) | grep -v \> > ${j}fa.txt &
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2,$3,$4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2,$3,$4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+done
+wait
+
+for Head in HT KD SK
+do
+ j=${Head}_${studyBed}_5mat5pat_uniq_AllReads_maxPauseinProteinCodingTunit
+  paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_mat_patSeq.bed 
+done
+
+
