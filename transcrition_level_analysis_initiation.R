@@ -16,7 +16,8 @@ tus$nonCA[tus$CAST_allele=="CA"] = tus$B6_allele[tus$CAST_allele=="CA"]
 tus$group[(tus$nonCA!= "CA")] = "1CA"
 dim(tus)
 #dim(unique(tus[,c(7:10,22)]))
-tus=tus[!duplicated(tus[,c(7:10,22)]),]
+# per 1CA/2CA group, tunit can only be count once
+tus=tus[!duplicated(tus[,c(7:10,22)]),] 
 # keep only -1 is "C"
 tus=tus[(tus$nonCA=="CT"|tus$nonCA=="CC"|tus$nonCA=="CG" | tus$nonCA =="CA"),]
 dim(tus)
