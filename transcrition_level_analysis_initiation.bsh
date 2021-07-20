@@ -59,15 +59,6 @@ do
   paste ${j}.bed  ${j}_-1-0_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_-1-0_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_-1-0_mat_patSeq.bed 
 done
 
-# identify geneID
-# -f 0.5 Minimum overlap required as a fraction of A
-# -F 0.8 Minimum overlap required as a fraction of B. 
-for Organ in BN LV
-do
-intersectBed -f 0.5 -F 0.8 -wao -s -a <(cat ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed |awk 'BEGIN {OFS="\t"} {print $13,$14,$15,$16,$17,$18, $0}' ) -b gencode.vM25.annotation.gene.bed \
-|cut -f 7- > ${Organ}_AT_4tunitIntersectNativeHMM_intersectRegion_strain_f0.5F0.8gencode.vM25.annotation.gene.bed
-done
-
 wc -l BN*
   78652 BN_allReads_TSS.bed
   83088 BN_allReads_TSS_maxTSNs.bed
@@ -75,4 +66,16 @@ wc -l BN*
    8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0.bed
    8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_P.CAST.EiJ_M.C57BL.6J_maternal.txt
    8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_P.CAST.EiJ_M.C57BL.6J_paternal.txt
+
+
+# identify geneID
+# -f 0.5 Minimum overlap required as a fraction of A
+# -F 0.8 Minimum overlap required as a fraction of B. 
+for Organ in BN LV
+do
+ j=${Organ}_allReads_TSS_maxTSNsinProteinCodingTunit
+intersectBed -f 0.5 -F 0.8 -wao -s -a <(cat ${j}_-1-0_mat_patSeq.bed |awk 'BEGIN {OFS="\t"} {print $7,$8,$9,$10,$11,$12, $0}' ) -b gencode.vM25.annotation.gene.bed \
+|cut -f 7- > ${j}_-1-0_mat_patSeq_f0.5F0.8gencode.vM25.annotation.gene.bed
+done
+
 
