@@ -1,7 +1,7 @@
 file_dir="~/Box Sync/KD_IGV/2020July/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/pause/")
 
-organ="HT"
+organ="SK"
 tus=read.table(file = paste(organ,"_dREG_5mat5pat_uniq_AllReads_maxPauseinProteinCodingTunit_mat_patSeq.bed",sep=""), header=FALSE)
 
 colnames(tus)[13:14] = c("B6_allele", "CAST_allele")
@@ -31,10 +31,11 @@ tus <- tus[(tus$TXEND-tus$TXSTART)>=500,]
 dim(tus)
 sum(tus$group == "1C") 
 sum(tus$group == "2C")
-# body exclude the first 250bp of transcript
+# body exclude the first h bp of transcript
+h=300
 bodies <- tus[,7:12]
-bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
-bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
+bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+h
+bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-h
 
 countBigWig <- function(prefix, bed, rpkm=FALSE, path="./") {
   pl <- load.bigWig(paste(path, prefix, "_plus.bw", sep=""))
