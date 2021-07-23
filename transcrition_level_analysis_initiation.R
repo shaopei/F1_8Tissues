@@ -1,12 +1,12 @@
 file_dir="~/Box Sync/BN_IGV/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/initiation_CA_nonCA/multipleMaxTSNperTunits/")
 
-organ="BN"
+organ="LV"
 # without RNA-seq
 tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq.bed",sep=""), header=FALSE)
 # with RNA-seq
 tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
-
+dim(tus)
 colnames(tus)[13:14] = c("B6_allele", "CAST_allele")
 # keep tus with CA in one allele
 tus=tus[(tus$B6_allele == "CA" | tus$CAST_allele == "CA"),]
@@ -28,13 +28,14 @@ sum(tus$group == "2CA")
 for (i  in 1:dim(tus)[1]){
   group <- NULL
   if(sum(tus$V10==tus$V10[i]) > 1){
-    cat (i)
-    cat ("\n")
+    #cat (i)
+    #cat ("\n")
     if ("1CA" %in% tus$group[tus$V10==tus$V10[i]]){
       tus$group[tus$V10==tus$V10[i]] = "1CA"
     }
   }
 }
+dim(tus)
 
 # per 1CA/2CA group, tunit can only be count once
 tus=tus[!duplicated(tus[,c(7:10,which(colnames(tus) == "group"))]),] 

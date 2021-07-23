@@ -7,18 +7,50 @@ ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/
 
 #*/
 
+
+
+# use mapped reads from AlleleDB (bowtie), including both mat, pat and identical reads
+# identify the abundance of PolII at each position of TSS
+# strand specific
+# use all reads (not just allelic reads), 
+# use mapping from bowtie mapping, pat is liftovered 
+wait
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do
+  #bedtools coverage -sorted -d -s -a ${Head}_allReads_TSS.bed -b <(zcat map2ref_1bpbed_map5/${Head}*.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_TSStemp1.bed &
+done
+ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/*_allReads_TSStemp1.bed .
+# */
+
+# report major TSNs with >= ratio of maxTSN read counts AND with at least b reads
+# BN 0.5, LV 0.5
+ratio=0.8
+b=5
+for Head in BN LV SP
+do
+   python2 getMaxTSNsAndMajorTSNs_frombedtools_coverage_strandSpecific.py ${Head}_allReads_TSStemp1.bed ${Head}_allReads_TSS_majorTSNsCol7_minusStrandSameDirection${ratio}.bed ${ratio} &
+done
+wait
+
+for Head in BN LV SP
+do
+   cat ${Head}_allReads_TSS_majorTSNsCol7_minusStrandSameDirection${ratio}.bed | awk -v b=$b '{OFS="\t"} ($8+0 >= b){print $1, $2+$7-1, $2+$7, $8, "111", $6}' >  ${Head}_allReads_TSS_majorTSNs.bed &
+# col4 the reads count of the TSN
+done
+
 ln -s /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/tunit_protein_coding .
 
 # use the first r bp of tunits to find the tunit which the maxTSN (of the TSS) reside
 r=300
-for Head in BN HT  SK  SP  KD  LV  GI  ST
+for Head in BN LV SP
 do
 Organ=${Head}
-intersectBed -s -wb -a ${Organ}_allReads_TSS_maxTSNs.bed -b <(cat tunit_protein_coding/${Organ}_all_h5.preds.full_inProtein_coding.bed \
+intersectBed -s -wb -a ${Head}_allReads_TSS_majorTSNs.bed -b <(cat tunit_protein_coding/${Organ}_all_h5.preds.full_inProtein_coding.bed \
     | awk 'BEGIN{OFS="\t"} ($3-$2 >=500) {print $0}' \
 	| awk -v r=${r} 'BEGIN{OFS="\t"} ($6=="+"){print $1, $2, $2+r, $4, $5, $6, $2, $3} ($6=="-"){print $1, $3-r, $3, $4, $5, $6, $2, $3} ') \
     | awk 'BEGIN{OFS="\t"} {print $1, $2, $3, $4, $5, $6, $7, $13, $14, $10, $11, $12}' \
 > ${Organ}_temp1.bed
+done
 
 # keep only one maxTSN (of the tunit) (the maxTSN with most read counts, if multiple maxTSN with max read counts, than more than 1 maxTSN) per Tunits
 #for Organ in BN LV SP
@@ -27,14 +59,18 @@ intersectBed -s -wb -a ${Organ}_allReads_TSS_maxTSNs.bed -b <(cat tunit_protein_
 #sort-bed ${Organ}_temp2.bed  > ${Organ}_allReads_TSS_maxTSNsinProteinCodingTunit.bed
 
 
-# keep all maxTSNs
-mv ${Organ}_temp1.bed ${Organ}_allReads_TSS_maxTSNsinProteinCodingTunit.bed
+# keep all majorTSNs
+for Head in BN LV SP
+do
+Organ=${Head}
+mv ${Organ}_temp1.bed ${Head}_allReads_TSS_maxTSNsinProteinCodingTunit.bed
 done
 
 ## get the -1 and 0 (CA) nucleotide
 # get the bed geions 
 # col4 is ReadCountOftheTSN
-for Head in BN HT  SK  SP  KD  LV  GI  ST
+#for Head in BN HT  SK  SP  KD  LV  GI  ST
+for Head in BN LV SP
 do 
    cat ${Head}_allReads_TSS_maxTSNsinProteinCodingTunit.bed | awk 'BEGIN{OFS="\t"} ($6=="+"){print $1, $2-1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12} ($6=="-") {print $1, $2, $3+1, $4, $5, $6,  $7, $8, $9, $10, $11, $12}'\
     >  ${Head}_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0.bed & 
@@ -48,7 +84,7 @@ ln -s /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/working/Per
 # get the sequence from fasta
 # -s  Force strandedness. If the feature occupies the antisense strand, the sequence will be reverse complemented. Default: strand information is ignored.
 
-for Head in BN HT  SK  SP  KD  LV  GI  ST
+for Head in BN LV SP
 do
  j=${Head}_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0
 
@@ -60,7 +96,7 @@ do
 done
 wait
 
-for Head in BN HT  SK  SP  KD  LV  GI  ST
+for Head in BN LV SP
 do
   j=${Head}_allReads_TSS_maxTSNsinProteinCodingTunit
   paste ${j}.bed  ${j}_-1-0_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_-1-0_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_-1-0_mat_patSeq.bed 
