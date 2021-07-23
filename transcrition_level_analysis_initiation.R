@@ -1,8 +1,10 @@
 file_dir="~/Box Sync/BN_IGV/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/initiation_CA_nonCA/")
 
-organ="LV"
-#tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq.bed",sep=""), header=FALSE)
+organ="GI"
+# without RNA-seq
+tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq.bed",sep=""), header=FALSE)
+# with RNA-seq
 tus=read.table(file = paste(organ,"_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
 
 colnames(tus)[13:14] = c("B6_allele", "CAST_allele")
@@ -17,7 +19,8 @@ tus$group[(tus$nonCA!= "CA")] = "1CA"
 dim(tus)
 #dim(unique(tus[,c(7:10,22)]))
 # per 1CA/2CA group, tunit can only be count once
-tus=tus[!duplicated(tus[,c(7:10,22)]),] 
+tus=tus[!duplicated(tus[,c(7:10,15)]),]  # without RNA-seq
+tus=tus[!duplicated(tus[,c(7:10,22)]),]  # with RNA-seq
 # keep only -1 is "C"
 tus=tus[(tus$nonCA=="CT"|tus$nonCA=="CC"|tus$nonCA=="CG" | tus$nonCA =="CA"),]
 dim(tus)
@@ -33,10 +36,11 @@ tus <- tus[(tus$TXEND-tus$TXSTART)>=500,]
 dim(tus)
 sum(tus$group == "1CA") 
 sum(tus$group == "2CA")
-# body exclude the first 250bp of transcript
+# body exclude the first h bp of transcript
+h=300
 bodies <- tus[,7:12]
-bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+250
-bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-250
+bodies$TXSTART[bodies$TXSTRAND == "+"] <-bodies$TXSTART[bodies$TXSTRAND == "+"]+h
+bodies$TXEND[bodies$TXSTRAND == "-"] <- bodies$TXEND[bodies$TXSTRAND == "-"]-h
 
 countBigWig <- function(prefix, bed, rpkm=FALSE, path="./") {
   pl <- load.bigWig(paste(path, prefix, "_plus.bw", sep=""))
@@ -76,6 +80,12 @@ boxplot(tus$log2_CA_NonCA_ratio ~ tus$group,
         main=paste(organ, " Tunit Proseq", sep=""))
 abline(h=0, col="red")
 
+dim(tus)
+sum(tus$group == "1CA") 
+sum(tus$group == "2CA")
+wilcox.test(tus$log2_CA_NonCA_ratio[tus$group=="1CA"],
+              tus$log2_CA_NonCA_ratio[tus$group=="2CA"])
+
 load(paste("~/Box Sync/Danko_lab_work/F1_8Tissues/PolyA_Allele-specific/RNA-seq/",organ, "_gencode.vM25.annotation.gene-Readcounts.RData", sep=""))
 #View(merge.counts)
 dim(merge.counts)
@@ -100,6 +110,14 @@ boxplot(tus_gene$log2_CA_NonCA_Exonratio~tus_gene$group,
         outline=F,las=1,
         main=paste(organ, " Gene exon RNA-seq", sep=""))
 abline(h=0, col="red")
+
+dim(tus_gene)
+sum(tus_gene$group == "1CA")
+sum(tus_gene$group == "2CA")
+wilcox.test(tus_gene$log2_CA_NonCA_Exonratio[tus_gene$group=="1CA"],
+            tus_gene$log2_CA_NonCA_Exonratio[tus_gene$group=="2CA"])
+
+
 
 boxplot(tus_gene$log2_CA_NonCA_ratio ~ tus_gene$group,
         #ylim=c(-1,1),
