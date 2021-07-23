@@ -23,8 +23,12 @@ intersectBed -s -wb -a ${Organ}_allReads_TSS_maxTSNs.bed -b <(cat tunit_protein_
 # keep only one maxTSN (of the tunit) (the maxTSN with most read counts, if multiple maxTSN with max read counts, than more than 1 maxTSN) per Tunits
 #for Organ in BN LV SP
 #do
-python2 transcrition_level_analysis_getMaxTSNs.py ${Organ}_temp1.bed ${Organ}_temp2.bed 
-sort-bed ${Organ}_temp2.bed  > ${Organ}_allReads_TSS_maxTSNsinProteinCodingTunit.bed
+#python2 transcrition_level_analysis_getMaxTSNs.py ${Organ}_temp1.bed ${Organ}_temp2.bed 
+#sort-bed ${Organ}_temp2.bed  > ${Organ}_allReads_TSS_maxTSNsinProteinCodingTunit.bed
+
+
+# keep all maxTSNs
+mv ${Organ}_temp1.bed ${Organ}_allReads_TSS_maxTSNsinProteinCodingTunit.bed
 done
 
 ## get the -1 and 0 (CA) nucleotide
@@ -65,10 +69,13 @@ done
 wc -l BN*
   78652 BN_allReads_TSS.bed
   83088 BN_allReads_TSS_maxTSNs.bed
-   8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit.bed
-   8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0.bed
-   8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_P.CAST.EiJ_M.C57BL.6J_maternal.txt
-   8976 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_P.CAST.EiJ_M.C57BL.6J_paternal.txt
+   6275 BN_allReads_TSS_maxTSNsinProteinCodingTunit.bed
+   6275 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0.bed
+   6275 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq.bed
+   9002 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_mat_patSeq_f0.5F0.8gencode.vM25.annotation.gene.bed
+   6275 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_P.CAST.EiJ_M.C57BL.6J_maternal.txt
+   6275 BN_allReads_TSS_maxTSNsinProteinCodingTunit_-1-0_P.CAST.EiJ_M.C57BL.6J_paternal.txt
+
 
 
 # identify geneID
