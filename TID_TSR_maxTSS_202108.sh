@@ -118,6 +118,8 @@ Seq-Inr_B6_CAST_TSN ${j}
 done
 done
 
+for Head in BN LV #HT  SK  SP  KD  GI  ST
+do
 # keep TID with at least 5 allelic reads
 cat ${Head}_all.dREG_binomtest.bed | awk 'BEGIN {OFS="\t"} (NR==1) {print $1,$2,$3,$4,$5, "strand", $6, $7, $9}( NR>1 && $6+$7 >=5) {print $1,$2,$3,$4,$5, $10, $6, $7, $9}' \
 > ${Head}_all.dREG_binomtest_5+reads.bed
@@ -135,9 +137,11 @@ cat ${Head}_allReads_TSS_maxTSNs_binomtest_Inr_mat_patSeq.bed | awk 'BEGIN {OFS=
 # maxTSN within TSS
 bedtools intersect -s -wo -a ${Head}_allReads_TSS_maxTSNs_binomtest_Inr_mat_patSeq_1+read.bed -b ${Head}_TSS_TID.bed  \
 > ${Head}_maxTSN_TSS_TID.bed
+# 1-11 maxTSN, 12-20 TSS, 21-29 TID
 
-# overlap with SNPs
-bedtools intersect -wo -a ${Head}_maxTSN_TSS_TID.bed -b <(zcat unfiltered_snp.sorted.bed.gz) >  ${Head}_maxTSN_TSS_TID_withSNP.bed
+# maxTSN overlap with SNPs
+bedtools intersect -wo -a ${Head}_maxTSN_TSS_TID.bed -b <(zcat unfiltered_snp.sorted.bed.gz) \
+>  ${Head}_maxTSN_TSS_TID_withSNP.bed
 
 # pick TSS(A) with high allele maxTSN CA, low allele nonCA.
 cat ${Head}_maxTSN_TSS_TID_withSNP.bed | awk 'BEGIN{OFS="\t"} 
@@ -149,13 +153,34 @@ cat ${Head}_maxTSN_TSS_TID_withSNP.bed | awk 'BEGIN{OFS="\t"}
 bedtools intersect -s -wo -a ${Head}_allReads_TSS_binomtest_1+read.bed -b <(cat ${Head}_maxTSN_TSS_TID_withSNP_temp1.bed| awk 'BEGIN {OFS="\t"} {print $21,$22, $23, $24, $25, $26, "maxTSN", $4}' | sort-bed - |uniq) \
 > ${Head}_maxTSN_TSS_TID_withSNP_temp2.bed
 # remove TSS(A) from TSS(C)
-bedtools intersect -s -v -a ${Head}_maxTSN_TSS_TID_withSNP_temp2.bed -b <(cat ${Head}_maxTSN_TSS_TID_withSNP_temp1.bed|cut -f 12-20 | sort-bed - |uniq)\
+bedtools intersect -s -v -a ${Head}_maxTSN_TSS_TID_withSNP_temp2.bed -b <(cat ${Head}_maxTSN_TSS_TID_withSNP_temp1.bed|cut -f 12-20 | sort-bed - |uniq) | uniq \
 > ${Head}_maxTSN_TSS_TID_withSNP_temp3.bed
 # 1-9 TSS, 10-15 TID, 17 maxTSN with SNP in TSS(A)
 
 
+# control group : TSS in TID NOT cootain SNPs at any maxTSN
+bedtools intersect -v -a ${Head}_maxTSN_TSS_TID.bed -b <(cat ${Head}_maxTSN_TSS_TID_withSNP.bed | cut -f 21-26) \
+>  ${Head}_maxTSN_TSS_TID_OutsideTIDwithSNPmaxTSN.bed
+# 1-11 maxTSN, 12-20 TSS, 21-29 TID
 
 #HERE
+
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # keep TID outside AlleleHMM blocks
 bedtools intersect -s -v -a <(grep -v chrX ${Head}_all.dREG.bed) -b <(cat HMM_bed/combined_cross/${Head}_HMM_*.bed) > ${Head}_all.dREG_NotInAlleleHMMBlocks.bed
 
