@@ -167,39 +167,4 @@ bedtools intersect -v -a ${Head}_maxTSN_TSS_TID.bed -b <(cat ${Head}_maxTSN_TSS_
 
 done
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# keep TID outside AlleleHMM blocks
-bedtools intersect -s -v -a <(grep -v chrX ${Head}_all.dREG.bed) -b <(cat HMM_bed/combined_cross/${Head}_HMM_*.bed) > ${Head}_all.dREG_NotInAlleleHMMBlocks.bed
-
-
-
-
-
-
-# maxTSN with SNPs at initiation motif
-bedtools closest -D a -id -a <(sort-bed ${Head}_allReads_TSS_maxTSNs.bed) -b <(zcat unfiltered_snp.sorted.bed.gz) | awk 'BEGIN {OFS="\t"; t="_"} ($11==-1 || $11==0) {print $1, $2, $3, $4, $5, $6}'  > ${Head}_allReads_TSS_maxTSNs_SNP.bed
-# -id	Ignore features in B that are downstream of features
-
-# maxTSN with SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs_SNP.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks.bed
-#body=allReads_TSS_maxTSNs_SNP_TSSNotInAlleleHMMBlocks
-
-
-# maxTSN with or without SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_TSSNotInAlleleHMMBlocks.bed
-
-# maxTSN WITHOUT SNPs at initiation motif within the TSS NOT overlap with AlleleHMM blocks
-bedtools intersect -s -a <(bedtools intersect -v -s -a ${Head}_allReads_TSS_maxTSNs.bed -b ${Head}_allReads_TSS_maxTSNs_SNP.bed) -b ${Head}_allReads_TSS_NotInAlleleHMMBlocks.bed > ${Head}_allReads_TSS_maxTSNs_NoSNP_TSSNotInAlleleHMMBlocks.bed
+TID_TSR_maxTSS_202108.R
