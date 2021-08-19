@@ -63,6 +63,22 @@ cat("g9, N=" , sum(tus$group=="g9"))
 cat("m, N=" , sum(tus$group=="m"))
 cat("s, N=" , sum(tus$group=="s"))
 
+
+plot(ecdf(abs(tus$change[tus$group=="g9"])),
+     #pch=10, 
+     col="dark blue",
+     #xlim=c(0,2),
+     ylim=c(0.6,1),
+     xlab="abs(log2(B6+1/CAST+1))",
+     ylab="CDF",
+     #las=1,cex=1,
+     main=organ
+)
+lines(ecdf(abs(tus$change[tus$group=="s"|tus$group=="m"])), 
+     cex=1, col="dark orange")
+ks.test(abs(tus$change[tus$group=="g9"]), abs(tus$change[tus$group=="s"|tus$group=="m"]))
+
+
 change_ratio=2
 testor <-  matrix(c(sum(abs(tus$change)>change_ratio & tus$group=="m"), sum(tus$group=="m"),
                     sum(abs(tus$change)>change_ratio & tus$group=="g9"),sum(tus$group=="g9")),
@@ -257,13 +273,24 @@ par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 # gene annotation, doesn't remove the AT window.
 
+boxplot(log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1))[tus_gene$AT_long=="B6"],
+        log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1))[tus_gene$AT_long=="NoAT"],
+        log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1))[tus_gene$AT_long=="CAST"],
+        ylim=c(-1.2,1.2),
+        outline=F,las=1,
+        names=c("B6","NoAT","CAST"),
+        ylab="log2((B6 exon +1)/(CAST exon+1))",
+        xlab="AT long allele",
+        main=organ)
+abline(h=0, col="red")
+dev.off()
+if(0){
 boxplot(log2((tus_gene$B6.exon+1)/(tus_gene$CAST.exon+1)) ~ tus_gene$AT_long,
         ylim=c(-1.2,1.2),
         outline=F,las=1,
         main=organ)
+}
 
-abline(h=0, col="red")
-dev.off()
 
 sum(tus_gene$AT_long=="B6")
 sum(tus_gene$AT_long=="CAST")
@@ -357,15 +384,15 @@ vioplot(tus_withAT$log2_long_short_ratio, tus$log2_long_short_ratio[tus$group=="
         main=organ)
 abline(h=0, col="red")
 }
-pdf(paste(organ,"_AT_Proseq_read_ratio.pdf", sep=""), width=7, height = 7)
+pdf(paste(organ,"_Tunit_AT_Proseq_read_ratio.pdf", sep=""), width=7, height = 7)
 #par(mfrow=c(1,3))
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 boxplot(tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="B6"], 
-        tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"],
         tus$log2_B6_CAST_ratio[tus$group=="NoAT"],
-        names=c("B6", "CAST", "No AT"),
+       tus_withAT$log2_B6_CAST_ratio[tus_withAT$AT_long=="CAST"],
+        names=c("B6",  "No AT","CAST"),
         xlab="AT long allele",
         ylab="log2(B6+1/CAST+1)",
         ylim=c(-1.2,1.2),

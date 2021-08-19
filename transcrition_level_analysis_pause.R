@@ -1,9 +1,10 @@
 file_dir="~/Box Sync/KD_IGV/2020July/"
-setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/pause/")
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/pause/MajorPauseS/")
 
-organ="SK"
-tus=read.table(file = paste(organ,"_dREG_5mat5pat_uniq_AllReads_maxPauseinProteinCodingTunit_mat_patSeq.bed",sep=""), header=FALSE)
+tus_dic=NULL
 
+organ="HT"
+tus=read.table(file = paste(organ,"_dREG_5mat5pat_uniq_AllReads_majorPauseSinProteinCodingTunit_mat_patSeq.bed",sep=""), header=FALSE)
 colnames(tus)[13:14] = c("B6_allele", "CAST_allele")
 # keep tus with C in one allele
 dim(tus)
@@ -15,6 +16,19 @@ tus$group = "2C"
 tus$nonC=tus$CAST_allele
 tus$nonC[tus$CAST_allele=="C"] = tus$B6_allele[tus$CAST_allele=="C"]
 tus$group[(tus$nonC!= "C")] = "1C"
+dim(tus)
+
+# per Tunits, if one of the maxTSN is C{!A}, assign the Tunit to the group 1CA
+for (i  in 1:dim(tus)[1]){
+  group <- NULL
+  if(sum(tus$V10==tus$V10[i]) > 1){
+    cat (i)
+    cat ("\n")
+    if ("1C" %in% tus$group[tus$V10==tus$V10[i]]){
+      tus$group[tus$V10==tus$V10[i]] = "1C"
+    }
+  }
+}
 dim(tus)
 # per 1C/2C group, tunit can only be count once
 tus=tus[!duplicated(tus[,c(7,8,9,12,15)]),] 
@@ -78,5 +92,39 @@ dim(tus)
 sum(tus$group == "1C") 
 sum(tus$group == "2C")
 
+wilcox.test(tus$log2_C_NonC_ratio[tus$group=="1C"],
+            tus$log2_C_NonC_ratio[tus$group=="2C"])
+
+tus_dic[[organ]]=tus
+tus_combine <- NULL
+for (organ in c("HT", "KD", "SK")){
+  tus_combine=rbind.data.frame(tus_combine, tus_dic[[organ]])
+}
+dim(tus_combine)
+View(tus_combine)
+tus=tus_combine
+
+# per 1C/2C group, tunit can only be count once
+tus=tus[!duplicated(tus[,c(7,8,9,12,15)]),] 
+# each pajor Pause base only used once
+tus=tus[!duplicated(tus[,c(1,2,3,6)]),] 
+dim(tus)
+sum(tus$group == "1C") 
+sum(tus$group == "2C")
+
+vioplot(tus$log2_C_NonC_ratio ~ tus$group,
+        main=paste("Combined", " Tunit Proseq", sep=""))
+abline(h=0, col="red")
+boxplot(tus$log2_C_NonC_ratio ~ tus$group,
+        #ylim=c(-1,1),
+        #xlab="AT long allele",
+        ylab="log2(C+1/NonC+1)",
+        outline=F,las=1,
+        main=paste("Combined", " Tunit Proseq", sep=""))
+abline(h=0, col="red")
+
+dim(tus)
+sum(tus$group == "1C") 
+sum(tus$group == "2C")
 wilcox.test(tus$log2_C_NonC_ratio[tus$group=="1C"],
             tus$log2_C_NonC_ratio[tus$group=="2C"])
