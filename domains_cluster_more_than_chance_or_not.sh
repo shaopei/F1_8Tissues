@@ -161,7 +161,7 @@ done
 
 
 
-############
+############ below old, NOT used ########
 
 # bias fdr<=0.1, control fdr > 0.9
 # biased, strain effect, tunits
