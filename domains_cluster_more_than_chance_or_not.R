@@ -4,7 +4,7 @@ df_0.1=read.table("BN_TunitProteinSrainEffect_binomtest_fdr0.1_adjacentTunit.bed
 df_0.9=read.table("BN_TunitProteinSrainEffect_binomtest_fdr0.9_adjacentTunit.bed")
 
 colnames(df_0.1)[22]="pair_fdr"  # fdr of the tunit that pair with the fdr0.1 tunit
-colnames(df_0.1)[23]="pair_distance"
+colnames(df_0.1)[23]="pair_distance" # distance of the tunit that pair with the fdr0.1 tunit
 df_0.1$TunitLength = df_0.1$V3 - df_0.1$V2
 df_0.1$expLevel = df_0.1$V7 + df_0.1$V8 + df_0.1$V9
 
