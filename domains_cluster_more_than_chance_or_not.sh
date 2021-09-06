@@ -83,7 +83,7 @@ for Head in BN LV #HT SK SP LV GI ST KD
         do echo $cross #MB6
           #for f in ${bed_dir}/${Head}_${cross}_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
            # do echo $f  #map2ref_bed/ST_PB6_B_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
-            PREFIX=${bed_dir}/${Head}_${cross}_all_R1   #map2ref_bed/ST_PB6_B_R1
+            PREFIX=${bed_dir}/${Head}_${cross}_all_R1   #map2ref_bed/ST_PB6_all_R1
             echo $PREFIX
             MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz
             PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz
@@ -101,7 +101,7 @@ for Head in BN LV #HT SK SP LV GI ST KD
 done
     wait
 
-# identify imprinted tunits, remove those. do binomial test again witj pool reads.
+# identify imprinted tunits, remove those. do binomial test again with pool reads.
 for Head in BN LV 
     do 
 intersectBed -wb -a ${Head}_MB6_all_h5_binomtest_fdr.bed -b ${Head}_PB6_all_h5_binomtest_fdr.bed | \
@@ -147,14 +147,14 @@ for Head in BN LV
         cat ${Head}_TunitProteinSrainEffect_binomtest_fdr.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5, $10, $6,$7,$8,$9, $11}' > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
 done
 
-
 #1.  identify tunits that overlap (in opposite strand)
 # -S	Require opposite strandedness
 for fdr in fdr0.1 fdr0.9
 do 
 bedtools closest -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_${fdr}.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
 | awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed
-#2. identify the closet one that do not overlap
+#2. identify the closet one that do not overlap regardless of strandness
+    # exclude those with overlap in the opposite strand 
 bedtools closest -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSrainEffect_binomtest_${fdr}.bed -b ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed) -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
 >> ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed
 done

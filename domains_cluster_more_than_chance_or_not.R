@@ -3,7 +3,7 @@ setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/domain
 df_0.1=read.table("BN_TunitProteinSrainEffect_binomtest_fdr0.1_adjacentTunit.bed")
 df_0.9=read.table("BN_TunitProteinSrainEffect_binomtest_fdr0.9_adjacentTunit.bed")
 
-colnames(df_0.1)[22]="pair_fdr"
+colnames(df_0.1)[22]="pair_fdr"  # fdr of the tunit that pair with the fdr0.1 tunit
 colnames(df_0.1)[23]="pair_distance"
 df_0.1$TunitLength = df_0.1$V3 - df_0.1$V2
 df_0.1$expLevel = df_0.1$V7 + df_0.1$V8 + df_0.1$V9
@@ -34,8 +34,14 @@ sum(df$Tunit1_winP != df$Tunit2_winP) / dim(df)[1]
 pie(c(sum(df$Tunit1_winP == df$Tunit2_winP), sum(df$Tunit1_winP != df$Tunit2_winP) ),
     label=c("same direction", "opposite direction"))
 
+
 # Distance distribution
-h1<- hist(log10(df_0.1$pair_distance[df_0.1$pair_fdr <= 0.1]))
+pdf("Distance_distribution_Between_Tunit_pairs.pdf", width=5, height = 5, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+
+h1<- hist(log10(df_0.1$pair_distance[df_0.1$pair_fdr <= 0.1]), plot = F)
 h1$counts=h1$counts/sum(h1$counts)
 plot(h1,col="red" 
      ,density=25     
@@ -68,6 +74,7 @@ legend("topright",
        , bty = "n"
 )
 
+dev.off()
 ks.test(df_0.9$pair_distance[df_0.9$pair_fdr <= 0.1], 
         df_0.1$pair_distance[df_0.1$pair_fdr <= 0.1] )
 
