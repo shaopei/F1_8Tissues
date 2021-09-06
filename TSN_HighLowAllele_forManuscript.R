@@ -354,7 +354,7 @@ new_x_list[["TG/CG"]] = c(x_list[["BN_SNP_TG/CG"]],x_list[["LV_SNP_TG/CG"]])
 str(new_x_list)
 pdf("BNandLV_CA_TA_TG_CG_NoAlleleHMMFilter.pdf", width = 5, height = 5, useDingbats=FALSE)
 par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
-
+library(vioplot)
 #par(mgp=c(3,1,0))
 vioplot(new_x_list, las=2, 
         #ylim=c(-6,6),
@@ -376,7 +376,8 @@ legend("topleft", legend=c("BN", "LV"),
 
 ###
 library("vioplot")
-
+# exclude TSS in AlleleHMM blocks
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/Initiation/TSN_ShootingGallery_TSSNotInAlleleHMMBlocks/")
 
 d=50
 v_list <- NULL
@@ -487,7 +488,7 @@ asTSS_name=""
 for (organ in c("BN", "LV")){
   for (SNP_orBackground in c("_SNP_", "_NoSNP_")){
     name=paste(organ, asTSS_name, SNP_orBackground, sep = "")
-    new_v_list[[paste(name, sep="")]]=v_list[[paste(name, lower_bound, "_",uper_bound, sep="")]]
+    new_v_list[[paste(name, sep="")]]=-1*(v_list[[paste(name, lower_bound, "_",uper_bound, sep="")]])
     }
 }
 str(new_v_list)
@@ -498,7 +499,7 @@ par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 #par(mgp=c(3,1,0))
 vioplot(new_v_list, las=1, 
         #ylim=c(-6,6),
-        ylab = "log2(High Allele + 1 / Low Allele + 1)",
+        ylab = "log2(Low Allele + 1 / High Allele + 1)",
         col=c("purple", "gray"),
         frame.plot=F
         )
@@ -722,8 +723,8 @@ for (lower_bound in seq(-25,20,step)){
     name2 = paste("LV", asTSS_name, SNP_orBackground[s], sep = "")
     temp1=S_list[[name1]]
     temp2=S_list[[name2]]
-    b_list[[paste(new_name, lower_bound, "_",uper_bound, sep="")]] = c(temp1$Delta_Signal[temp1$dist >= lower_bound & temp1$dist < uper_bound ],
-                                                                       temp2$Delta_Signal[temp2$dist >= lower_bound & temp2$dist < uper_bound ])
+    b_list[[paste(new_name, lower_bound, "_",uper_bound, sep="")]] = c(-1*(temp1$Delta_Signal[temp1$dist >= lower_bound & temp1$dist < uper_bound ]),
+                                                                       -1*(temp2$Delta_Signal[temp2$dist >= lower_bound & temp2$dist < uper_bound ]))
     
     
     str(b_list)
@@ -747,7 +748,7 @@ for (i in 1:(length(b_list)/2)){
 
 boxplot(b_list, las=2, 
         col=c("purple","gray"),
-        ylab = "log2(High Allele + 1 / Low Allele + 1)",
+        ylab = "log2(Low Allele + 1 / High Allele + 1)",
         frame.plot=F,
         outline=FALSE,
         #space = rep(c(1,2),(length(b_list)/2))
