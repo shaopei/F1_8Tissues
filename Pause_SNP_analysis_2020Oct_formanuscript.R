@@ -787,8 +787,18 @@ if(!Test_one_by_one){
 df$AllelicMaxPauseDist = abs(df$mat_maxPause_map3 - df$pat_maxPause_map3)
 # Figure 4H
 sub_df=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0,]
+# SNP at 0
 sub_df_SNP=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & 
                 df$SNP1_distance_earlyPause==0 & !is.na(df$SNP1_distance_earlyPause),]
+# SNP at -2 or -3
+sub_df_SNP=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & (
+                ((df$SNP1_distance_earlyPause==-2 |df$SNP1_distance_earlyPause==-3) & !is.na(df$SNP1_distance_earlyPause))|
+                ((df$SNP2_distance_earlyPause==-2 |df$SNP2_distance_earlyPause==-3) & !is.na(df$SNP2_distance_earlyPause))|
+                ((df$SNP3_distance_earlyPause==-2 |df$SNP3_distance_earlyPause==-3) & !is.na(df$SNP3_distance_earlyPause)))
+              ,]
+
+
+
 #UniqRowCount(sub_df)
 #UniqRowCount(sub_df_SNP)
 dim(sub_df)
@@ -1001,6 +1011,84 @@ dev.off()
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP$AllelicMaxPauseDist, alternative = "less")
 ks.test(sub_df$AllelicMaxPauseDist ,sub_df_indel$AllelicMaxPauseDist, alternative = "greater")
 #ks.test(sub_df_no_indel$AllelicMaxPauseDist ,sub_df_indel$AllelicMaxPauseDist, alternative = "greater")
+
+#######
+# without indel 
+sub_df_no_indel=df[df$map3.p.value.fdr<=0.1 & df$AllelicMaxPauseDist >0 & df$dist_Indel_maxTSN > df$latePause,]
+#c('V1','V2','V3','earlyPause','AllelicMaxPauseDist')])
+dim(sub_df_no_indel)
+sub_df_no_indel$earlyPauseSites=getEarlyPauseSites(sub_df_no_indel)$V2
+sub_df_no_indel=sub_df_no_indel[!duplicated(sub_df_no_indel[,c('V1','earlyPauseSites','V6','AllelicMaxPauseDist')]),]
+dim(sub_df_no_indel)
+#Figure4I
+# panel56_Indel_allelicMaxPauseDist
+pdf("NoIndel_allelicMaxPauseDist.pdf", width=7, height = 3.5, useDingbats=FALSE)
+par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+par(mgp=c(3,1,0))
+par(cex.lab=2.2, cex.axis=2.2)
+plot(ecdf(sub_df$AllelicMaxPauseDist), col="blue", 
+     xlab="Distance between allelic maxPause",
+     ylab="fraction",
+     las=1,
+     main="maxPause map3TomaxTSNs KS FDR <= 0.1, e and l >1bp move")
+
+hist(sub_df$AllelicMaxPauseDist,
+     freq = F, ylim=c(0,0.4), las=1,
+     breaks = seq(-0.5,50,1), col="blue", main="maxPause map3TomaxTSNs KS FDR <= 0.1",
+     add=T
+)
+
+
+hist(sub_df_no_indel$AllelicMaxPauseDist,     freq = F, ylim=c(0,0.4), las=1,
+     breaks = seq(-0.5,50,1),
+     col="dark green", density = 45, add=T)
+
+
+lines(ecdf(sub_df$AllelicMaxPauseDist), cex=1, col="blue", pch=19)
+lines(ecdf(sub_df_no_indel$AllelicMaxPauseDist), cex=1, col="dark green", pch=10)
+
+
+legend("right", 
+       # legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
+       #             paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       legend = c( paste("Allelic difference, n = ", dim(sub_df)[1], sep=""), 
+                   paste("No Indel, n=", dim(sub_df_no_indel)[1], sep="")),
+       title = ,
+       lwd=1.5, 
+       col=c("blue","dark green"),
+       pch=c(19,10),
+       bty = "n"
+)
+
+legend("right", 
+       #legend = c( paste("All FDR<=0.1, >1bp move, n = ", dim(sub_df)[1], sep=""), 
+       #            paste("Without Indel, n=", dim(sub_df_no_indel)[1], sep=""),                   paste("With Indel, n=", dim(sub_df_indel)[1], sep="")),
+       legend = c( paste("Allelic difference, n = ", dim(sub_df)[1], sep=""), 
+                   paste("+ Indel, n=", dim(sub_df_no_indel)[1], sep="")),
+       
+       title = ,
+       #pch=c(15,15),
+       #cex=1.5, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(10000,25),
+       angle=c(180,45),
+       #angle=45,
+       fill=c("blue","dark green")
+       , bty = "n"
+)
+dev.off()
+
+# KS test 
+ks.test(sub_df$AllelicMaxPauseDist ,sub_df_SNP$AllelicMaxPauseDist, alternative = "less")
+ks.test(sub_df$AllelicMaxPauseDist ,sub_df_no_indel$AllelicMaxPauseDist, alternative = "greater")
+#ks.test(sub_df_no_indel$AllelicMaxPauseDist ,sub_df_no_indel$AllelicMaxPauseDist, alternative = "greater")
+
+######
+
+
+
 
 # count SNPs 
 # use UniqRowCount dim(unique(data.frame(subdf$V2, subdf$earlyPause)))[1]
