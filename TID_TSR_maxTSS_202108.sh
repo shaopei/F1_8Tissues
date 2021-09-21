@@ -330,16 +330,23 @@ done
 # Use the upstream -20~-35bp of maxTSN to represent the pontentail TATA box region 
 # -a -35~-20 upstream of maxTSN
 # -b motif binding sites from rtdbsdb_mm10_TATA.R, score of all regions with binding motif
-Head=BN
+Head=LV
  cat ${Head}_allReads_TSS_maxTSNs_binomtest.bed |awk '{OFS="\t"} (NR>1 && $10=="+") {print $1, $2-35, $3-20, $4,$9,$10, $6,$7,$8, $1, $2, $3} (NR>1 && $10=="-") {print $1, $2+20, $3+35, $4,$9,$10, $6,$7,$8, $1, $2, $3}' > test1.bed
  # chrm   chrmStart  chrmEnd hmm_state   Binom_p_value   strand   mat_allele_count   pat_allele_count   identical_reads_count
  bedtools intersect -wo -a test1.bed \
  -b <(cat ${Head}_allReads_TSS_maxTSNs_binomtest_motifM00216.bed |awk '{OFS="\t"} (NR>1) {print "chr"$0}') \
  > ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216.bed
 
+ bedtools intersect -wo -a test1.bed \
+ -b <(cat ${Head}_allReads_TSS_maxTSNs_binomtest_motifM09433.bed |awk '{OFS="\t"} (NR>1) {print "chr"$0}') \
+ > ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433.bed
+
+
+
 # -a chrm(TATA region)   chrmStart  chrmEnd hmm_state   Binom_p_value   strand   mat_allele_count   pat_allele_count   identical_reads_count chrm(maxTSN)   chrmStart  chrmEnd
 # -b chrmo chromStart  chromEnd        score.b6        score.cast      strand  score.ave
 
 # get the maxScore of avrage(score.B6, score.CAST) from the intersect motif bind sites # only use the first, if tie
 python2 getMaxScore_TFbindingmotif.py ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216.bed ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216_maxScore.bed
+python2 getMaxScore_TFbindingmotif.py ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433.bed ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433_maxScore.bed
 

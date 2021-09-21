@@ -26,9 +26,9 @@ db<- CisBP.download("Mus_musculus");
 ## Query the CisBP dataset and select the motifs for a transcription factor of interest
 tfs<- tfbs.createFromCisBP(db, family_name="TBP");
 file.twoBit <- "/home/sc2457/mm10.2bit"
-r1.scan <- tfbs.scanTFsite( tfs, file.twoBit, ncores = 20, threshold = 3);
+#r1.scan <- tfbs.scanTFsite( tfs, file.twoBit, ncores = 20, threshold = 3);
 
-Head="BN"
+Head="LV" #"BN"
 b6.TATA.Bed = read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35to-20_mat.bed",sep=""))
 CAST.TATA.Bed = read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35to-20_pat.bed",sep=""))
 

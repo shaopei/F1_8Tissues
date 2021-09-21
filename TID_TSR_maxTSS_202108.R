@@ -219,6 +219,7 @@ sum(TSS$AveAT >= bin*3 &TSS$AveAT<bin*4)
 sum(TSS$AveAT >= bin*4)
 
 ### 
+Head="LV"
 df=read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216_maxScore.bed",sep=""))
 colnames(df)[16:19]=c("score.b6","score.cast","strand","score.ave")
 colnames(df)[7:9]=c("matRead","patRead", "ideRead")
@@ -226,4 +227,16 @@ df$scoreB6minusCAST = df$score.b6 - df$score.cast
 df$totalRead = df$matRead + df$patRead + df$ideRead
 dim(df)
 df=df[df$matRead + df$patRead >0,]
-plot(df$matRead - df$patRead, df$scoreB6minusCAST)
+dim(df)
+plot((df$matRead - df$patRead)/(df$matRead + df$patRead), df$scoreB6minusCAST)
+
+
+df=read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433_maxScore.bed",sep=""))
+colnames(df)[16:19]=c("score.b6","score.cast","strand","score.ave")
+colnames(df)[7:9]=c("matRead","patRead", "ideRead")
+df$scoreB6minusCAST = df$score.b6 - df$score.cast
+df$totalRead = df$matRead + df$patRead + df$ideRead
+dim(df)
+df=df[df$matRead + df$patRead >0,]
+dim(df)
+plot((df$matRead - df$patRead)/(df$matRead + df$patRead), df$scoreB6minusCAST)
