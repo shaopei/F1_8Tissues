@@ -219,7 +219,7 @@ sum(TSS$AveAT >= bin*3 &TSS$AveAT<bin*4)
 sum(TSS$AveAT >= bin*4)
 
 ### 
-Head="LV"
+Head="BN"
 df=read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216_maxScore.bed",sep=""))
 colnames(df)[16:19]=c("score.b6","score.cast","strand","score.ave")
 colnames(df)[7:9]=c("matRead","patRead", "ideRead")
