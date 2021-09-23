@@ -229,6 +229,10 @@ dim(df)
 df=df[df$matRead + df$patRead >0,]
 dim(df)
 plot((df$matRead - df$patRead)/(df$matRead + df$patRead), df$scoreB6minusCAST)
+hist( df$scoreB6minusCAST, breaks = seq(-3,3, 0.1))
+
+plot(((df$matRead - df$patRead)/(df$matRead + df$patRead))[abs(df$scoreB6minusCAST)>0.1], df$scoreB6minusCAST[abs(df$scoreB6minusCAST)>0.1])
+cor.test(((df$matRead - df$patRead)/(df$matRead + df$patRead))[abs(df$scoreB6minusCAST)>0.1], df$scoreB6minusCAST[abs(df$scoreB6minusCAST)>0.1])
 
 
 df=read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433_maxScore.bed",sep=""))
@@ -240,3 +244,5 @@ dim(df)
 df=df[df$matRead + df$patRead >0,]
 dim(df)
 plot((df$matRead - df$patRead)/(df$matRead + df$patRead), df$scoreB6minusCAST)
+plot(((df$matRead - df$patRead)/(df$matRead + df$patRead))[abs(df$scoreB6minusCAST)>0.1], df$scoreB6minusCAST[abs(df$scoreB6minusCAST)>0.1])
+cor.test(((df$matRead - df$patRead)/(df$matRead + df$patRead))[abs(df$scoreB6minusCAST)>0.1], df$scoreB6minusCAST[abs(df$scoreB6minusCAST)>0.1])

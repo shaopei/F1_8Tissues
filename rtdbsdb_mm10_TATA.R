@@ -4,7 +4,7 @@ file.twoBit <- "/home/sc2457/mm10.2bit"
 
 ## Example 1: Scan the whole genome
 ## Scan 2bit file within whole genome to find motif binding site
-r1.scan <- tfbs.scanTFsite( tfs, file.twoBit, ncores = 20);
+r1.scan <- tfbs.scanTFsite( tfs, file.twoBit, ncores = 20, threshold = 6);
 
 
 write.table(r1.scan$result[[1]], file="mm10-TBP_M00216_2.00.bed",
@@ -25,8 +25,22 @@ db<- CisBP.download("Mus_musculus");
 
 ## Query the CisBP dataset and select the motifs for a transcription factor of interest
 tfs<- tfbs.createFromCisBP(db, family_name="TBP");
-file.twoBit <- "/home/sc2457/mm10.2bit"
+#file.twoBit <- "/home/sc2457/mm10.2bit"
 #r1.scan <- tfbs.scanTFsite( tfs, file.twoBit, ncores = 20, threshold = 3);
+#r4.scan <- tfbs.scanTFsite( tfs, file.twoBit, ncores = 20, threshold = 4);
+
+
+#write.table(r1.scan$result[[1]], file="mm10-TBP_M00216_2.00.bed",
+#            quote=F, sep="\t", row.names = F,
+#            col.names = T)
+
+#write.table(r1.scan$result[[2]], file="mm10-TBP_M09433_2.00.bed",
+#            quote=F, sep="\t", row.names = F,
+#            col.names = T)
+
+
+
+
 
 Head="LV" #"BN"
 b6.TATA.Bed = read.table(paste(Head,"_allReads_TSS_maxTSNs_binomtest_-35to-20_mat.bed",sep=""))
