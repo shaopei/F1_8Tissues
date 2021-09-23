@@ -18,7 +18,7 @@ FDR_CUTOFF=0.1
 
 BinomialTest(){
   # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
-  # Need to seperate plus and minus strand before using this function. This function ignore strandness in the output
+  # This function take strandness into account
   f=$1  #bed file containing region to perform test
   j=$2  # prefix for output
   MAT_READ_BED=$3
@@ -45,7 +45,7 @@ BinomialTest(){
 
 BinomialTest_IDE(){
   # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
-  # Need to seperate plus and minus strand before using this function. This function ignore strandness in the output
+  # This function take strandness into account
   f=$1  #bed file containing region to perform test
   j=$2  # prefix for output
   MAT_READ_BED=$3
@@ -134,6 +134,7 @@ for Head in BN LV #HT SK SP LV GI ST KD
     P=${Head}_TunitProteinSrainEffect
     ln -s ${Head}_all_h5.preds.full_inProtein_coding_NoImprinted.bed ${P}.bed
     BinomialTest_IDE ${P}.bed ${P} ${Head}_MAT_READ_BED.temp.gz ${Head}_PAT_READ_BED.temp.gz ${Head}_IDE_READ_BED.temp.gz &
+    #BinomialTest_IDE only keep block with at lease 1 allele-specific read
 done
 wait
 
@@ -145,8 +146,12 @@ for Head in BN LV
     	cat ${Head}_TunitProteinSrainEffect_binomtest_fdr.bed | awk 'BEGIN {OFS="\t"} ($11+0 <= 0.1) {print $1,$2,$3,$4,$5, $10, $6,$7,$8,$9, $11}' > ${Head}_TunitProteinSrainEffect_binomtest_fdr0.1.bed
     	cat ${Head}_TunitProteinSrainEffect_binomtest_fdr.bed | awk 'BEGIN {OFS="\t"} ($11+0 > 0.9) {print $1,$2,$3,$4,$5, $10, $6,$7,$8,$9, $11}' > ${Head}_TunitProteinSrainEffect_binomtest_fdr0.9.bed
         cat ${Head}_TunitProteinSrainEffect_binomtest_fdr.bed | awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5, $10, $6,$7,$8,$9, $11}' > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+# chrom, chromStart, chromEnd, HMM, HMM_BinomailTest, strand, mat(B6)Reads, patReads, IdeReads, Binomial pvalue, Binomial fdr
+
 done
 
+
+## identify the closet genes, including overlap one 
 #1.  identify tunits that overlap (in opposite strand)
 # -S	Require opposite strandedness
 for fdr in fdr0.1 fdr0.9
@@ -154,56 +159,85 @@ do
 bedtools closest -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_${fdr}.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
 | awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed
 #2. identify the closet one that do not overlap regardless of strandness
-    # exclude those with overlap in the opposite strand 
+                             # exclude those with overlap in the opposite strand to avoid duplicates
 bedtools closest -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSrainEffect_binomtest_${fdr}.bed -b ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed) -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
 >> ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed
 done
 
 
-
-############ below old, NOT used ########
-
-# bias fdr<=0.1, control fdr > 0.9
-# biased, strain effect, tunits
-for Head in BN LV 
-    do 
-    for strand in plus minus
-        do
-intersectBed -wb -a ${Head}_MB6_all_h5_${strand}_binomtest_fdr.bed -b ${Head}_PB6_all_h5_${strand}_binomtest_fdr.bed | \
-awk 'BEGIN {OFS="\t"} ($2==$12 && $3==$13 && substr($4,1,1) != substr($14,1,1) && $10+0 <=0.1 && $20+0 <= 0.1 ){print $0}' \
-> ${Head}_${strand}_Tunit_strain_effect_fdr0.1.temp
-
-intersectBed -wb -a <(cat ${Head}_all_h5_${strand}.bed | cut -f 1-6) \
--b <(cat ${Head}_${strand}_Tunit_strain_effect_fdr0.1.temp | awk 'BEGIN {OFS="\t"} (substr($4,1,1)=="M") {print $1, $2, $3, "B6"} (substr($4,1,1)=="P") {print $1, $2, $3, "CAST"}') \
-|awk 'BEGIN {OFS="\t"} ($2==$8 && $3==$9){print $1,$2,$3,$4, $10, $6}' \
-> ${Head}_${strand}_Tunit_strain_effect_fdr0.1.bed
-
-# control, UNbiased, tunits
-intersectBed -wb -a ${Head}_MB6_all_h5_${strand}_binomtest_fdr.bed -b ${Head}_PB6_all_h5_${strand}_binomtest_fdr.bed | \
-awk 'BEGIN {OFS="\t"} ($2==$12 && $3==$13 && $5=="S" && $15=="S" && $10+0 >0.9 && $20+0 >0.9){print $0}' \
-> ${Head}_${strand}_Tunit_strain_effect_fdr0.9.temp
-
-intersectBed -wb -a <(cat ${Head}_all_h5_${strand}.bed | cut -f 1-6) \
--b <(cat ${Head}_${strand}_Tunit_strain_effect_fdr0.9.temp | awk 'BEGIN {OFS="\t"} {print $1, $2, $3, "Sym"} ') \
-|awk 'BEGIN {OFS="\t"} ($2==$8 && $3==$9){print $1,$2,$3,$4, $10, $6}' \
-> ${Head}_${strand}_Tunit_strain_effect_fdr0.9.bed
-
-cat ${Head}_${strand}_Tunit_strain_effect_fdr0.1.bed ${Head}_${strand}_Tunit_strain_effect_fdr0.9.bed |sort-bed - > ${Head}_${strand}_Tunit_strain_effect_fdr0.1AND0.9.bed
-
-intersectBed -wb -a ${Head}_MB6_all_h5_${strand}_binomtest_fdr.bed -b ${Head}_PB6_all_h5_${strand}_binomtest_fdr.bed | \
-awk 'BEGIN {OFS="\t"} ($2==$12 && $3==$13) {print $0}' \
-| awk 'BEGIN {OFS="\t"} ($5 !="S" && substr($4,1,1) =="M" && substr($14,1,1)=="P" && $10+0 <=0.1 && $20+0 <= 0.1 ){print $1, $2, $3, "B6", $10, $20} 
-                        ($5 !="S" && substr($4,1,1) =="P" && substr($14,1,1)=="M" && $10+0 <=0.1 && $20+0 <= 0.1 ){print $1, $2, $3, "CAST", $10, $20} 
-                        ($5 =="S"){print $1, $2, $3, "Sym", $10, $20}' \
-> ${Head}_${strand}_Tunit_strain_effect_fdrALL.temp
-
-intersectBed -wb -a <(cat ${Head}_all_h5_${strand}.bed | cut -f 1-6) -b ${Head}_${strand}_Tunit_strain_effect_fdrALL.temp \
-| awk 'BEGIN {OFS="\t"} ($2==$8 && $3==$9){print $1,$2,$3,$4, $10, $6, $11, $12}' > ${Head}_${strand}_Tunit_strain_effect_fdrALL.bed
+###Given a gene with AT window,  is the adjacent gene more likely to be biased? ###
+cd /workdir/sc2457/F1_Tissues/transcription_level_analysis/AllelicTermination_StainEffectDomain
+# from PolyA_Allele-specific-manuscript_2021updates
+# tunits that DO overlap with the gene transcript (gencode.vM25.annotation_transcript_protein_coding) with dREG sites 
+# exclude chrX and chrY
+# Tunits
+ln -s /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/tunit_protein_coding .
+# Tunits that are under strain effect (no evidence of significantly imprinted), with binomial test results
+ln -s /workdir/sc2457/F1_Tissues/transcription_level_analysis/domains_cluster_more_than_chance_or_not_tunit_protein/*_TunitProteinSrainEffect_binomtest_fdrAll.bed .
+# chrom, chromStart, chromEnd, HMM, HMM_BinomailTest, strand, mat(B6)Reads, patReads, IdeReads, Binomial pvalue, Binomial fdr
 
 
-done
+# AT windows
+ln -s  /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/*_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed .
+# col 1-6 AT window
+# col 7-12 AlleleHMM blocks
+# col 13-18 Tunit 
+# col 19 B6 or CAST which strain AT bias toward
+
+
+for Head in BN LV
+do
+# identify the SrainEffect tunits without AT window
+# -b  col 13-18 Tunit
+intersectBed -v -s -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed
 done
 
+for Head in BN LV
+do
+# identify the SrainEffect tunits with AT window
+# -b  col 13-18 Tunit
+intersectBed -s -wa -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
+done
+
+## identify the closet genes, including overlap one. if tie, Report the first tie that occurred in the B file.
+#1.  identify tunits that overlap (in opposite strand)
+# -S	Require opposite strandedness
+# SrainEffect tunits with AT window
+for Head in BN LV
+do
+bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed \
+-b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+| awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed
+# col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed with a pair on opposite strad
+# col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+
+#2. identify the closet one that do not overlap regardless of strandness
+                             # exclude those with overlap in the opposite strand to avoid duplicates
+bedtools closest -t first -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed) \
+-b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+>> ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed
+done
+
+#SrainEffect tunits without AT window
+## identify the closet genes, including overlap one. if tie, Report the first tie that occurred in the B file.
+#1.  identify tunits that overlap (in opposite strand)
+# -S	Require opposite strandedness
+for Head in BN LV
+do
+bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed \
+-b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+| awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed
+# col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed with a pair on opposite strad
+# col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+
+#2. identify the closet one that do not overlap regardless of strandness
+                             # exclude those with overlap in the opposite strand to avoid duplicates
+bedtools closest -t first -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed) \
+-b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+>> ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed
+done
 
 
 
