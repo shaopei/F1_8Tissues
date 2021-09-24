@@ -190,7 +190,7 @@ do
 # identify the SrainEffect tunits without AT window
 # -b  col 13-18 Tunit
 intersectBed -v -s -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
--b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18)| uniq > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed
 done
 
 for Head in BN LV
@@ -198,7 +198,7 @@ do
 # identify the SrainEffect tunits with AT window
 # -b  col 13-18 Tunit
 intersectBed -s -wa -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
--b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) | uniq > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
 done
 
 ## identify the closet genes, including overlap one. if tie, Report the first tie that occurred in the B file.
