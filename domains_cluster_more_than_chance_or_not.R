@@ -314,3 +314,50 @@ legend("topright",
 
 ks.test(df_0.9$expLevel[!duplicated(df_0.9[,1:6])], 
         df_0.1$expLevel[!duplicated(df_0.1[,1:6])])
+
+
+### gene annotation counts OR tunit counts in Strain effect domain with VS without AT window
+Head="BN"
+df_with = read.table(paste(Head, "_T8_2Strand_p0.05_effect_strain.bed_cluster_withATwindow_geneCount.txt", sep=""))
+df_without = read.table(paste(Head, "_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutATwindow_geneCount.txt", sep=""))
+
+h1<- hist(df_with$V1, breaks = seq(0,200,5))
+h1$counts=h1$counts/sum(h1$counts)
+plot(h1,col="red" 
+     ,density=25     
+     ,ylab="Proportion"
+     #, xlim=c(0,7)
+     #,xlab="Tunit Expression Level"     
+     ,las=1
+     #,xaxt='n'
+     ,main= Head
+)
+
+h2<- hist(df_without$V1
+          ,plot =FALSE
+          , breaks = seq(0,200,5))
+h2$counts=h2$counts/sum(h2$counts)
+plot(h2,col="blue" , add=T)
+plot(h1,col="red" ,density=25, add=T)
+
+legend("topright", 
+       legend = c( "With AT window","Without AT window"), 
+       #pch=c(15,15),
+       #cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25, 10000),
+       angle=c(45, 180),
+       #angle=45,
+       fill=c("red","blue")
+       , bty = "n"
+)
+
+ks.test(df_without$V1, df_with$V1)
+        
+        
+        
+        
+        
+        

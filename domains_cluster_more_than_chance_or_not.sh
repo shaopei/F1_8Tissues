@@ -239,5 +239,49 @@ bedtools closest -t first -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSra
 >> ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed
 done
 
+# from Find_consistent_blocks_v3.bsh
+# strain effect domain
+ln -s /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/T8_2Strand_p0.05_effect_strain.bed_cluster .
+# seperate strain effect domain to two group, one with AT window, one without
+
+for Head in BN LV
+do
+# identify the SrainEffect domains without AT window
+# -b  col 13-18 Tunit
+intersectBed -v -a <(cat T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-| grep ${Head}) \
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18| uniq)| uniq > ${Head}_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutATwindow.bed
+done
+
+for Head in BN LV
+do
+# identify the SrainEffect domains with AT window
+# -b  col 13-18 Tunit
+intersectBed -wa -a <(cat T8_2Strand_p0.05_effect_strain.bed_cluster |cut -f 3-| grep ${Head}) \
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18| uniq) | uniq > ${Head}_T8_2Strand_p0.05_effect_strain.bed_cluster_withATwindow.bed
+done
+
+ # wc -l *T8_2Strand_p0.05_effect_strain.bed_cluster*
+ #   326 BN_T8_2Strand_p0.05_effect_strain.bed_cluster_withATwindow.bed
+ #   407 BN_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutATwindow.bed
+ #   712 LV_T8_2Strand_p0.05_effect_strain.bed_cluster_withATwindow.bed
+ #  1132 LV_T8_2Strand_p0.05_effect_strain.bed_cluster_withoutATwindow.bed
+ #  3466 T8_2Strand_p0.05_effect_strain.bed_cluster
+ #  6043 total
+
+# use gencode.vM25.annotation.gtf  or Tunits over lap with protein coding gene
+ln -s /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/GeneAnnotationInCluster/gencode.vM25.annotation_geneMerged.bed
+
+f=gencode.vM25.annotation_geneMerged.bed
+
+for Head in BN LV
+do
+	for state in withoutATwindow withATwindow
+do
+	f=tunit_protein_coding/${Head}_all_h5.preds.full_inProtein_coding.bed
+bedtools intersect -wo -a <(cat ${f} |cut -f 1-3) -b  ${Head}_T8_2Strand_p0.05_effect_strain.bed_cluster_${state}.bed |cut -f 4-7 |sort |uniq -c > ${Head}_T8_2Strand_p0.05_effect_strain.bed_cluster_${state}_geneCount.txt
+done
+done
+
+
 
 
