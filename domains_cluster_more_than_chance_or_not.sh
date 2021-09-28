@@ -124,7 +124,6 @@ for Head in BN LV #HT SK SP LV GI ST KD
     |grep -v chrX |grep -v chrY | grep -v chrMT| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |gzip > ${Head}_PAT_READ_BED.temp.gz &
     zcat ${bed_dir}/${Head}_*_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.map5.1bp.sorted.bed.gz \
     |grep -v chrX |grep -v chrY | grep -v chrMT| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |gzip > ${Head}_IDE_READ_BED.temp.gz &
-
 done
 
 
