@@ -1,0 +1,184 @@
+###For strain effect and imprinted domains: 
+#How many expressed TUs? 
+#How many TUs are covered by SNPs with at least one read? 
+#How many have allelic changes? (seperate 8 organs).
+
+cd /workdir/sc2457/F1_Tissues/transcription_level_analysis/Summary_statistics_F18ORgans
+
+# from Find_consistent_blocks_v3.bsh
+# strain effect domain
+ln -s /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/T8_2Strand_p0.05_effect_strain.bed_cluster .
+ln -s /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/T8_2Strand_p0.05_effect_imprinting.bed_cluster
+
+#How many expressed TUs?  (chrX and chrY are excluded)
+# Tunits overlap with protein coding gene annotations
+ln -s /workdir/sc2457/F1_Tissues/PolyA_Allele-specific-manuscript/tunit_protein_coding .
+# All Tunits (use this one)
+ln -s /workdir/sc2457/F1_Tissues/bigWig/tunit .
+
+
+for effect in strain imprinting
+	do
+for Head in BN LV HT SK SP GI ST KD
+    do 
+#echo ${Head} ${effect} 
+intersectBed -u -a tunit/${Head}_all_h5.preds.full.bed \
+-b <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster | cut -f 3-) |sort-bed - |uniq |wc -l 
+ done
+ done
+
+
+#How many TUs are covered by SNPs with at least one allelic read? 
+
+### calculate allele specifcity within each tunit predicts
+ln -s ../domains_cluster_more_than_chance_or_not/getFDR.R .
+ln -s  /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map2ref_1bpbed_map5 .
+
+PL=/workdir/sc2457/alleleDB/alleledb_pipeline_mouse
+FDR_SIMS=10
+FDR_CUTOFF=0.1
+
+BinomialTest(){
+  # BinomialTest $f $j $MAT_READ_BED $PAT_READ_BED
+  # This function take strandness into account
+  f=$1  #bed file containing region to perform test
+  j=$2  # prefix for output
+  MAT_READ_BED=$3
+  PAT_READ_BED=$4
+
+  bedtools coverage -s -a <(cat $f | LC_ALL=C sort -k1,1V -k2,2n --parallel=30| awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6}') -b <(zcat ${MAT_READ_BED} | grep -v chrX |grep -v chrY | grep -v chrMT) -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $1,$2,$3,$7,$8,$9,$10, $6}' > ${j}.mat_cov.bed &
+  bedtools coverage -s -a <(cat $f | LC_ALL=C sort -k1,1V -k2,2n --parallel=30| awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6}') -b <(zcat ${PAT_READ_BED} | grep -v chrX |grep -v chrY | grep -v chrMT) -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3t$6, $1,$2,$3,$7,$8,$9,$10, $6}' > ${j}.pat_cov.bed &
+  #bedtools coverage -s -a $f -b ${IDENTICAL_READ_BED} -sorted| awk 'BEGIN {OFS="\t"; t="_"} {print $1t$2t$3, $1,$2,$3,$7,$8,$9,$10}' |LC_ALL=C sort -k1,1V -k2,2n > ${j}.iden_cov.bed &
+  wait
+
+  # filter the block and only keep block with at lease 1 allele-specific read
+  join -t $'\t' -j 1 -o 1.1,1.2,1.3,1.4,1.5,2.5,1.9 ${j}.mat_cov.bed ${j}.pat_cov.bed | awk 'BEGIN{OFS="\t"} ($5+$6 >0) {print $0}' | \
+  awk 'BEGIN{OFS="\t"; t=","} ($5>$6) {print $2, $3, $4, "M"t$5t$6, $5, $6, "-", $7 }  ($5<$6) {print $2, $3, $4, "P"t$5t$6, $5, $6, "-", $7 }  ($5==$6) {print $2, $3, $4, "S"t$5t$6, $5, $6, "-", $7} '  \
+  | LC_ALL=C sort -k1,1V -k2,2n --parallel=30 > ${j}.merged_cov.bed
+
+  mv ${j}.mat_cov.bed ${j}.pat_cov.bed toremove
+  # output of BinomialTestFor_merged_cov.bed.py:(hmm+BinomialTest) if p-value <= 0.05, remain what it got from hmm (can ne M,P, or S), otherwise S.
+  python2 ${PL}/BinomialTestFor_merged_cov.bed.py ${j}.merged_cov.bed ${j}_binomtest.bed
+  mv ${j}.merged_cov.bed toremove
+  R --vanilla --slave --args $(pwd) ${j}_binomtest.bed ${j}_binomtest_fdr.bed < getFDR.R
+  # python2 ${PL}/FalsePosFor_merged_cov.bed.py ${j}_binomtest.bed ${FDR_SIMS} ${FDR_CUTOFF} > ${j}_binomtest_FDR${FDR_CUTOFF}.txt &
+  #  awk 'NR==1 { print $0 } NR>1 && $9 <= thresh { print $0 }'  thresh=$(awk 'END {print $6}' ${j}_binomtest_FDR${FDR_CUTOFF}.txt) < ${j}_binomtest.bed  > ${j}_interestingHets.bed
+}
+
+
+# map reads from each individual sample from the same tissue and cross to the tunit predicts
+
+for Head in BN LV HT SK SP GI ST KD
+    do 
+    echo $Head #BN
+    bed_dir=map2ref_1bpbed_map5
+    for cross in MB6 PB6
+        do echo $cross #MB6
+          #for f in ${bed_dir}/${Head}_${cross}_all_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+           # do echo $f  #map2ref_bed/ST_PB6_B_R1.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+            PREFIX=${bed_dir}/${Head}_${cross}_all_R1   #map2ref_bed/ST_PB6_all_R1
+            echo $PREFIX
+            MAT_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz
+            PAT_READ_BED=${PREFIX}.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz
+            #IDENTICAL_READ_BED=${PREFIX}.mat.bowtie.gz_AMBremoved_sorted_identical.map2ref.sorted.bed.gz
+            P=${Head}_${cross}_all_h5
+            ln -s tunit/${Head}_all_h5.preds.full.bed ${P}.bed
+
+            if [[ "$cross" == "MB6" ]] ; then
+                BinomialTest ${P}.bed ${P} ${MAT_READ_BED} ${PAT_READ_BED} &
+            elif [[ "$cross" == "PB6" ]]  ; then
+            # switch -m and -p for PB6
+                BinomialTest ${P}.bed ${P} ${PAT_READ_BED} ${MAT_READ_BED} &
+            fi
+    done
+done
+    wait
+
+#How many TUs are covered by SNPs with at least one allelic read? 
+for effect in strain imprinting
+	do
+for Head in BN LV HT SK SP GI ST KD
+    do 
+#echo ${Head} ${effect} 
+intersectBed -u -a <(cat ${Head}_*B6_all_h5_binomtest.bed |grep -v \# |awk 'BEGIN {OFS="\t"} {print $1, $2, $3, ".", "111", $10}'  | sort-bed - | uniq) \
+-b <(cat T8_2Strand_p0.05_effect_${effect}.bed_cluster | cut -f 3-) | sort-bed - | uniq | wc -l 
+ done
+ done
+
+
+for Head in BN LV HT SK SP GI ST KD
+    do 
+intersectBed -wb -a ${Head}_MB6_all_h5_binomtest_fdr.bed -b ${Head}_PB6_all_h5_binomtest_fdr.bed | \
+awk 'BEGIN {OFS="\t"} ($2==$13 && $3==$14 && substr($4,1,1) == substr($15,1,1) && $11+0 <=0.5 && $22+0 <= 0.5 ){print $1,$2,$3,$4,$5,$10}' \
+> ${Head}_Tunit_imprinted_effect_fdr0.5.bed
+done
+
+for Head in BN LV HT SK SP GI ST KD
+    do intersectBed -v -a tunit/${Head}_all_h5.preds.full.bed \
+    -b ${Head}_Tunit_imprinted_effect_fdr0.5.bed > ${Head}_all_h5.preds.full_Noimprinted_effect_fdr0.5.bed
+done
+
+
+# group reads from MB6 and PB6 based on strain
+bed_dir=map2ref_1bpbed_map5
+for Head in BN LV HT SK SP GI ST KD
+    do 
+    zcat ${bed_dir}/${Head}_*_all_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    |grep -v chrX |grep -v chrY | grep -v chrMT| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |gzip > ${Head}_B6_READ_BED.temp.gz &
+    zcat ${bed_dir}/${Head}_*_all_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    |grep -v chrX |grep -v chrY | grep -v chrMT| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |gzip > ${Head}_CAST_READ_BED.temp.gz &
+done
+wait
+
+for Head in BN LV HT SK SP GI ST KD
+    do 
+    echo $Head #BN
+    P=${Head}_TunitSrainEffect
+    ln -s ${Head}_all_h5.preds.full_Noimprinted_effect_fdr0.5.bed ${P}.bed
+    BinomialTest ${P}.bed ${P} ${Head}_B6_READ_BED.temp.gz ${Head}_CAST_READ_BED.temp.gz &
+done
+wait
+
+# group reads from MB6 and PB6 based on parent of origin
+bed_dir=map2ref_1bpbed_map5
+for Head in BN LV HT SK SP GI ST KD
+    do 
+    zcat ${bed_dir}/${Head}_MB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    ${bed_dir}/${Head}_PB6_all_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    |grep -v chrX |grep -v chrY | grep -v chrMT| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |gzip > ${Head}_POmat_READ_BED.temp.gz &
+    zcat ${bed_dir}/${Head}_MB6_all_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    ${bed_dir}/${Head}_PB6_all_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz \
+    |grep -v chrX |grep -v chrY | grep -v chrMT| LC_ALL=C sort -k1,1V -k2,2n --parallel=30 |gzip > ${Head}_POpat_READ_BED.temp.gz &
+done
+wait
+
+for Head in BN LV HT SK SP GI ST KD
+    do 
+    echo $Head #BN
+    P=${Head}_TunitImprintedEffect
+    ln -s ${Head}_Tunit_imprinted_effect_fdr0.5.bed ${P}.bed
+    BinomialTest ${P}.bed ${P} ${Head}_POmat_READ_BED.temp.gz ${Head}_POpat_READ_BED.temp.gz &
+done
+wait
+
+# How many have allelic changes? (seperate 8 organs).
+# strain effect
+for Head in BN LV HT SK SP GI ST KD
+    do 
+#echo ${Head}
+intersectBed -u -a <(cat ${Head}_TunitSrainEffect_binomtest_fdr.bed| awk 'BEGIN {OFS="\t"} ($11+0 <0.1) {print $1, $2, $3, $4, $5, $10}' | sort-bed - | uniq) \
+-b <(cat T8_2Strand_p0.05_effect_strain.bed_cluster | cut -f 3-) | sort-bed - | uniq | wc -l 
+ done
+
+# imprinted effect
+for Head in BN LV HT SK SP GI ST KD
+    do 
+#echo ${Head}
+intersectBed -u -a <(cat ${Head}_TunitImprintedEffect_binomtest_fdr.bed| awk 'BEGIN {OFS="\t"} ($11+0 <0.1) {print $1, $2, $3, $4, $5, $10}' | sort-bed - | uniq) \
+-b <(cat T8_2Strand_p0.05_effect_imprinting.bed_cluster | cut -f 3-) | sort-bed - | uniq | wc -l 
+ done
+
+
+
+
+
