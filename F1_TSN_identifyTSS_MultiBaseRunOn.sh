@@ -31,6 +31,17 @@ do
   bedtools coverage -sorted -d -s -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed_map5/${Head}*.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted.bed.gz |sort-bed --max-mem 10G -) > ${Head}_allReads_temp0_pat.bed &
 done
 
+# count dREG sites 
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do #echo ${Head}
+zcat Browser/${Head}_all.dREG.peak.score.bed.gz |grep -v chrX | grep -v chrY |wc -l
+done
+
+# count dREG sites with SNPs
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do intersectBed -sorted -u -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+done
+
 ## identify TSN
 # only keep base with at least b all reads ($8 >=b)
 b=5
@@ -40,6 +51,18 @@ do
    cat ${Head}_allReads_temp0.bed | awk -v b=$b 'BEGIN{OFS="\t"; c=","; C=",reads:"} ($8-0 >=b) {print $1, $2+$7-1, $2+$7 , $7c$6C$8, $5, $6}' |sort-bed - > ${Head}_allReads_TSN${b}+_IGV.bed &
    cat ${Head}_allReads_temp0.bed | awk -v b=$b 'BEGIN{OFS="\t"; c=","; C=",reads:"} ($8-0 >=b) {print $1, $2+$7-1, $2+$7 , $7, $8, $6}' |sort-bed - > ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed &
    # $4 is TSN position inside dREG, $5 read counts of the TSN, $6 strand of the TSN
+done
+
+# count TSN
+b=5
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do #echo ${Head}
+cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY |wc -l 
+done
+
+# count TSN with SNPs
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
 done
 
 # only keep base with at least 7 mat (B6) or pat(cast) reads ($8 >=b)
@@ -64,6 +87,17 @@ do
    # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least b reads), $6 strand of the TSS
 done
 wait
+
+# count TSS
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do #echo ${Head}
+cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY |wc -l 
+done
+
+# count TSS with SNPs
+for Head in BN HT  SK  SP  KD  LV  GI  ST
+do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY ) -b unfiltered_snp.sorted.bed.gz |wc -l
+done
 
 ## identify maxTSNs with EACH TSS
 # use Proseq2.0, BWA mapping to mm10
