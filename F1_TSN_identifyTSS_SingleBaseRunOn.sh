@@ -43,6 +43,19 @@ do
    # $4 is TSN position inside dREG, $5 read counts of the TSN, $6 strand of the TSN
 done
 
+
+# count TSN
+for Head in HT KD SK
+do #echo ${Head}
+cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY |wc -l 
+done
+
+ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
+# count TSN with SNPs
+for Head in HT KD SK
+do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed  |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+done
+
 ## identify TSS
 # Force strandedness -s
 # merge TSN with gap <= 60bp -d 60
@@ -53,6 +66,17 @@ do
    # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least b reads), $6 strand of the TSS
 done
 wait
+
+# count TSS
+for Head in HT KD SK
+do
+cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY |wc -l 
+done
+
+# count TSS with SNPs
+for Head in HT KD SK
+do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY ) -b unfiltered_snp.sorted.bed.gz |wc -l
+done
 
 
 ## identify maxTSNs with EACH TSS

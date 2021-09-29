@@ -33,6 +33,13 @@ do
 done
 wait
 
+# count dREG sites with  mat reads >=5 AND pat reads >=5 (strand specific)
+# for plus and minus from the same dREG sites, only count once
+for Head in HT KD SK
+do cat ${Head}_${studyBed}_5mat5pat_uniq.bed | cut -f 1-3 |sort-bed - |uniq |wc -l
+done
+
+
 
 unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
 # generate a smaller SNP file for IGV, SNPs within 100bp of the dREG sites
