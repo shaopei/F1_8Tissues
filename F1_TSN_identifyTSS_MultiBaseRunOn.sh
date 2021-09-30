@@ -37,9 +37,12 @@ do #echo ${Head}
 zcat Browser/${Head}_all.dREG.peak.score.bed.gz |grep -v chrX | grep -v chrY |wc -l
 done
 
-# count dREG sites with SNPs
+# count dREG sites TAGGED with SNPs (within 20bp)
 for Head in BN HT  SK  SP  KD  LV  GI  ST
-do intersectBed -sorted -u -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+do 
+  #intersectBed -sorted -u -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+bedtools closest -d -t first -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz \
+| awk 'BEGIN {OFS="\t"} ($9+0 <= 20) {print $0}' |wc -l
 done
 
 ## identify TSN
@@ -60,9 +63,11 @@ do #echo ${Head}
 cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY |wc -l 
 done
 
-# count TSN with SNPs
+# count TSN with SNPs (within 20bp downstream)
 for Head in BN HT  SK  SP  KD  LV  GI  ST
-do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+do #intersectBed -sorted -u -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+bedtools closest -D a -iu -t first -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz \
+| awk 'BEGIN {OFS="\t"} ($11+0 <= 20) {print $0}' |wc -l
 done
 
 # only keep base with at least 7 mat (B6) or pat(cast) reads ($8 >=b)
@@ -94,9 +99,13 @@ do #echo ${Head}
 cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY |wc -l 
 done
 
-# count TSS with SNPs
+# count TSS with SNPs (within 20bp downstream)
 for Head in BN HT  SK  SP  KD  LV  GI  ST
-do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY ) -b unfiltered_snp.sorted.bed.gz |wc -l
+do 
+  #intersectBed -sorted -u -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY ) -b unfiltered_snp.sorted.bed.gz |wc -l
+bedtools closest -D a -iu -t first -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz \
+| awk 'BEGIN {OFS="\t"} ($11+0 <= 20) {print $0}' |wc -l
+
 done
 
 ## identify maxTSNs with EACH TSS

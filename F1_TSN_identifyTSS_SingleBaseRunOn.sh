@@ -51,10 +51,15 @@ cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v c
 done
 
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn/unfiltered_snp.sorted.bed.gz .
-# count TSN with SNPs
+
+# count TSN with SNPs (within 20bp downstream)
 for Head in HT KD SK
-do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed  |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+do 
+#intersectBed -sorted -u -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed  |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz |wc -l
+bedtools closest -D a -iu -t first -a <(cat ${Head}_allReads_TSN_pos_readcount${b}+_strand.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz \
+| awk 'BEGIN {OFS="\t"} ($11+0 <= 20) {print $0}' |wc -l
 done
+
 
 ## identify TSS
 # Force strandedness -s
@@ -75,7 +80,10 @@ done
 
 # count TSS with SNPs
 for Head in HT KD SK
-do intersectBed -sorted -u -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY ) -b unfiltered_snp.sorted.bed.gz |wc -l
+do #intersectBed -sorted -u -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY ) -b unfiltered_snp.sorted.bed.gz |wc -l
+bedtools closest -D a -iu -t first -a <(cat ${Head}_allReads_TSS.bed |grep -v chrX | grep -v chrY) -b unfiltered_snp.sorted.bed.gz \
+| awk 'BEGIN {OFS="\t"} ($11+0 <= 20) {print $0}' |wc -l
+
 done
 
 
