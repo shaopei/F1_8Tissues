@@ -159,12 +159,14 @@ bedtools closest -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_${fdr}.bed -
 | awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed
 #2. identify the closet one that do not overlap regardless of strandness
                              # exclude those with overlap in the opposite strand to avoid duplicates
+# -io	Ignore features in B that overlap A. That is, we want close, yet not touching features only.
 bedtools closest -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSrainEffect_binomtest_${fdr}.bed -b ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed) -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
 >> ${Head}_TunitProteinSrainEffect_binomtest_${fdr}_adjacentTunit.bed
 done
 
 
 ###Given a gene with AT window,  is the adjacent gene more likely to be biased? ###
+# exclude the paired downstream adjancent tunits that are baised to the same direction (i.e. Both B6 or Both CAST) AND on the same strand
 cd /workdir/sc2457/F1_Tissues/transcription_level_analysis/AllelicTermination_StainEffectDomain
 # from PolyA_Allele-specific-manuscript_2021updates
 # tunits that DO overlap with the gene transcript (gencode.vM25.annotation_transcript_protein_coding) with dREG sites 
@@ -195,12 +197,16 @@ done
 for Head in BN LV
 do
 # identify the SrainEffect tunits with AT window
-# -b  col 13-18 Tunit
-intersectBed -s -wa -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
--b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| cut -f 13-18) | uniq > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
+# -b  col 13-18 Tunit, col 1-6 AT window
+intersectBed -s -wo -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+-b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| awk 'BEGIN {OFS="\t"} {print $13,$14,$15,$16,$17,$18, $1,$2,$3,$4,$5,$6}' )\
+ |awk 'BEGIN {OFS="\t"; a="_AT"} {print $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11,$18, $19,$20,$21a,$22,$23}' | uniq > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
 done
 
+
 ## identify the closet genes, including overlap one. if tie, Report the first tie that occurred in the B file.
+# exclude the paired downstream adjancent tunits that are baised to the same direction (i.e. Both B6 or Both CAST) AND on the same strand
+
 #1.  identify tunits that overlap (in opposite strand)
 # -S	Require opposite strandedness
 # SrainEffect tunits with AT window
@@ -208,16 +214,36 @@ for Head in BN LV
 do
 bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed \
 -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
-| awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed
+| awk 'BEGIN {OFS="\t"} ($29+0 ==0) {print $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11,$18, $19,$20,$21,$22,$23, $24, $25, $26,$27,$28, $29, $12,$13,$14,$15,$16,$17}' \
+ > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed
 # col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed with a pair on opposite strad
 # col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+# col 23 distance
+# col 24-29 associated AT window
 
 #2. identify the closet one that do not overlap regardless of strandness
                              # exclude those with overlap in the opposite strand to avoid duplicates
 bedtools closest -t first -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed) \
 -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+| awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11,$18, $19,$20,$21,$22,$23,$24, $25, $26,$27,$28, $29, $12,$13,$14,$15,$16,$17}' \
 >> ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed
 done
+
+
+# use paired Tunits only from the opposite strand
+for Head in BN LV
+do
+bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed \
+-b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+| awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11,$18, $19,$20,$21,$22,$23, $24, $25, $26,$27,$28, $29, $12,$13,$14,$15,$16,$17}' \
+ > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunitOppositeStrand.bed
+# col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed with a pair on opposite strad
+# col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+# col 23 distance
+# col 24-29 associated AT window
+done
+
+
 
 #SrainEffect tunits without AT window
 ## identify the closet genes, including overlap one. if tie, Report the first tie that occurred in the B file.
