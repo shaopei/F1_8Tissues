@@ -156,13 +156,21 @@ ks.test(df_0.9$expLevel[!duplicated(df_0.9[,1:6])],
 
 
 #####
-## exclude the paired downstream adjancent tunits that are baised to the same direction (i.e. Both B6 or Both CAST) AND on the same strand
-
+# two analysis, one use all tunits that are nearest degrardless of strand,
+# the other only use nearest from the opposite strand
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/domains_cluster_more_than_chance_or_not_tunit_protein/")
 
 # with AT window VS withOUT AT window
-df_withAT=read.table("BN_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed")
-df_withoutAT=read.table("BN_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed")
+Head="BN"
+df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed", sep=""))
+df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed", sep=""))
+
+#use nearest from the opposite strand
+df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunitOppositeStrand.bed", sep=""))
+df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunitOppositeStrand.bed", sep=""))
+
+
+
 
 colnames(df_withAT)[22]="pair_fdr"  # fdr of the tunit that pair with the fdr0.1 tunit
 colnames(df_withAT)[23]="pair_distance" # distance of the tunit that pair with the fdr0.1 tunit
@@ -180,28 +188,6 @@ fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1),
                      dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
              , 2,2))
 
-
-#Do TUs that are adjacent to a significant change tend to share the same change?
-## exclude the paired downstream adjancent tunits that are baised to the same direction (i.e. Both B6 or Both CAST) AND on the same strand
-temp <- data.frame(do.call(rbind, strsplit(as.character(df_withAT$V4), ",")))
-df_withAT$Tunit1_winP = temp[,1]
-temp <- data.frame(do.call(rbind, strsplit(as.character(df_withAT$V15), ",")))
-df_withAT$Tunit2_winP = temp[,1]
-
-# exclude Tunits that downstream of AT window share  the same alleleic bias (i.e. from the same AlleleHMM blocks)
-df_withAT$exclude = (df_withAT$V6 == df_withAT$V17) & (df_withAT$Tunit1_winP == df_withAT$Tunit2_winP) 
-#& (df_withAT$pair_distance >0)
-
-dim(df_withAT)
-sum(df_withAT$exclude)
-
-df_withAT=df_withAT[!df_withAT$exclude,]
-
-fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1), 
-                     dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
-                   , 2,2))
-
-
 # Do TUs change in the same direction of change? Or do they often have the opposite direction?
 df = df_withAT[df_withAT$pair_fdr <= 0.1,]
 temp <- data.frame(do.call(rbind, strsplit(as.character(df$V4), ",")))
@@ -216,6 +202,10 @@ sum(df$Tunit1_winP == df$Tunit2_winP) / dim(df)[1]
 sum(df$Tunit1_winP != df$Tunit2_winP) / dim(df)[1]
 pie(c(sum(df$Tunit1_winP == df$Tunit2_winP), sum(df$Tunit1_winP != df$Tunit2_winP) ),
     label=c("same direction", "opposite direction"))
+# same direction
+sum(df$Tunit1_winP == df$Tunit2_winP)
+# opposite direction
+sum(df$Tunit1_winP != df$Tunit2_winP)
 
 
 # Distance distribution
@@ -257,7 +247,7 @@ legend("topright",
        , bty = "n"
 )
 
-dev.off()
+#dev.off()
 ks.test(df_withoutAT$pair_distance[df_withoutAT$pair_fdr <= 0.1], 
         df_withAT$pair_distance[df_withAT$pair_fdr <= 0.1] )
 

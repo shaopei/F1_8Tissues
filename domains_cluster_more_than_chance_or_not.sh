@@ -264,6 +264,18 @@ bedtools closest -t first -io -d -a <(intersectBed -v -a ${Head}_TunitProteinSra
 >> ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed
 done
 
+
+
+# use paired Tunits only from the opposite strand
+for Head in BN LV
+do
+bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed \
+-b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+| awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunitOppositeStrand.bed
+# col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed with a pair on opposite strad
+# col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+done
+
 # from Find_consistent_blocks_v3.bsh
 # strain effect domain
 ln -s /workdir/sc2457/F1_Tissues/ImprintingOrGenetics/Combined_MB6andPB6/T8_2Strand_p0.05_effect_strain.bed_cluster .
