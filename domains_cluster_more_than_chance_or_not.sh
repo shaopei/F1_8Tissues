@@ -200,8 +200,12 @@ do
 # -b  col 13-18 Tunit, col 1-6 AT window
 intersectBed -s -wo -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
 -b <(cat ${Head}_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed| awk 'BEGIN {OFS="\t"} {print $13,$14,$15,$16,$17,$18, $1,$2,$3,$4,$5,$6}' )\
- |awk 'BEGIN {OFS="\t"; a="_AT"} {print $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11,$18, $19,$20,$21a,$22,$23}' | uniq > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
+ |awk 'BEGIN {OFS="\t"; a="_AT"} {print $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11,$18, $19,$20,$21a,$22,$23}' | uniq \
+ > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
 done
+# ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed
+# col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+# col 12-17 AT window
 
 
 ## identify the closet genes, including overlap one. if tie, Report the first tie that occurred in the B file.
@@ -275,6 +279,32 @@ bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdr
 # col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed with a pair on opposite strad
 # col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
 done
+
+
+# compare genes (use protein coding Tunits here) overlap with AT window, and genes overlap with gene(another tunit) without AT window.
+# without AT window
+# for gene1 without AT window, identify the gene2 with TSS overlap with the 2nd half of the gene1  using R
+for Head in BN LV
+do
+intersectBed -wo -S -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+> ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_IntersectTunitOppositeStrand.bed
+done
+
+#with AT window
+# identify gene2 overlap with AT window
+for Head in BN LV
+do
+cat ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed | awk 'BEGIN {OFS="\t"} {print $12,$13,$14,$15,$16,$17, $1,$2,$3,$4,$5,$6, $7, $8, $9, $10, $11}' > temp.bed
+intersectBed -wo -S -a temp.bed -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
+| awk 'BEGIN {OFS="\t"} {print $7, $8, $9, $10, $11, $12,$13,$14,$15,$16,$17, $18, $19,$20,$21,$22,$23, $24, $25, $26,$27,$28, $29, $1,$2,$3,$4,$5,$6}' \
+ > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunitOppositeStrand.bed
+# col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow.bed with a pair on opposite strad
+# col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
+# col 23 distance
+# col 24-29 associated AT window
+done
+
+
 
 # from Find_consistent_blocks_v3.bsh
 # strain effect domain
