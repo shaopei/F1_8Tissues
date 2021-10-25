@@ -172,6 +172,7 @@ df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_w
 #use nearest from the opposite strand
 df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunitOppositeStrand.bed", sep=""))
 df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunitOppositeStrand.bed", sep=""))
+#df_withoutAT = new_df
 dim(df_withAT)
 df_withAT = unique(df_withAT[,1:23])
 dim(df_withAT)
@@ -185,7 +186,7 @@ colnames(df_withoutAT)[23]="pair_distance"
 df_withoutAT$TunitLength = df_withoutAT$V3 - df_withoutAT$V2
 df_withoutAT$expLevel = df_withoutAT$V7 + df_withoutAT$V8 + df_withoutAT$V9
 
-
+# go to current+179=368 line # subsample withoutAT to match the distrubution of expLevel in withAT 
 #Given a gene with AT window,  is the adjacent gene more likely to be biased? 
 fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1), 
                      dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
@@ -256,7 +257,7 @@ ks.test(df_withoutAT$pair_distance[df_withoutAT$pair_fdr <= 0.1],
 
 
 # Tunit length
-h1<- hist(log10(df_withAT$TunitLength)[!duplicated(df_withoutAT[,1:6])], 
+h1<- hist(log10(df_withAT$TunitLength)[!duplicated(df_withAT[,1:6])], 
           breaks=seq(2,7,0.5))
 h1$counts=h1$counts/sum(h1$counts)
 plot(h1,col="red" 
@@ -269,7 +270,7 @@ plot(h1,col="red"
 )
 axis(1, at=seq(0,7,1), labels=c(0,10,100,1000,"10,000","100,000","1000,000","10,000,000"), las=2)
 
-h2<- hist(log10(df_withoutAT$TunitLength)[!duplicated(df_withAT[,1:6])]
+h2<- hist(log10(df_withoutAT$TunitLength)[!duplicated(df_withoutAT[,1:6])]
           ,plot =FALSE,breaks=seq(2,7,0.5)
 )
 h2$counts=h2$counts/sum(h2$counts)
@@ -279,7 +280,7 @@ plot(h1,col="red" ,density=25, add=T)
 legend("topright", 
        legend = c( "With AT window","Without AT window"), 
        #pch=c(15,15),
-       cex=2, 
+#       cex=2, 
        lty=c(0,0),
        #bty="n",
        lwd=1.5, 
@@ -294,7 +295,7 @@ ks.test(df_withoutAT$TunitLength[!duplicated(df_withoutAT[,1:6])],
         df_withAT$TunitLength[!duplicated(df_withAT[,1:6])])
 
 # Tunit expression level
-h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withoutAT[,1:6])])
+h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])])
 h1$counts=h1$counts/sum(h1$counts)
 plot(h1,col="red" 
      ,density=25     
@@ -306,11 +307,48 @@ plot(h1,col="red"
 )
 axis(1, at=seq(0,7,1), labels=c(0,10,100,1000,"10,000","100,000","1000,000","10,000,000"), las=2)
 
-h2<- hist(log10(df_withoutAT$expLevel)[!duplicated(df_withAT[,1:6])]
+h2<- hist(log10(df_withoutAT$expLevel)[!duplicated(df_withoutAT[,1:6])]
           ,plot =FALSE
 )
 h2$counts=h2$counts/sum(h2$counts)
 plot(h2,col="blue" , add=T)
+plot(h1,col="red" ,density=25, add=T)
+
+legend("topright", 
+       legend = c( "With AT window","Without AT window"), 
+       #pch=c(15,15),
+    #   cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25, 10000),
+       angle=c(45, 180),
+       #angle=45,
+       fill=c("red","blue")
+       , bty = "n"
+)
+
+ks.test(df_withoutAT$expLevel[!duplicated(df_withoutAT[,1:6])], 
+        df_withAT$expLevel[!duplicated(df_withAT[,1:6])])
+
+# examine counts
+h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])])
+#h1$counts=h1$counts/sum(h1$counts)
+plot(h1,col="red" 
+     ,density=25     
+     ,ylab="Proportion"
+     , xlim=c(0,7)
+     ,xlab="Tunit Expression Level"     
+     ,las=2
+     ,xaxt='n',main= ""
+)
+axis(1, at=seq(0,7,1), labels=c(0,10,100,1000,"10,000","100,000","1000,000","10,000,000"), las=2)
+
+h2<- hist(log10(df_withoutAT$expLevel)[!duplicated(df_withoutAT[,1:6])]
+          ,plot =FALSE
+)
+#h2$counts=h2$counts/sum(h2$counts)
+plot(h2,col="blue" )
 plot(h1,col="red" ,density=25, add=T)
 
 legend("topright", 
@@ -327,11 +365,82 @@ legend("topright",
        , bty = "n"
 )
 
-ks.test(df_withoutAT$expLevel[!duplicated(df_withoutAT[,1:6])], 
+# subsample withoutAT to match the distrubution of expLevel in withAT
+# sample without replacement to avid duplicates 
+
+# distribution of expLevel withAT
+h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])])
+h1$frac=h1$counts/sum(h1$counts)
+# distribution of expLevel withoutAT
+h2<- hist(log10(df_withoutAT$expLevel)[!duplicated(df_withoutAT[,1:6])]
+          #,plot =FALSE
+)
+
+# use withAT fraction to calculate the counts of tunits to be sampled from each expLevel breaks
+# determine *sum(h2$counts)/10 by observing numbers in excel
+f = round(h1$frac*sum(h2$counts)/10) 
+# the breaks are not the same length
+h2$counts = h2$counts[(1+length(h2$counts) - length(f)):length(h2$counts)] 
+
+#f[f > h2$counts] = h2$counts[f > h2$counts]
+
+df_withoutAT$log10expLevel = log10(df_withoutAT$expLevel)
+#u=1.5
+#l=1
+new_df <- NULL
+
+for (i in 1:(length(h1$breaks)-1)){
+    l = h1$breaks[i]
+    u = h1$breaks[i+1]
+    temp=df_withoutAT[df_withoutAT$log10expLevel>l & df_withoutAT$log10expLevel<=u,]
+    cat ("draw",f[i],"from" ,h2$counts[i], "\n")
+    if (f[i] <= h2$counts[i]){
+        t1 = temp[sample(nrow(temp),f[i], replace = FALSE), ]
+    }else{
+        t1 = temp[sample(nrow(temp),f[i], replace = TRUE), ]
+    }
+    new_df=rbind.data.frame(new_df, t1)
+}
+View(new_df)
+
+h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])])
+h1$counts=h1$counts/sum(h1$counts)
+plot(h1,col="red" 
+     ,density=25     
+     ,ylab="Proportion"
+     , xlim=c(0,7)
+     ,xlab="log10(Tunit Expression Level)"     
+     ,las=2
+     #,xaxt='n',main= ""
+)
+#axis(1, at=seq(0,7,1), labels=c(0,10,100,1000,"10,000","100,000","1000,000","10,000,000"), las=2)
+
+h2<- hist(log10(new_df$expLevel)[!duplicated(new_df[,1:6])]
+          ,plot =FALSE
+)
+h2$counts=h2$counts/sum(h2$counts)
+plot(h2,col="blue" , add=T)
+plot(h1,col="red" ,density=25, add=T)
+
+legend("topright", 
+       legend = c( "With AT window","Without AT window"), 
+       #pch=c(15,15),
+       #cex=2, 
+       lty=c(0,0),
+       #bty="n",
+       lwd=1.5, 
+       density=c(25, 10000),
+       angle=c(45, 180),
+       #angle=45,
+       fill=c("red","blue")
+       , bty = "n"
+)
+
+ks.test(new_df$expLevel[!duplicated(new_df[,1:6])], 
         df_withAT$expLevel[!duplicated(df_withAT[,1:6])])
 
-
 ### compare genes (use protein coding Tunits here) overlap with AT window, and genes overlap with gene(another tunit) without AT window
+# Do TUs that are TSS within AT window of another TU more likely to be biased? 
 # with AT window VS withOUT AT window
 Head="BN"
 df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunitOppositeStrand.bed", sep=""))
