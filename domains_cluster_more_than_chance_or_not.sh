@@ -275,7 +275,7 @@ for Head in BN LV
 do
 bedtools closest -t first -S -d -a ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed \
 -b ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed \
-| awk 'BEGIN {OFS="\t"} ($23+0 ==0) {print $0}'  > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunitOppositeStrand.bed
+ > ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunitOppositeStrand.bed
 # col 1-11 ${Head}_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow.bed with a pair on opposite strad
 # col 12-22 the opposite strad pair in ${Head}_TunitProteinSrainEffect_binomtest_fdrAll.bed
 done
