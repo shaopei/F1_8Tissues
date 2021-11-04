@@ -247,7 +247,72 @@ bedtools intersect -s -v -a ${Head}_maxTSN.TATA_TSS_TID_diffAT_TSSC.bed -b <(cat
 # 1-9 TSS, 10-15 TID, 17 maxTSN with different AT content in TSS(A)
 
 
+### overlap of TSCs with (A)allelic difference in abundance; (B)allelic difference in shape, and (C)inside AlleleHMM blocks
 
+
+for Head in BN LV #HT  SK  SP  KD  GI  ST
+do
+  # (A)allelic difference in abundance
+  # j=${Head}_allReads_TSS_binomtest_1+read   
+  R --vanilla --slave --args $(pwd) ${Head}_allReads_TSS_binomtest_1+read.bed ${Head}_allReads_TSS_binomtest_1+read_fdr.bed < getFDR.R
+  cat ${Head}_allReads_TSS_binomtest_1+read_fdr.bed | awk 'BEGIN{OFS="\t"} $10+0<=0.1 {print $0}' > ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed
+
+ # (B)allelic difference in shape from F1_TSS_KStest_MultiBaseRunOn_Formanuscript.sh
+ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSS_KStest_MultiBaseRunOn/${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed
+#ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/TSS_KStest_MultiBaseRunOn/${Head}_allReads_TSS_5mat5pat_uniq_pValue.bed  # this one contain more info indlucing p-value and fdr
+
+# (C)TSCs within AlleleHMM blocks
+intersectBed -s -u -a ${Head}_allReads_TSS.bed -b <(cat HMM_bed/${Head}_*HMM*bed) > ${Head}_allReads_TSS_inAlleleHMMBlocks.bed
+
+#intersect of A & B
+wc -l ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed
+wc -l ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed
+wc -l ${Head}_allReads_TSS_inAlleleHMMBlocks.bed
+cat ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed |awk 'BEGIN {OFS="\t";l="_"}{print $1l$2l$3$6}' > ${Head}_temp_A
+cat ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed |awk 'BEGIN {OFS="\t";l="_"}{print $1l$2l$3$6}' > ${Head}_temp_B
+cat ${Head}_allReads_TSS_inAlleleHMMBlocks.bed |awk 'BEGIN {OFS="\t";l="_"}{print $1l$2l$3$6}' > ${Head}_temp_C
+
+# A,B
+intersectBed -s -wo -a ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed -b ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed | wc -l 
+# A,C
+intersectBed -s -wo -a ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed -b ${Head}_allReads_TSS_inAlleleHMMBlocks.bed | wc -l 
+# B,C
+intersectBed -s -wo -a ${Head}_allReads_TSS_inAlleleHMMBlocks.bed -b ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed | wc -l 
+#A.B.C
+intersectBed -s -wo -a ${Head}_allReads_TSS_inAlleleHMMBlocks.bed -b <(intersectBed -s -u -a ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed -b ${Head}_allReads_TSS_5mat5pat_uniq_fdr0.1.bed) |wc -l
+
+
+
+
+done
+
+### plot venn diagram in R
+library(eulerr)
+set.seed(1)
+#BN
+combo <- c(A = 3225, B = 1093, C = 2324, "A&B" = 476, "A&C" = 410, "B&C" = 126, "A&B&C"=94)
+plot(euler(combo))
+#LV
+combo <- c(A = 7227, B = 1482, C = 10113, "A&B" = 745, "A&C" = 2133, "B&C" = 313, "A&B&C"=242)
+plot(euler(combo))
+
+###
+#R CMD INSTALL /Users/sc2457/Downloads/BioVenn_1.1.3.tar.gz
+library(BioVenn)
+setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/TID_TSR_maxTSS")
+Head="BN"
+a=read.table(paste(Head,"_temp_A", sep=""))
+b=read.table(paste(Head,"_temp_B", sep=""))
+c=read.table(paste(Head,"_temp_C", sep=""))
+biovenn <- draw.venn(a$V1, b$V1, c$V1, subtitle=Head, nrtype="abs")
+biovenn <- draw.venn(a$V1, b$V1, c$V1, subtitle="Example diagram 1", nrtype="abs")
+
+
+### Changes in the abundance of Pol II in TSCs were enriched in changes in AlleleHMM blocks (give results)
+# No allelic difference in abundance (fdr0.9) inside alleleHMM blocks
+# continue...
+# A,C
+intersectBed -s -wo -a ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed -b ${Head}_allReads_TSS_inAlleleHMMBlocks.bed | wc -l 
 
 ####
 # identify TBP binding motif using rtdbsdb
@@ -349,4 +414,8 @@ Head=LV
 # get the maxScore of avrage(score.B6, score.CAST) from the intersect motif bind sites # only use the first, if tie
 python2 getMaxScore_TFbindingmotif.py ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216.bed ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM00216_maxScore.bed
 python2 getMaxScore_TFbindingmotif.py ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433.bed ${Head}_allReads_TSS_maxTSNs_binomtest_-35To-20INTERSECTmotifM09433_maxScore.bed
+
+
+
+
 
