@@ -197,7 +197,7 @@ f = fisher.test(testor, alternative = "g" ); f
 # AT, Allelic termination 
 file_dir="~/Box Sync/BN_IGV/"
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/AT_AllelicTermination/")
-organ="LV"
+organ="BN"
 #tus=read.table("BN_AT_4tunitIntersectNativeHMM_intersectRegion_strain.bed") 
 tus_noAT=read.table(file = paste(organ,"_all_h5.preds.full_inProtein_coding_withoutATwindow_f0.5F0.8gencode.vM25.annotation.gene.bed",sep=""), header=FALSE)
 # tus_noAT col1-6 tunits 7-12 gene col13 overlap base counts
@@ -363,7 +363,7 @@ for(f in filenames) {
     counts <- cbind(counts, countBigWig(f, bodies, rpkm=FALSE, path=file_dir))
 }
 
-tus_withAT$it_B6_counts = counts[,1]
+tus_withAT$it_B6_counts = counts[,1]  # counts in AT region
 tus_withAT$it_CAST_counts = counts[,2]
 
 tus_withAT$B6_counts = tus_withAT$tunit_B6_counts - tus_withAT$it_B6_counts

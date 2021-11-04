@@ -12,7 +12,7 @@ mkdir map2ref_1bpbed_map5
 ln -s ../allelicbias-PersonalGenome_P.CAST_M.B6-*_all_R1/*.map2ref.map5.1bp.sorted.bed.gz .
 # HERE
 
-# identify TSB within dREG sites
+# identify TSN within dREG sites
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_MultiBaseRunOn
 studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
