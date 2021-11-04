@@ -165,7 +165,7 @@ ks.test(df_0.9$expLevel[!duplicated(df_0.9[,1:6])],
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/domains_cluster_more_than_chance_or_not_tunit_protein/")
 
 # with AT window VS withOUT AT window
-Head="LV"
+Head="BN"
 df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed", sep=""))
 df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed", sep=""))
 
@@ -187,6 +187,82 @@ df_withoutAT$TunitLength = df_withoutAT$V3 - df_withoutAT$V2
 df_withoutAT$expLevel = df_withoutAT$V7 + df_withoutAT$V8 + df_withoutAT$V9
 
 # go to current+179=368 line # subsample withoutAT to match the distrubution of expLevel in withAT 
+#df_withoutAT = new_df 
+
+if(1){
+    # distribution of expLevel withAT
+    # set the breaks to the same length
+    h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])], breaks = seq(0,7,0.5))
+    h1$frac=h1$counts/sum(h1$counts)
+    # distribution of expLevel withoutAT
+    h2<- hist(log10(df_withoutAT$expLevel)[!duplicated(df_withoutAT[,1:6])]
+              , breaks = seq(0,7,0.5))
+    
+    
+    # use withAT fraction to calculate the counts of tunits to be sampled from each expLevel breaks
+    # determine *sum(h2$counts)/10 by observing numbers in excel
+    f = round(h1$frac*sum(h2$counts)/10) 
+    # the breaks are not the same length
+    # h2$counts = h2$counts[(1+length(h2$counts) - length(f)):length(h2$counts)] 
+    
+    #f[f > h2$counts] = h2$counts[f > h2$counts]
+    
+    df_withoutAT$log10expLevel = log10(df_withoutAT$expLevel)
+    #u=1.5
+    #l=1
+    new_df <- NULL
+    
+    for (i in 1:(length(h1$breaks)-1)){
+        l = h1$breaks[i]
+        u = h1$breaks[i+1]
+        temp=df_withoutAT[df_withoutAT$log10expLevel>l & df_withoutAT$log10expLevel<=u,]
+        cat ("draw",f[i],"from" ,h2$counts[i], "\n")
+        if (f[i] <= h2$counts[i]){
+            t1 = temp[sample(nrow(temp),f[i], replace = FALSE), ]
+        }else{
+            t1 = temp[sample(nrow(temp),f[i], replace = TRUE), ]
+        }
+        new_df=rbind.data.frame(new_df, t1)
+    }
+    #View(new_df)
+    
+    h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])])
+    h1$counts=h1$counts/sum(h1$counts)
+    plot(h1,col="red" 
+         ,density=25     
+         ,ylab="Proportion"
+         , xlim=c(0,7)
+         ,xlab="log10(Tunit Expression Level)"     
+         ,las=2
+         #,xaxt='n',main= ""
+    )
+    #axis(1, at=seq(0,7,1), labels=c(0,10,100,1000,"10,000","100,000","1000,000","10,000,000"), las=2)
+    
+    h2<- hist(log10(new_df$expLevel)[!duplicated(new_df[,1:6])]
+              ,plot =FALSE
+    )
+    h2$counts=h2$counts/sum(h2$counts)
+    plot(h2,col="blue" , add=T)
+    plot(h1,col="red" ,density=25, add=T)
+    
+    legend("topright", 
+           legend = c( "With AT window","Without AT window"), 
+           #pch=c(15,15),
+           #cex=2, 
+           lty=c(0,0),
+           #bty="n",
+           lwd=1.5, 
+           density=c(25, 10000),
+           angle=c(45, 180),
+           #angle=45,
+           fill=c("red","blue")
+           , bty = "n"
+    )
+    
+    ks.test(new_df$expLevel[!duplicated(new_df[,1:6])], 
+            df_withAT$expLevel[!duplicated(df_withAT[,1:6])])
+    
+}
 #Given a gene with AT window,  is the adjacent gene more likely to be biased? 
 fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1), 
                      dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
@@ -214,11 +290,11 @@ dim(unique(df[df$Tunit1_winP != df$Tunit2_winP, 1:6]))[1]
 
 # Distance distribution
 #pdf("Distance_distribution_Between_Tunit_pairs_withVSwithoutATwindow.pdf", width=5, height = 5, useDingbats=FALSE)
-par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
-par(mgp=c(3,1,0))
-par(cex.lab=2.2, cex.axis=2.2)
+#par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
+#par(mgp=c(3,1,0))
+#par(cex.lab=2.2, cex.axis=2.2)
 
-h1<- hist(log10(df_withAT$pair_distance[df_withAT$pair_fdr <= 0.1]), plot = F)
+h1<- hist(log10(df_withAT$pair_distance[df_withAT$pair_fdr <= 0.1]),breaks=seq(0,7,0.5))
 h1$counts=h1$counts/sum(h1$counts)
 plot(h1,col="red" 
      ,density=25     
@@ -227,13 +303,17 @@ plot(h1,col="red"
      ,xlab="distance between pair Tunits"     
      ,las=2
      ,xaxt='n',main= ""
-)
+     #,breaks=seq(1,7,0.5)
+     )
+
 axis(1, at=seq(0,7,1), labels=c(0,10,100,1000,"10,000","100,000","1000,000","10,000,000"), las=2)
 
 h2<- hist(log10(df_withoutAT$pair_distance[df_withoutAT$pair_fdr <= 0.1])
-          ,plot =FALSE
+          ,breaks=seq(0,7,0.5)
+          #,plot =FALSE
 )
 h2$counts=h2$counts/sum(h2$counts)
+plot(h1,col="red" ,density=25)
 plot(h2,col="blue" , add=T)
 plot(h1,col="red" ,density=25, add=T)
 
@@ -369,18 +449,19 @@ legend("topright",
 # sample without replacement to avid duplicates 
 
 # distribution of expLevel withAT
-h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])])
+# set the breaks to the same length
+h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])], breaks = seq(0,7,0.5))
 h1$frac=h1$counts/sum(h1$counts)
 # distribution of expLevel withoutAT
 h2<- hist(log10(df_withoutAT$expLevel)[!duplicated(df_withoutAT[,1:6])]
-          #,plot =FALSE
-)
+          , breaks = seq(0,7,0.5))
+
 
 # use withAT fraction to calculate the counts of tunits to be sampled from each expLevel breaks
 # determine *sum(h2$counts)/10 by observing numbers in excel
 f = round(h1$frac*sum(h2$counts)/10) 
 # the breaks are not the same length
-h2$counts = h2$counts[(1+length(h2$counts) - length(f)):length(h2$counts)] 
+# h2$counts = h2$counts[(1+length(h2$counts) - length(f)):length(h2$counts)] 
 
 #f[f > h2$counts] = h2$counts[f > h2$counts]
 
