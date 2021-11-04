@@ -165,7 +165,7 @@ ks.test(df_0.9$expLevel[!duplicated(df_0.9[,1:6])],
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/domains_cluster_more_than_chance_or_not_tunit_protein/")
 
 # with AT window VS withOUT AT window
-Head="BN"
+Head="LV"
 df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed", sep=""))
 df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed", sep=""))
 
@@ -189,7 +189,10 @@ df_withoutAT$expLevel = df_withoutAT$V7 + df_withoutAT$V8 + df_withoutAT$V9
 # go to current+179=368 line # subsample withoutAT to match the distrubution of expLevel in withAT 
 #df_withoutAT = new_df 
 
-if(1){
+resample=TRUE
+set.seed(100)
+
+if(resample){
     # distribution of expLevel withAT
     # set the breaks to the same length
     h1<- hist(log10(df_withAT$expLevel)[!duplicated(df_withAT[,1:6])], breaks = seq(0,7,0.5))
@@ -261,8 +264,9 @@ if(1){
     
     ks.test(new_df$expLevel[!duplicated(new_df[,1:6])], 
             df_withAT$expLevel[!duplicated(df_withAT[,1:6])])
-    
+    df_withoutAT = new_df 
 }
+
 #Given a gene with AT window,  is the adjacent gene more likely to be biased? 
 fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1), 
                      dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
