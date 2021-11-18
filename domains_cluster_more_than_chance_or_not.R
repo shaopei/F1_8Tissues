@@ -6,12 +6,12 @@ df_0.9=read.table(paste(Head,"_TunitProteinSrainEffect_binomtest_fdr0.9_adjacent
 colnames(df_0.1)[22]="pair_fdr"  # fdr of the tunit that pair with the fdr0.1 tunit
 colnames(df_0.1)[23]="pair_distance" # distance of the tunit that pair with the fdr0.1 tunit
 df_0.1$TunitLength = df_0.1$V3 - df_0.1$V2
-df_0.1$expLevel = df_0.1$V7 + df_0.1$V8 + df_0.1$V9
+df_0.1$expLevel = df_0.1$V18 + df_0.1$V19 + df_0.1$V20
 
 colnames(df_0.9)[22]="pair_fdr"
 colnames(df_0.9)[23]="pair_distance"
 df_0.9$TunitLength = df_0.9$V3 - df_0.9$V2
-df_0.9$expLevel = df_0.9$V7 + df_0.9$V8 + df_0.9$V9
+df_0.9$expLevel = df_0.9$V18 + df_0.9$V19 + df_0.9$V20
 
 
 #Do TUs that are adjacent to a significant change tend to share the same change?
@@ -165,7 +165,7 @@ ks.test(df_0.9$expLevel[!duplicated(df_0.9[,1:6])],
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/domains_cluster_more_than_chance_or_not_tunit_protein/")
 
 # with AT window VS withOUT AT window
-Head="LV"
+Head="BN"
 df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed", sep=""))
 df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed", sep=""))
 
@@ -179,12 +179,12 @@ dim(df_withAT)
 colnames(df_withAT)[22]="pair_fdr"  # fdr of the tunit that pair with the fdr0.1 tunit
 colnames(df_withAT)[23]="pair_distance" # distance of the tunit that pair with the fdr0.1 tunit
 df_withAT$TunitLength = df_withAT$V3 - df_withAT$V2
-df_withAT$expLevel = df_withAT$V7 + df_withAT$V8 + df_withAT$V9
+df_withAT$expLevel = df_withAT$V18 + df_withAT$V19 + df_withAT$V20
 
 colnames(df_withoutAT)[22]="pair_fdr"
 colnames(df_withoutAT)[23]="pair_distance"
 df_withoutAT$TunitLength = df_withoutAT$V3 - df_withoutAT$V2
-df_withoutAT$expLevel = df_withoutAT$V7 + df_withoutAT$V8 + df_withoutAT$V9
+df_withoutAT$expLevel = df_withoutAT$V18 + df_withoutAT$V19 + df_withoutAT$V20
 
 # go to current+179=368 line # subsample withoutAT to match the distrubution of expLevel in withAT 
 #df_withoutAT = new_df 
@@ -268,9 +268,10 @@ if(resample){
 }
 
 #Given a gene with AT window,  is the adjacent gene more likely to be biased? 
-fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1), 
+fisher.test(matrix(c(dim(unique(df_withoutAT[,1:6]))[1],dim(unique(df_withoutAT[df_withoutAT$pair_fdr <= 0.1, 1:6]))[1], 
                      dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
-             , 2,2))
+                   , 2,2))
+
 
 # Do TUs change in the same direction of change? Or do they often have the opposite direction?
 df = df_withAT[df_withAT$pair_fdr <= 0.1,]
