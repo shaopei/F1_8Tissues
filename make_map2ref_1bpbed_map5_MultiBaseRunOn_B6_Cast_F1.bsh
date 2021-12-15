@@ -19,14 +19,14 @@ ln -s 1-alignment-${PREFIX}/${PATBOWTIE} .
 
 mkdir toremove
 echo "python ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids "
-python ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${PATBOWTIE}_AMBremoved_sorted &
-python ${PL}/filter_reads_out.py ${MATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${MATBOWTIE}_AMBremoved_sorted &
+python2 ${PL}/filter_reads_out.py ${PATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${PATBOWTIE}_AMBremoved_sorted &
+python2 ${PL}/filter_reads_out.py ${MATBOWTIE} - originalmatpatreads.toremove.ids | LC_ALL=C  sort -k1 -n  --parallel=30 -o ${MATBOWTIE}_AMBremoved_sorted &
 wait
 
 # seperate mat and pat reads from bowtie output
 # order matters! ${PATBOWTIE}_AMBremoved_sorted need to be in front of ${MATBOWTIE}_AMBremoved_sorted !!!
 echo "seperate mat and pat reads from bowtie output"
-python ${PL}/seperate_mat_pat_reads_withSNPs_returnMatIdentical.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS} &
+python2 ${PL}/seperate_mat_pat_reads_withSNPs_returnMatIdentical.py ${PATBOWTIE}_AMBremoved_sorted ${MATBOWTIE}_AMBremoved_sorted ${MAPS} &
 wait
 
 
