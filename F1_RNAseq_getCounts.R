@@ -77,7 +77,7 @@ counts$sCAST <- counts$CAST.exon/counts$CAST.proseq
 
 
 plot(counts$All.exon, counts$All.rna)
-cor(counts$All.exon, counts$All.rna)
+cor.test(counts$All.exon, counts$All.rna)
 plot(counts$All.proseq, counts$All.rna)
 cor.test(counts$All.proseq, counts$All.rna)
 plot(log(counts$All.proseq+1), log(counts$All.rna+1))

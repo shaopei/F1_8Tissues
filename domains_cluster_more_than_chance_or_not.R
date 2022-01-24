@@ -165,7 +165,7 @@ ks.test(df_0.9$expLevel[!duplicated(df_0.9[,1:6])],
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/domains_cluster_more_than_chance_or_not_tunit_protein/")
 
 # with AT window VS withOUT AT window
-Head="BN"
+Head="LV"
 df_withAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withATwindow_adjacentTunit.bed", sep=""))
 df_withoutAT=read.table(paste(Head, "_TunitProteinSrainEffect_binomtest_fdrAll_withoutATwindow_adjacentTunit.bed", sep=""))
 

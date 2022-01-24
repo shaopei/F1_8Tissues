@@ -309,16 +309,23 @@ biovenn <- draw.venn(a$V1, b$V1, c$V1, subtitle="Example diagram 1", nrtype="abs
 # No allelic difference in abundance (fdr0.9) inside alleleHMM blocks
 # continue...
 # A,C
-Head=BN
+Head=LV
 wc -l ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed
 intersectBed -s -wo -a ${Head}_allReads_TSS_binomtest_1+read_fdr0.1.bed -b ${Head}_allReads_TSS_inAlleleHMMBlocks.bed | wc -l 
 cat ${Head}_allReads_TSS_binomtest_1+read_fdr.bed | awk 'BEGIN {OFS="\t"} ($10+0>0.9){print $0}' > ${Head}_allReads_TSS_binomtest_1+read_fdr0.9.bed
 wc -l ${Head}_allReads_TSS_binomtest_1+read_fdr0.9.bed
 intersectBed -s -wo -a ${Head}_allReads_TSS_binomtest_1+read_fdr0.9.bed -b ${Head}_allReads_TSS_inAlleleHMMBlocks.bed | wc -l 
 # in R
-fisher.test(matrix(c(dim(df_withoutAT)[1],sum(df_withoutAT$pair_fdr <= 0.1), 
-                     dim(unique(df_withAT[,1:6]))[1],dim(unique(df_withAT[df_withAT$pair_fdr <= 0.1, 1:6]))[1])
+#BN
+fisher.test(matrix(c(20339,481, 
+                     3225,410)
              , 2,2))
+#LV
+fisher.test(matrix(c(23933,2033, 
+                     7227,2133)
+             , 2,2))
+
+
 
 ####
 # identify TBP binding motif using rtdbsdb

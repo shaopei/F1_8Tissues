@@ -313,6 +313,14 @@ intersectBed -u -s -a LV_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotat
 mv geneID_withATwindow LV_geneID_withATwindow
 mv geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks LV_geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks
 
+#####
+# Use all the AlleleHMM blocks within the Tunits, instead of limiting to 10K upstream of AT window
+
+
+
+#####
+
+
 
 f=LV_MB6_BOTH_RNA_mat3waspSJ.out.tab
 

@@ -542,6 +542,12 @@ cat BN_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed | c
 intersectBed -u -s -a BN_AT_4tunitIntersectNativeHMM_tunits_gencode.vM25.annotation.geneID.bed -b <(cat BN_t1E-0${t}_AT_AlleleHMM.bed BN_t1E-0${t}_AT_AlleleHMM_within10K.bed|cut -f 1-6 | sort | uniq ) | cut -f 10 |sort |uniq \
 > geneID_withATwindow.with.nearby.RNA.AlleleHMM.blocks
 
+# identify the genes without AT window (without overlap with Tunits that contain AT windows)
+intersectBed -v -s -a ../gencode.vM25.annotation.gene.bed -b BN_AT_4tunitIntersectNativeHMM_tunits.bed  > gencode.vM25.annotation_intersectBed-v_BN_AT_4tunitIntersectNativeHMM_tunits.bed
+# 54085 gencode.vM25.annotation_intersectBed-v_BN_AT_4tunitIntersectNativeHMM_tunits.bed
+# cat gencode.vM25.annotation_intersectBed-v_BN_AT_4tunitIntersectNativeHMM_tunits.bed | cut -f 4 |sort |uniq |wc -l
+# 54085
+# identify the genes without AT window (without overlap with Tunits that contain AT windows) AND contain mRNA AlleleHMM blocks
 
 
 

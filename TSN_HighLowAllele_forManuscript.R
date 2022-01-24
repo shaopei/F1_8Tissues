@@ -345,11 +345,12 @@ for (i in 1:3){
 }
 str(x_list)
 new_x_list <- NULL
+c("CA/TA","CA/TG","CA/CG", "TA/TG")
 new_x_list[["CA/TA"]] = c(x_list[["BN_SNP_CA/TA"]],x_list[["LV_SNP_CA/TA"]])
 new_x_list[["CA/TG"]] = c(x_list[["BN_SNP_CA/TG"]],x_list[["LV_SNP_CA/TG"]])
 new_x_list[["CA/CG"]] = c(x_list[["BN_SNP_CA/CG"]],x_list[["LV_SNP_CA/CG"]])
 new_x_list[["TA/TG"]] = c(x_list[["BN_SNP_TA/TG"]],x_list[["LV_SNP_TA/TG"]])
-new_x_list[["TG/CG"]] = c(x_list[["BN_SNP_TG/CG"]],x_list[["LV_SNP_TG/CG"]])
+#new_x_list[["TG/CG"]] = c(x_list[["BN_SNP_TG/CG"]],x_list[["LV_SNP_TG/CG"]])
 
 str(new_x_list)
 pdf("BNandLV_CA_TA_TG_CG_NoAlleleHMMFilter.pdf", width = 5, height = 5, useDingbats=FALSE)
@@ -366,6 +367,31 @@ vioplot(new_x_list, las=2,
 
 abline(h=0, lty=2)
 dev.off()
+
+pvalue<-NULL
+wilcox.test(new_x_list[["CA/TA"]], new_x_list[["CA/TG"]], paired = FALSE)
+wilcox.test(new_x_list[["CA/TA"]], new_x_list[["CA/TG"]], paired = FALSE)
+
+
+wilcox.test(new_x_list[["CA/TA"]], new_x_list[["CA/TG"]], paired = FALSE)
+wilcox.test(new_x_list[["CA/TA"]], new_x_list[["CA/CG"]], paired = FALSE)
+wilcox.test(new_x_list[["CA/TA"]], new_x_list[["TA/TG"]], paired = FALSE)
+wilcox.test(new_x_list[["CA/TG"]], new_x_list[["CA/CG"]], paired = FALSE)
+wilcox.test(new_x_list[["CA/TG"]], new_x_list[["TA/TG"]], paired = FALSE)
+wilcox.test(new_x_list[["CA/CG"]], new_x_list[["TA/TG"]], paired = FALSE)
+
+paires = c("CA/TA","CA/TG","CA/CG", "TA/TG")
+name<- NULL
+p_value <- NULL
+for (i in 1:3){
+  for (j in (i+1):4){
+    name = c(name, paste(paires[i], paires[j], sep="_"))
+    p_value = c(p_value, wilcox.test(new_x_list[[paires[i]]], new_x_list[[paires[j]]], paired = FALSE)$p.value)
+  }
+}
+
+p.adjust(p_value, method = "fdr")
+
 legend("topleft", legend=c("BN", "LV"),
        #title = "SNPs",
        fill = c("purple", "gray"), 

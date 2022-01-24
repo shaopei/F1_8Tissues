@@ -56,7 +56,7 @@ ln -s ../allelicbias-PersonalGenome_P.CAST_M.B6-BN_*R1/BN_*_R1.mat.bowtie.gz_AMB
 ln -s ../allelicbias-PersonalGenome_P.CAST_M.B6-BN_*R1/BN_*_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.sorted.bed.gz .
 
 export mouse_genome=/local/storage/data/short_read_index/mm10/bwa.rRNA-0.7.8-r455/mm10.rRNA.fa.gz
-export mouse_chinfo=/local/storage/data/mm10/mm10.chromInfo
+cat /local/storage/data/mm10/mm10.chromInfo | awk'{OFS="\t"} {print $1, $2}' > mouse_chinfo.txt
 
 #for Head in  BN HT  SK  SP  KD  LV  GI  ST
 #do
