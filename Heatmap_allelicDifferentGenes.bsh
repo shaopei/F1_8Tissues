@@ -52,6 +52,7 @@ ln -s /workdir/sc2457/F1_Tissues/map2ref_1bpbed_map5_MultiBaseRunOn/map5.1pb.fro
 intersectBed -u -a gencode.vM25.annotation.gene.bed -b T8_2Strand_p0.05_effect_strain.bed_cluster_IGV.bed > gencode.vM25.annotation.gene_inStrainDomain.bed
 intersectBed -u -a gencode.vM25.annotation.gene.bed -b T8_2Strand_p0.05_effect_imprinting.bed_cluster_IGV.bed > gencode.vM25.annotation.gene_inImprintingDomain.bed
 
+intersectBed -u -a <(cat imprinted_genes_pvaluefs0.05.txt| awk 'BEGIN{OFS="\t"} NR>1 {print $0}') -b T8_2Strand_p0.05_effect_imprinting.bed_cluster_IGV.bed > gencode.vM25.annotation.gene_inImprintingDomain.bed
 
 
 use getCounts_allelicReads.R 
