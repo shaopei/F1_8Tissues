@@ -136,6 +136,15 @@ for (i in (1:dim(fdr)[1])){
         fdr_seven[i,j:(j+6)] = max(fdr[i,j:(j+6)])
     }
 }
+
+fdr_3rdmin <- fdr
+for (i in (1:dim(fdr)[1])){
+    for (j in seq(1,dim(fdr)[2],7)){
+        fdr_3rdmin[i,j:(j+6)] = sort(fdr[i,j:(j+6)])[(3)]
+    }
+}
+
+
 #View(fdr_seven)
 if(0){
     library("metap")
@@ -150,18 +159,23 @@ if(0){
 
 # only keep genes with allelic biased in all replicates of a organ
 f = apply(fdr_seven, 1, min)
+f = apply(fdr_3rdmin, 1, min)
 f = apply(fdr, 1, min)
-sum(f<0.1)
+f_cutoff = 0.1
+sum(f<f_cutoff)
 #mat_counts = mat_counts[which(f<0.1),]
 #pat_counts = pat_counts[which(f<0.1),]
 
-new_mat_counts_vsd = mat_counts_vsd[which(f<0.1),]
-new_pat_counts_vsd = pat_counts_vsd[which(f<0.1),]
+new_mat_counts_vsd = mat_counts_vsd[which(f<f_cutoff),]
+new_pat_counts_vsd = pat_counts_vsd[which(f<f_cutoff),]
 allelic_diff = new_mat_counts_vsd - new_pat_counts_vsd
 
-new_mat_counts = mat_counts[which(f<0.1),]
-new_pat_counts = pat_counts[which(f<0.1),]
+new_mat_counts = mat_counts[which(f<f_cutoff),]
+new_pat_counts = pat_counts[which(f<f_cutoff),]
 allelic_diff = log2((new_mat_counts+1)/(new_pat_counts+1))
+
+write.table(allelic_diff , file = "allelic_diff_trx10K_vsd_fdr3rdmin0.2.txt", quote =FALSE, sep="\t") #full length
+write.table(allelic_diff , file = "allelic_diff_trx10K_NOvsd_fdr3rdmin0.2.txt", quote =FALSE, sep="\t") #full length
 
 
 write.table(allelic_diff , file = "allelic_diff_trx10K_vsd_fdr0.1.txt", quote =FALSE, sep="\t") #full length
@@ -191,4 +205,190 @@ write.table(allelic_diff , file = "allelic_diff_trx10K_imprinting_fdrseven0.1.tx
 #write.table(allelic_diff , file = "allelic_diff_trx10K_vsd_fdr7.txt", quote =FALSE, sep="\t") #full length
 
 
+### calculate the proportion in inprinted genes in imprinted domain
+##
+## getCounts.R - Counts reads in each gene.
+# cd /workdir/sc2457/F1_Tissues/3rd_batch/map2ref_1bpbed_map5
+require(bigWig)
 
+tus <- read.table("gencode.vM25.annotation.gene.bed", header=F)
+bodies <- tus
+bodies <- bodies[(bodies$V1 != "chrM"), ]
+bodies <- bodies[(bodies$V1 != "chrX"), ]
+bodies <- bodies[(bodies$V1 != "chrY"), ]
+
+countBigWig_mat <- function(prefix, bed, rpkm=FALSE, path="./") {
+    pl <- load.bigWig(paste(path, prefix, "_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted_plus.bw", sep=""))
+    mn <- load.bigWig(paste(path, prefix, "_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted_minus.bw", sep=""))
+    
+    counts <- bed6.region.bpQuery.bigWig(pl, mn, bed, abs.value = TRUE)
+    if(rpkm==TRUE) {
+        counts <- counts * (1000/(bed[,3]-bed[,2])) * (1e6/(abs(pl$mean)*pl$basesCovered+abs(mn$mean)*mn$basesCovered))
+    }
+    
+    return(counts)
+}
+
+countBigWig_pat <- function(prefix, bed, rpkm=FALSE, path="./") {
+    pl <- load.bigWig(paste(path, prefix, "_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted_plus.bw", sep=""))
+    mn <- load.bigWig(paste(path, prefix, "_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.map5.1bp.sorted_minus.bw", sep=""))
+    
+    counts <- bed6.region.bpQuery.bigWig(pl, mn, bed, abs.value = TRUE)
+    if(rpkm==TRUE) {
+        counts <- counts * (1000/(bed[,3]-bed[,2])) * (1e6/(abs(pl$mean)*pl$basesCovered+abs(mn$mean)*mn$basesCovered))
+    }
+    
+    return(counts)
+}
+
+stage     <- c("BN", "GI", "HT", "LV", "SK", "SP", "ST", "KD")
+replicate <- c("MB6_A", "MB6_F", "MB6_G", "PB6_B", "PB6_C", "PB6_D", "PB6_E")
+
+filenames=c()
+for (s in stage){
+    filenames <- c(filenames, paste(s, replicate, sep="_"))
+}
+
+
+## Gets counts
+mat_counts <- NULL
+pat_counts <- NULL
+for(f in filenames) {
+    mat_counts <- cbind(mat_counts, countBigWig_mat(f, bodies, rpkm=FALSE))
+    pat_counts <- cbind(pat_counts, countBigWig_pat(f, bodies, rpkm=FALSE))
+}
+head(mat_counts)
+colnames(mat_counts) <- filenames
+colnames(pat_counts) <- filenames
+rownames(mat_counts) <- bodies$V4
+rownames(pat_counts) <- bodies$V4
+
+## Create DESeq2 object.
+library("DESeq2")
+organ <- c(rep("BN", 7), rep("GI", 7), rep("HT", 7), rep("LV", 7), 
+           rep("SK", 7), rep("SP", 7), rep("ST", 7), rep("KD", 7))
+condition <- c(rep("MB6", 3), rep("PB6", 4))
+replicate <- factor(rep(c(1:3, 1:4), 8))
+Design <- data.frame(colnames(mat_counts), organ, condition, replicate)
+dds <- DESeqDataSetFromMatrix(countData= mat_counts, colData= Design, design= ~organ+condition+replicate)
+vsd <- vst(dds, blind=FALSE)
+# for imprinted due to small n
+vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
+#
+mat_counts_vsd = assay(vsd)
+
+dds_p <- DESeqDataSetFromMatrix(countData= pat_counts, colData= Design, design= ~organ+condition+replicate)
+vsd_p <- vst(dds_p, blind=FALSE)
+# for imprinted due to small n
+vsd_p <- varianceStabilizingTransformation(dds_p, blind=FALSE)
+#
+pat_counts_vsd = assay(vsd_p)
+
+save.image("data-counts_allLength.RData")
+
+## identify imprinted genes
+#View(mat_counts)
+#View(mat_counts_vsd)
+#View(pat_counts)
+
+win_P = pat_counts
+win_P[pat_counts > mat_counts] = "P"
+win_P[pat_counts < mat_counts] = "M"
+win_P[pat_counts == mat_counts] = "S"
+head(win_P)
+
+if(o){
+old_mat_counts = mat_counts
+old_pat_counts = pat_counts
+
+for (i in (1:dim(mat_counts)[1])) {
+    for (j in seq(1, dim(mat_counts)[2], 7)) {
+        mat_counts[i, j:(j + 6)] = sum(mat_counts[i, j:(j + 6)])
+    }
+}
+
+for (i in (1:dim(mat_counts)[1])) {
+    for (j in seq(1, dim(mat_counts)[2], 7)) {
+        pat_counts[i, j:(j + 6)] = sum(pat_counts[i, j:(j + 6)])
+    }
+}
+}
+
+
+p_value = pat_counts
+
+for (i in (1:dim(mat_counts)[1])){
+    for (j in (1:dim(mat_counts)[2])){
+        x=mat_counts[i,j]
+        n=mat_counts[i,j] + pat_counts[i,j]
+        if (n>0){b=binom.test(x, n, p = 0.5,
+                              alternative = c("two.sided"),
+                              conf.level = 0.95)
+        p_value[i,j]=b$p.value} else {
+            p_value[i,j]=1
+        }
+        
+    }
+}
+#View(p_value)
+dim(p_value)
+fdr <- p_value
+
+for (j in (1:dim(mat_counts)[2])){
+    fdr[,j] = p.adjust(p_value[,j], method = "fdr", n = length(p_value[,j]))
+}
+#View(fdr)
+
+fdr_seven <- fdr
+for (i in (1:dim(fdr)[1])){
+    for (j in seq(1,dim(fdr)[2],7)){
+        fdr_seven[i,j:(j+6)] = max(fdr[i,j:(j+6)])
+    }
+}
+
+fdr_3rdmin <- fdr
+for (i in (1:dim(fdr)[1])){
+    for (j in seq(1,dim(fdr)[2],7)){
+        fdr_3rdmin[i,j:(j+6)] = sort(fdr[i,j:(j+6)])[(3)]
+    }
+}
+
+
+#View(fdr_seven)
+library("metap")
+pvalue_fs <- p_value
+for (i in (1:dim(p_value)[1])) {
+    for (j in seq(1, dim(p_value)[2], 7)) {
+        pvalue_fs[i, j:(j + 6)] = sumlog(p_value[i, j:(j + 6)])$p
+    }
+}
+head(pvalue_fs)
+
+setwd("/Users/sc2457/Box Sync/Danko_lab_work/F1_8Tissues/correlation/allelicReads/")
+load("data-counts_allLength.RData")
+View(pvalue_fs)
+
+imprinted <- rep(FALSE,dim(p_value)[1])
+for (i in (1:dim(p_value)[1])) { #each row
+    for (j in seq(1, dim(p_value)[2], 7)) {  # each 7 col
+        if (sum(win_P[i, j:(j + 6)] == "M") == 7 | sum(win_P[i, j:(j + 6)] == "P") == 7){
+            imprinted[i]=TRUE 
+        }
+    }
+}
+
+# only keep genes with allelic biased in all replicates of a organ
+f = apply(fdr_seven, 1, min)
+f = apply(pvalue_fs, 1, min)
+#f = apply(fdr, 1, min)
+f_cutoff = 0.05
+sum(f<f_cutoff)
+
+new_imprinted = cbind(bodies, f, imprinted)
+new_imprinted=new_imprinted[which(f<=f_cutoff),]
+sum(new_imprinted$imprinted==TRUE)
+new_imprinted = new_imprinted[new_imprinted$imprinted==TRUE,] 
+# 4420 pvalue_fs <=0.05, and imprinted in at least one organ
+
+write.table(new_imprinted[new_imprinted$imprinted==TRUE,] , file = "imprinted_genes_pvaluefs0.05.txt", 
+            quote =FALSE, sep="\t", row.names = FALSE) 
