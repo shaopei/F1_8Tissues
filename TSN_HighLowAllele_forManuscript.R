@@ -368,7 +368,7 @@ vioplot(new_x_list, las=2,
 abline(h=0, lty=2)
 dev.off()
 
-pvalue<-NULL
+
 wilcox.test(new_x_list[["CA/TA"]], new_x_list[["CA/TG"]], paired = FALSE)
 wilcox.test(new_x_list[["CA/TA"]], new_x_list[["CA/TG"]], paired = FALSE)
 
@@ -380,6 +380,13 @@ wilcox.test(new_x_list[["CA/TG"]], new_x_list[["CA/CG"]], paired = FALSE)
 wilcox.test(new_x_list[["CA/TG"]], new_x_list[["TA/TG"]], paired = FALSE)
 wilcox.test(new_x_list[["CA/CG"]], new_x_list[["TA/TG"]], paired = FALSE)
 
+
+wilcox.test(new_x_list[["TA/TG"]])
+wilcox.test(new_x_list[["TA/TG"]], rep(0,106), paired = FALSE)
+
+
+
+pvalue<-NULL
 paires = c("CA/TA","CA/TG","CA/CG", "TA/TG")
 name<- NULL
 p_value <- NULL
@@ -468,7 +475,7 @@ for (i in 1:3){
       asTSS_name = asTSS_name_list[a]
       for (k in 1:2){
         name=paste(organ, asTSS_name, sep = "")
-        v_list_withNewName[[paste(name,SNP_orBackground_name[k],Inr_name[i], sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,Inr[i], sep="")]] 
+        v_list_withNewName[[paste(name,SNP_orBackground_name[k],Inr_name[i], sep="")]] = -1 * (v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,Inr[i], sep="")]]) 
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"AllInr", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound, sep="")]] 
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyWeakInr", sep="")]]=v_list[[paste(name,SNP_orBackground[k], lower_bound,"_",uper_bound,"_OnlyWeakInr", sep="")]]
         #v_list_withNewName[[paste(name,SNP_orBackground_name[k],"OnlyCA", sep="")]] = v_list[[paste(name,SNP_orBackground[k], lower_bound, "_",uper_bound,"_OnlyCA", sep="")]] 
@@ -485,7 +492,7 @@ par(mar=c(13.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 #par(mgp=c(3,1,0))
 vioplot(v_list_withNewName, las=2, 
         #ylim=c(-6,6),
-        ylab = "log2(High Allele + 1 / Low Allele + 1)",
+        ylab = "log2(Low Allele + 1 / High Allele + 1)",
         #col=c("black", "blue", "orange"), 
         col=c("purple", "gray"),
         #border=c(rep("purple",3) ,rep("gray",3)),
@@ -525,7 +532,8 @@ par(mar=c(5.1, 4.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 #par(mgp=c(3,1,0))
 vioplot(new_v_list, las=1, 
         #ylim=c(-6,6),
-        ylab = "log2(Low Allele + 1 / High Allele + 1)",
+        ylab="Log2(Non-CA allele / CA allele)",
+        #ylab = "log2(Low Allele + 1 / High Allele + 1)",
         col=c("purple", "gray"),
         frame.plot=F
         )
