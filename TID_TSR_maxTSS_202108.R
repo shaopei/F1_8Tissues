@@ -1,5 +1,5 @@
 setwd("~/Box Sync/Danko_lab_work/F1_8Tissues/transcription_level_analysis/TID_TSR_maxTSS")
-Head="BN"
+Head="LV"
 
 df=read.table(paste(Head,"_maxTSN_TSS_TID_withSNP_temp3.bed",sep=""))
 # 1-9 TSS, 10-15 TID, 17 maxTSN with SNP in TSS(A)
@@ -32,21 +32,40 @@ dim(TSS)
 TSS$log2_high_low = log2((TSS$V18 +1 )/(TSS$V19+1))
 TSS$log2_high_low[TSS$winP=="P"] = log2((TSS$V18 +1 )/(TSS$V19+1))[TSS$winP=="P"]
 
-pdf(paste(Head, "_TSSinTID_withSNPsinMaxTSNofTSS_boxplot-2.pdf",sep=""), width=7, height = 7, useDingbats=FALSE)
+# change the "Head" above
+df_BN=df
+TSS_BN=TSS
+df_LV=df
+TSS_LV=TSS
+
+
+pdf(paste("BN_LV", "_TSSinTID_withSNPsinMaxTSNofTSS_boxplot-2.pdf",sep=""), width=7, height = 7, useDingbats=FALSE)
 par(mar=c(6.1, 7.1, 2.1, 2.1)) #d l u r 5.1, 4.1, 4.1, 2.1
 par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
-boxplot(df$log2_high_low, TSS$log2_high_low, 
+boxplot(df_BN$log2_high_low, TSS_BN$log2_high_low, df_LV$log2_high_low, TSS_LV$log2_high_low, 
         main=Head, ylab="log2(high allele +1/low allele +1)",
         frame.plot=F,
         outline=FALSE,
-        names=c("with SNPs at CA Inr", "control"),
+        names=c("with SNPs at CA Inr", "control", "LV SNP", "LV control"),
+        col=c("purple", "gray"),
         las=2
         )
-abline(h=0, col="red")
+#abline(h=0, col="red")
+abline(h=0, lty=2)
+legend("topleft", legend=c("maxTSNs with SNPs", "maxTSNs without SNP" ),
+       #title = "SNPs",
+       fill = c("purple", "gray"), 
+       bty = "n")
 dev.off()
-length(df$log2_high_low)
-length(TSS$log2_high_low)
+
+length(df_BN$log2_high_low)
+length(TSS_BN$log2_high_low)
+wilcox.test(df_BN$log2_high_low, TSS_BN$log2_high_low, alternative = "two.sided")
+
+length(df_LV$log2_high_low)
+length(TSS_LV$log2_high_low)
+wilcox.test(df_LV$log2_high_low, TSS_LV$log2_high_low, alternative = "two.sided")
 
 ###########
 library(seqLogo)
