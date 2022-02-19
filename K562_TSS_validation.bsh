@@ -1,0 +1,109 @@
+# positive control
+# maxTSN from co-pro
+ln -s /local/storage/data/hg19/k562/copro/enhancers.maxTSS.K562.bed .
+ln -s /local/storage/data/hg19/k562/copro/promoter.maxTSS.K562.bed .
+
+cat  promoter.maxTSS.K562.bed | awk 'BEGIN{OFS="\t"} NR>1 {print $1,$2-1,$3,$4,".", $5}' > promoterNenhancers.maxTSS.K562.bed
+cat  enhancers.maxTSS.K562.bed | awk 'BEGIN{OFS="\t"} NR>1 {print $1,$2-1,$3,$4,".", $5}' >> promoterNenhancers.maxTSS.K562.bed
+
+# negative control
+# 5' end of gene annotation
+ln -s /local/storage/data/hg19/all/gencode/gencode.V19.annotation.txtable.out
+cat gencode.V19.annotation.txtable.out | awk 'BEGIN{OFS="\t"} ($6 == "+") {print $1,$2,$2+1,$4,$5,$6}; ($6 == "-") {print $1,$3-1,$3,$4,$5,$6}' > gencode.V19.annotation_5END_temp.bed
+cat gencode.V19.annotation_5END_temp.bed | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,".",".",$6}' |sort-bed - |uniq > gencode.V19.annotation_5END.bed
+# procap
+GRO-cap data: /local/storage/data/hg19/k562/groseq_tss/
+groseq_tss_wTAP * . bigWig
+groseq_tss_wTAP_minus.bigWig
+groseq_tss_wTAP_plus.bigWig
+
+ln -s /local/storage/data/hg19/k562/groseq_tss/groseq_tss_wTAP*.bigWig .
+
+
+# TSS from paired-end PRO-seq data
+# dREG
+ln -s /local/storage/data/hg19/k562/dreg/G1.dREG.peak.full.bed.gz .
+
+# proseq data 
+ln -s /local/storage/projects/RawSequenceFiles/2019-07-06_K562_ChIP_TriptolideTimecourse/merged_datasets_JuneJuly2019/merged_ChROseq/ChROseq_merged_0h.bam .
+# fastq
+ln -s /local/storage/projects/RawSequenceFiles/2019-07-06_K562_ChIP_TriptolideTimecourse/FASTQ_files/geo_Danko.submission_Dec20/K562-0hr-br2_TCCGCGAA_R*.fastq.gz .
+#PROseq: K562-0hr-br2_TCCGCGAA_R1.fastq.gz and K562-0hr-br2_TCCGCGAA_R2.fastq.gz
+## report The 5' end of the RNA. Danko lab leChRO-Seq protocol is on the 5' of _R1 readl, same strand of R1 ($9)
+f=ChROseq_merged_0h.bam
+name=ChROseq_merged_0h
+samtools view -bf 0x2 -q 20 $f | samtools sort -n -@ 30 - > ${name}.sort.bam
+f=${name}.sort.bam
+j=${name}
+bedtools bamtobed -bedpe -mate1 -i $f 2> kill.warnings | awk 'BEGIN{OFS="\t"} ($9 == "+") {print $1,$2,$2+1,$7,$8,$9}; ($9 == "-") {print $1,$3-1,$3,$7,$8,$9}' | gzip > $j.bed.gz
+zcat $j.bed.gz | grep "rRNA\|chrM\|dm" -v | grep "_" -v | sort-bed - | gzip > $j.nr.rs.bed.gz
+
+CHINFO=/local/storage/data/hg19/hg19.chromInfo
+bedtools genomecov -bg -i $j.nr.rs.bed.gz -g ${CHINFO} -strand + > $j\_plus.bedGraph &
+bedtools genomecov -bg -i $j.nr.rs.bed.gz -g ${CHINFO} -strand - > $j\_minus.noinv.bedGraph &
+wait
+cat $j\_minus.noinv.bedGraph | awk 'BEGIN{OFS="\t"} {print $1,$2,$3,-1*$4}' > $j\_minus.bedGraph
+
+mv $j\_minus.bedGraph $j\_minus0.bedGraph
+cat $j\_minus0.bedGraph | grep "dm" -v > $j\_minus.bedGraph
+mv $j\_plus.bedGraph $j\_plus0.bedGraph
+cat $j\_plus0.bedGraph | grep "dm" -v > $j\_plus.bedGraph
+bedGraphToBigWig $j\_plus.bedGraph ${CHINFO} $j\_plus.bw &
+bedGraphToBigWig $j\_minus.bedGraph ${CHINFO} $j\_minus.bw &
+
+
+## identify the abundance of PolII at each position of TID (dREG)
+# strand specific
+bedtools coverage -sorted -d -s -a <(zcat G1.dREG.peak.full.bed.gz| awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5, "+"} {print $1,$2,$3,$4,$5, "-"}') -b <(zcat ChROseq_merged_0h.nr.rs.bed.gz) \
+> ChROseq_merged_0h_temp0.bed &
+
+## identify TSN
+# only keep base with at least b all reads ($8 >=b)
+b=5
+cat ChROseq_merged_0h_temp0.bed | awk -v b=$b 'BEGIN{OFS="\t"; c=","; C=",reads:"} ($8-0 >=b) {print $1, $2+$7-1, $2+$7 , $7c$6C$8, $5, $6}' \
+|sort-bed - > ChROseq_merged_0h_TSN${b}+_IGV.bed &
+
+cat ChROseq_merged_0h_temp0.bed | awk -v b=$b 'BEGIN{OFS="\t"; c=","; C=",reads:"} ($8-0 >=b) {print $1, $2+$7-1, $2+$7 , $7, $8, $6}' \
+|sort-bed - > ChROseq_merged_0h_TSN_pos_readcount${b}+_strand.bed &
+# $4 is TSN position inside dREG, $5 read counts of the TSN, $6 strand of the TSN
+
+
+## identify TSS
+# Force strandedness -s
+# merge TSN with gap <= 60bp -d 60
+bedtools merge -s -d 60 -c 4,5,6 -o count,sum,distinct -i ChROseq_merged_0h_TSN_pos_readcount${b}+_strand.bed |grep -v chrY \
+> ChROseq_merged_0h_TSS.bed &
+   # $4 is number of TSN in the TSS, $5 sum of the read counts of the TSN (with at least b reads), $6 strand of the TSS
+
+## identify maxTSNs with EACH TSS
+# identify the abundance of PolII at each position of TSS
+# strand specific
+# use all reads (not just allelic reads), 
+bedtools coverage -sorted -d -s -a ChROseq_merged_0h_TSS.bed -b <(zcat ChROseq_merged_0h.nr.rs.bed.gz) > ChROseq_merged_0h_TSStemp1.bed &
+
+# report more than one maxTSN if multiple TSN share the same max read count
+python getMaxTSNs_frombedtools_coverage_strandSpecific.py ChROseq_merged_0h_TSStemp1.bed ChROseq_merged_0h_TSS_maxTSNsCol7_minusStrandSameDirection.bed &
+cat ChROseq_merged_0h_TSS_maxTSNsCol7_minusStrandSameDirection.bed | awk '{OFS="\t"} {print $1, $2+$7-1, $2+$7, $8, "111", $6}' >  ChROseq_merged_0h_TSS_maxTSNs.bed &
+
+## use +- 10bp to identify seqlogo
+wait
+d=10
+# get the bed geions 
+# col4 is ReadCountOftheTSN
+Head=ChROseq_merged_0h
+cat ChROseq_merged_0h_TSS_maxTSNs.bed | awk -v d=$d '{OFS="\t"} {print $1, $2-d, $3+d, $4, $5, $6}' >  ${Head}_allReads_TSS_maxTSNs+-${d}.bed &
+
+wait
+# get the sequence from fasta
+# -s	Force strandedness. If the feature occupies the antisense strand, the sequence will be reverse complemented. Default: strand information is ignored.
+
+bedtools getfasta -s -fi hg19.fa -bed ${Head}_allReads_TSS_maxTSNs+-${d}.bed  | grep -v \> > ${Head}_allReads_TSS_maxTSNs+-${d}.txt &
+
+wait
+# the the seqlogo
+R --vanilla --slave --args $(pwd) ${Head}_allReads_TSS_maxTSNs+-10.txt ${Head}_allReads_TSS_maxTSNs+-10_SeqLogo.pdf < getSeqLogo.R &
+
+
+
+
+
