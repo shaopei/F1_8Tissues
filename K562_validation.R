@@ -65,7 +65,9 @@ par(mgp=c(3,1,0))
 par(cex.lab=2.2, cex.axis=2.2)
 
 
-plot(seq(-29.5,30,1), pos, type="l", ylab="GRO-cap signal", xlab="distance to maxTSS", las=1)
+plot(seq(-29.5,30,1), pos, type="l", 
+     ylab="GRO-cap signal", xlab="distance to maxTSS", 
+     las=1,         frame.plot=F)
 lines(seq(-29.5,30,1), tss, col="blue")
 lines(seq(-29.5,30,1), neg, col="red")
 legend("topright", 
@@ -80,6 +82,4 @@ legend("topright",
        col=c("black","blue", "red")
        , bty = "n"
 )
-
-genecode_meta.hmat.high = meta.hmat.high 
 
