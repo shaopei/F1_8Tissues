@@ -1,6 +1,6 @@
 # scripts for F1 8 organ manuscript, pause
 # https://github.com/shaopei/F1_8Tissues/blob/master/F1_Pausing_whole_dREG.sh
-cd /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate
+cd /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/whole_dREG_combine_replicate_NEW
 
 studyBed=dREG
 ln -s /workdir/sc2457/F1_Tissues/dREG/Browser/ .
@@ -28,7 +28,7 @@ wait
 for Head in HT KD SK
 do
 #  bedtools coverage -a <(zcat Browser/${Head}_all.dREG.peak.score.bed.gz| awk 'BEGIN{OFS="\t"} {print $0, ".", "+"} {print $0, ".", "-"}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}' > ${intermediate_file}
-  bedtools coverage -s -a <(bedtools coverage -a ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5, $6}'| sort-bed - |uniq \
+  bedtools coverage -s -a <(bedtools coverage -s -a ${Head}_${studyBed}_5mat5pat_NS_uniq_labeled.bed -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.mat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5,$6}') -b <(zcat map2ref_1bpbed/${Head}_PB6_*_dedup_R1.pat.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed.gz) | awk 'BEGIN{OFS="\t"} ($7 >=5){print $1,$2,$3,$4,$5, $6}'| sort-bed - |uniq \
   > ${Head}_${studyBed}_5mat5pat_uniq.bed &
 done
 wait
@@ -39,7 +39,9 @@ for Head in HT KD SK
 do cat ${Head}_${studyBed}_5mat5pat_uniq.bed | cut -f 1-3 |sort-bed - |uniq |wc -l
 done
 
-
+#6746
+#6332
+#6755
 
 unfiltered_snp=/workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered
 # generate a smaller SNP file for IGV, SNPs within 100bp of the dREG sites
