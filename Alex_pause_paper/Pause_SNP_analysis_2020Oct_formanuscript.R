@@ -45,37 +45,6 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
   return(hmat);    
 }
 
-###
-fimo_mat = read.table("fimo_from_streme_mat.tsv", sep ="\t", header = T)
-fimo_pat = read.table("fimo_from_streme_pat.tsv", sep ="\t", header = T)
-fimo <- merge(fimo_mat, fimo_pat, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
-fimo$score_diff = fimo$score.m - fimo$score.p
-#fimo <- fimo[fimo$score.m != fimo$score.p, ]
-sum(fimo$score.m != fimo$score.p)
-fimo_mat1 = read.table("fimo_from_my_pause_motif_mat.tsv", sep ="\t", header = T)
-fimo_pat1 = read.table("fimo_from_my_pause_motif_pat.tsv", sep ="\t", header = T)
-fimo1 <- merge(fimo_mat1, fimo_pat1, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
-fimo1$score_diff = fimo1$score.m - fimo1$score.p
-sum(fimo1$score.m != fimo1$score.p)
-fimo_all <- merge(fimo, fimo1, by = c("sequence_name"), suffixes = c(".streme", ".my"))
-plot(fimo_all$score_diff.streme, fimo_all$score_diff.streme)
-
-fimo$win_genotype = "mat"
-fimo$win_genotype[fimo$score.m < fimo$score.p] = 'pat'
-
-library(stringr)
-
-# Split sequence_name into separate columns
-split_cols <- str_split(fimo$sequence_name, "_")
-
-# Extract individual components and create new columns
-fimo$chr <- sapply(split_cols, `[`, 1)
-fimo$chrStart <- sapply(split_cols, `[`, 2)
-fimo$chrEnd <- sapply(split_cols, `[`, 3)
-fimo$strand <- sapply(split_cols, `[`, 4)
-write.table(fimo, file = 'fimo_streme_motif.tsv', sep = "\t", quote = FALSE, row.names = FALSE)
-
-colnames(fimo)
 # pause center analysis, using dREG sites with KS test, map3 position, fdr<=0.1
 combine_pause0.1 <- NULL
 for (t in c("HT","SK","KD")){
@@ -1391,7 +1360,7 @@ SeqLogo <- function(seq, output, range=NULL) {
   return (pwm)
 }
 
-
+#### make fasta files center at macPause from streme, mast, and fimo ######
 seq_a=read.table("Tissues3_maxPause_map3AllReadsSites_+-4_mat_patSeq.bed")
 dim(seq_a)
 View(seq_a)
@@ -1411,7 +1380,41 @@ sequences_col <- my_table$V8
 fasta_entries <- paste(">", name_cols, "\n", sequences_col, sep = "")
 # Write the FASTA entries to a file
 writeLines(fasta_entries, "Tissues3_maxPause_pat.fasta")
+# output for streme, mast and fimo
 
+### process fimo output
+fimo_mat = read.table("fimo_from_streme_mat.tsv", sep ="\t", header = T)
+fimo_pat = read.table("fimo_from_streme_pat.tsv", sep ="\t", header = T)
+fimo <- merge(fimo_mat, fimo_pat, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
+fimo$score_diff = fimo$score.m - fimo$score.p
+#fimo <- fimo[fimo$score.m != fimo$score.p, ]
+sum(fimo$score.m != fimo$score.p)
+fimo_mat1 = read.table("fimo_from_my_pause_motif_mat.tsv", sep ="\t", header = T)
+fimo_pat1 = read.table("fimo_from_my_pause_motif_pat.tsv", sep ="\t", header = T)
+fimo1 <- merge(fimo_mat1, fimo_pat1, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
+fimo1$score_diff = fimo1$score.m - fimo1$score.p
+sum(fimo1$score.m != fimo1$score.p)
+fimo_all <- merge(fimo, fimo1, by = c("sequence_name"), suffixes = c(".streme", ".my"))
+plot(fimo_all$score_diff.streme, fimo_all$score_diff.streme)
+
+fimo$win_genotype = "mat"
+fimo$win_genotype[fimo$score.m < fimo$score.p] = 'pat'
+
+library(stringr)
+
+# Split sequence_name into separate columns
+split_cols <- str_split(fimo$sequence_name, "_")
+
+# Extract individual components and create new columns
+fimo$chr <- sapply(split_cols, `[`, 1)
+fimo$chrStart <- sapply(split_cols, `[`, 2)
+fimo$chrEnd <- sapply(split_cols, `[`, 3)
+fimo$strand <- sapply(split_cols, `[`, 4)
+write.table(fimo, file = 'fimo_streme_motif.tsv', sep = "\t", quote = FALSE, row.names = FALSE)
+
+colnames(fimo)
+
+###### fimo end #########
 
 # Panel58_short_pause_site_seqlogo
 seq_a=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
