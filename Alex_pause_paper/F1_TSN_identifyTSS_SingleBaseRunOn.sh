@@ -187,15 +187,19 @@ done
    4909 SK_patReads_TSS_maxTSNs.bed
   34873 total
 
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn/AlexPausePaper
+ln -s ../*_matReads_patReads_TSS_maxTSNs.bed .
+
+# ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed is actually NOT filtered by the ratio between mat/pat reads
 for Head in HT KD SK
-do cat ${Head}_matReads_patReads_TSS_maxTSNs.bed | awk '{OFS="\t"; c=","} ($4/$10<2 && $4/$10>0.5){print $1,$2,$3,$4c$10, $5, $6}' > ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
+do cat ${Head}_matReads_patReads_TSS_maxTSNs.bed | awk '{OFS="\t"; c=","} {print $1,$2,$3,$4c$10, $5, $6}' > ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
 done
 
-[sc2457@cbsudanko identifyTSS_SingleBaseRunOn]$ wc -l *_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
-  1448 HT_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
-  1395 KD_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
-  1461 SK_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
-  4304 total
+[sc2457@cbsudanko AlexPausePaper]$ wc -l *_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
+  1976 HT_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
+  1865 KD_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
+  1933 SK_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed
+  5774 total
 
 # get the read
 for Head in HT KD SK
@@ -220,13 +224,13 @@ done
 
 for Head in HT KD SK
 do 
-  R --vanilla --slave --args $(pwd) ${Head} matReads_patReads_TSS_maxTSNs_ratio0.5-2 < KStest_flexible_length_ReadLength.R &
+  /programs/R-3.5.0/r3.5.0.sif Rscript --vanilla --slave KStest_flexible_length_ReadLength.R $(pwd) ${Head} matReads_patReads_TSS_maxTSNs_ratio0.5-2  &
 done
 
 for Head in HT KD SK
 do 
-R --vanilla --slave --args $(pwd) ${Head} ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_mat.ReadLength.bed  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_pat.ReadLength.bed \
- < getAllelicReadLengthDifference.R &
+/programs/R-3.5.0/r3.5.0.sif Rscript --vanilla --slave getAllelicReadLengthDifference.R  $(pwd) ${Head} ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_mat.ReadLength.bed  ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_pat.ReadLength.bed \
+ &
 done
 
 # mapped location of pause
@@ -257,6 +261,7 @@ do
     while read  chr start end strand r
     do
   #echo $chr $start $end $strand $r
+  # $r looks like 9118768,AGAAATGGGGGTCTATCCCAGAAGCTGTGTAGCTTCTGC. use r to grep the map3 position of the read from map5 
   nice grep $r map2ref_1bpbed_map3/${Head}_PB6_F*_dedup_R1.${allele}.bowtie.gz_AMBremoved_sorted_specific.map2ref.1bp.sorted.bed | cut -d ":" -f 2 \
   > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_temp/${chr}_${start}_${end}_${strand}_$r &
   wait_a_second
@@ -300,7 +305,7 @@ sed 's/ /,/g' ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads_map2ref_D
 done
 done
 
-# HERE
+# HERE 0514
 for Head in HT KD SK
 do 
 R --vanilla --slave --args $(pwd) ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_map2ref_DistanceTomaxTSN.bed  ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_map2ref_DistanceTomaxTSN.bed \
@@ -308,16 +313,26 @@ ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed  < KSte
 
 done
 
+for Head in HT KD SK
+do
+  /programs/R-3.5.0/r3.5.0.sif Rscript --vanilla --slave KStest_flexible_length_mat_pat_output.R $(pwd) ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_map2ref_DistanceTomaxTSN.bed \
+  ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_map2ref_DistanceTomaxTSN.bed ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_map3TomaxTSN_PValue.bed &
+done
+
+
 # make map3 IGC track with only reads from the shared maxTSNs
 #Head=KD
+for Head in HT KD SK
+do
 for allele in mat pat
   do 
 cat ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads/* | sort-bed -  > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_${allele}reads.bed &
 done
+done
 
 #HERE
 cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn
-
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn/AlexPausePaper
 for Head in HT KD SK
 do 
 # make a file with both ReadLength and map3TomaxTSNDistance exclude any region contain NA (KS test input)
@@ -349,7 +364,7 @@ cat ${Head}_matReads_patReads_TSS_maxTSNs_ratio0.5-2_ReadLengthPValue_map3TomaxT
 
 
 
-cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn/Pasue_SNP_analysis
+cd /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/identifyTSS_SingleBaseRunOn/AlexPausePaper/Pasue_SNP_analysis
 ln -s ../*_matReads_patReads_TSS_maxTSNs_ratio0.5-2.bed  .  # shared maxTSNs between B6 and CAST allele with allelic read ratio between 0.5-2
 
 # identify maxPause using all reads from the maxTSNs
@@ -450,9 +465,23 @@ intersectBed -s -wao -a <(intersectBed -s -wao -a ${Head}_BothAlleleMaxTSNs_rati
 | cut -f 1-7,14) -b ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_IDEreads_map2ref_DistanceTomaxTSN.bed  | awk '{OFS="\t"} ($16 !=0 ){print $1,$2,$3,$4,$5,$6,$7,$8, $15} ($16 ==0 ){print $1,$2,$3,$4,$5,$6,$7,$8, "NA"}'\
 > ${Head}_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed
 done
+# HERE 0514
 
 #ln -s /workdir/sc2457/F1_Tissues/Pause_SingleBaseRunOn/pause_Indel/P.CAST_M.B6_F1hybrid.snps.bed .
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/P.CAST.EiJ_M.C57BL.6J_*aternal_all.fa* .
+
+j=Tissues3_maxPause_map3AllReadsSites
+d=10
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+ #cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($4,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ #(substr($4,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+
 
 j=Tissues3_EarlyPause_1bpapart_KSfdr0.1
 d=10

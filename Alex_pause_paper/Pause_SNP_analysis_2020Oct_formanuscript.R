@@ -1,6 +1,8 @@
-setwd("~/Box Sync/KD_IGV/2020July/")
+#setwd("~/Box Sync/KD_IGV/2020July/")
+setwd("/Users/sc2457/Box Sync/Danko_lab_work/F1_8Tissues/Alex_pause_paper/")
 #setwd("/Volumes/BackupGray/ VM-SC2457-LT/Box Sync 2022April/KD_IGV/2020July")
 file_dir="~/Box Sync/KD_IGV/"
+file_dir3 = "/Users/sc2457/Box Sync/Danko_lab_work/F1_8Tissues/Alex_pause_paper/Saho-Pei_BWs/"
 SNP.bw <- paste(file_dir, "P.CAST_M.B6_indelsNsnps_CAST.bam.snp.unfiltered_plus.bw", sep="")
 
 # functions:
@@ -43,7 +45,37 @@ read_read_mat_SNPs <-function (SNP.bw , bed6, step=2, navg = 20, times=1, use.lo
   return(hmat);    
 }
 
+###
+fimo_mat = read.table("fimo_from_streme_mat.tsv", sep ="\t", header = T)
+fimo_pat = read.table("fimo_from_streme_pat.tsv", sep ="\t", header = T)
+fimo <- merge(fimo_mat, fimo_pat, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
+fimo$score_diff = fimo$score.m - fimo$score.p
+#fimo <- fimo[fimo$score.m != fimo$score.p, ]
+sum(fimo$score.m != fimo$score.p)
+fimo_mat1 = read.table("fimo_from_my_pause_motif_mat.tsv", sep ="\t", header = T)
+fimo_pat1 = read.table("fimo_from_my_pause_motif_pat.tsv", sep ="\t", header = T)
+fimo1 <- merge(fimo_mat1, fimo_pat1, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
+fimo1$score_diff = fimo1$score.m - fimo1$score.p
+sum(fimo1$score.m != fimo1$score.p)
+fimo_all <- merge(fimo, fimo1, by = c("sequence_name"), suffixes = c(".streme", ".my"))
+plot(fimo_all$score_diff.streme, fimo_all$score_diff.streme)
 
+fimo$win_genotype = "mat"
+fimo$win_genotype[fimo$score.m < fimo$score.p] = 'pat'
+
+library(stringr)
+
+# Split sequence_name into separate columns
+split_cols <- str_split(fimo$sequence_name, "_")
+
+# Extract individual components and create new columns
+fimo$chr <- sapply(split_cols, `[`, 1)
+fimo$chrStart <- sapply(split_cols, `[`, 2)
+fimo$chrEnd <- sapply(split_cols, `[`, 3)
+fimo$strand <- sapply(split_cols, `[`, 4)
+write.table(fimo, file = 'fimo_streme_motif.tsv', sep = "\t", quote = FALSE, row.names = FALSE)
+
+colnames(fimo)
 # pause center analysis, using dREG sites with KS test, map3 position, fdr<=0.1
 combine_pause0.1 <- NULL
 for (t in c("HT","SK","KD")){
@@ -52,13 +84,13 @@ for (t in c("HT","SK","KD")){
   cat (t, dim(pause_window_0.1), "\n")
   pause_window_0.1 <- pause_window_0.1[pause_window_0.1$V1 != 'chrX',]
   cat (dim(pause_window_0.1), "\n")
-  end=".rpm.bw"; times=10
+  end=".bw"; times=10
   #end=".bw"; times=1
   # allelic reads (map3) #mapped position of the 3 prime end of reads
-  file.bw.plus.pat <- paste(file_dir,t,".pat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.pat <- paste(file_dir,t,".pat.map2ref.1bp_minus",end, sep="")
-  file.bw.plus.mat <- paste(file_dir,t,".mat.map2ref.1bp_plus",end, sep="")
-  file.bw.minus.mat <- paste(file_dir,t,".mat.map2ref.1bp_minus",end, sep="")
+  file.bw.plus.pat <- paste(file_dir3,t,"_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_plus",end, sep="")
+  file.bw.minus.pat <- paste(file_dir3,t,"_BothAlleleMaxTSNs_ratio0.5-2_map3_patreads_minus",end, sep="")
+  file.bw.plus.mat <- paste(file_dir3,t,"_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_plus",end, sep="")
+  file.bw.minus.mat <- paste(file_dir3,t,"_BothAlleleMaxTSNs_ratio0.5-2_map3_matreads_minus",end, sep="")
   # allelic reads (map5) HT.mat.map5.map2ref.1bp_minus.bw
   map5.file.bw.plus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_plus.bw", sep="")
   map5.file.bw.minus.pat <- paste(file_dir, "map5/",t,".pat.map5.map2ref.1bp_minus.bw", sep="")
@@ -376,9 +408,9 @@ fisher.test(data.frame(c(b, a), c(d, c)))
 ### maxTSN centered pause analysis ###
 # use the shared allelic maxTSN
 # SNP analysis
-df1=read.table("HT_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed")
-df2=read.table("SK_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed")
-df3=read.table("KD_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed")
+df1=read.table("/Users/sc2457/Box Sync/Danko_lab_work/F1_8Tissues/Alex_pause_paper/Saho-Pei_BWs/HT_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed")
+df2=read.table("/Users/sc2457/Box Sync/Danko_lab_work/F1_8Tissues/Alex_pause_paper/Saho-Pei_BWs/SK_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed")
+df3=read.table("/Users/sc2457/Box Sync/Danko_lab_work/F1_8Tissues/Alex_pause_paper/Saho-Pei_BWs/KD_BothAlleleMaxTSNs_ratio0.5-2_map3_mat.pat.IDEreads_map2ref_DistanceTomaxTSN.bed")
 
 df1$Tissue="HT"
 df2$Tissue="SK"
@@ -386,7 +418,7 @@ df3$Tissue="KD"
 df=rbind.data.frame(df1,df2,df3)  
 
 colnames(df)[7:9]=c("mat_map3", "pat_map3" , "ide_map3" )
-#View(df)
+View(df)
 for (i in 1:dim(df)[1]){
   # pick maxPause
   # if there is a tie, the shorter read length/mapping position is reported
@@ -402,6 +434,34 @@ for (i in 1:dim(df)[1]){
   }
   
 }
+
+df_temp = getmaxPause_map3AllReadsSites(df)
+View(df_temp)
+dim(df_temp) #5774
+df_temp = unique(df_temp ) #duplicates from different organs
+dim(df_temp) #4387
+write.table(df_temp, file="Tissues3_maxPause_map3AllReadsSites.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+
+
+
+getmaxPause_map3AllReadsSites <- function(subdf){
+  bed6 <- subdf[1:6]
+  for (i in 1:NROW(bed6)){
+    if(bed6[i,6]=="-") {
+      bed6[i,3] <- subdf[i,3] - subdf$maxPause_map3AllReads[i]
+      bed6[i,2] <- subdf[i,2] - subdf$maxPause_map3AllReads[i]
+    } else {
+      bed6[i,2] <- subdf[i,2] + subdf$maxPause_map3AllReads[i]
+      bed6[i,3] <- subdf[i,3] + subdf$maxPause_map3AllReads[i]
+    }
+  }
+  bed6[,4]=111
+  bed6[,5]=111
+  return((bed6))
+  #dim(unique(data.frame(subdf$V1, subdf$V2+subdf$earlyPause)))[1]
+}
+
 
 # with or without indel 
 Tissue_list= c("HT", "SK", "KD")
@@ -1331,6 +1391,28 @@ SeqLogo <- function(seq, output, range=NULL) {
   return (pwm)
 }
 
+
+seq_a=read.table("Tissues3_maxPause_map3AllReadsSites_+-4_mat_patSeq.bed")
+dim(seq_a)
+View(seq_a)
+Tissues3_maxPause_mat=SeqLogo(seq_a$V7, "Tissues3_maxPause_mat.pdf")
+Tissues3_maxPause_pat=SeqLogo(seq_a$V8, "Tissues3_maxPause_pat.pdf")
+
+# Extract the necessary columns for sequence names and sequences
+my_table=seq_a
+name_cols <- paste(my_table$V1, my_table$V2, my_table$V3, my_table$V6, sep = "_")
+sequences_col <- my_table$V7
+# Create the FASTA entries
+fasta_entries <- paste(">", name_cols, "\n", sequences_col, sep = "")
+# Write the FASTA entries to a file
+writeLines(fasta_entries, "Tissues3_maxPause_mat.fasta")
+sequences_col <- my_table$V8
+# Create the FASTA entries
+fasta_entries <- paste(">", name_cols, "\n", sequences_col, sep = "")
+# Write the FASTA entries to a file
+writeLines(fasta_entries, "Tissues3_maxPause_pat.fasta")
+
+
 # Panel58_short_pause_site_seqlogo
 seq_a=read.table("Tissues3_EarlyPause_1bpapart_KSfdr0.1_+-10_Early_LateAlleleSeq.bed")
 dim(seq_a)
@@ -1344,12 +1426,12 @@ dim(seq_l)
 Tissues3_LatePause_1bpapart_KSfdr0.1_early=SeqLogo(seq_l$V8, "Tissues3_LatePause_1bpapart_KSfdr0.1_early.pdf")
 Tissues3_LatePause_1bpapart_KSfdr0.1_late=SeqLogo(seq_l$V9, "Tissues3_LatePause_1bpapart_KSfdr0.1_late.pdf")
 
-seq=read.table("combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
+seq=read.table("~/Box Sync/KD_IGV/2020July/combine_maxPause_noduplicate_+-30_mm10_Seq.bed")
 dim(seq)
 #Figure4D bottom
 #n=3456
 combine_maxPause_noduplicate= SeqLogo(seq$V7, "combine_maxPause_noduplicate_+-30_mm10_Se.pdf")
-
+t(combine_maxPause_noduplicate)
 
 acgt_col=c("dark green", "blue", "orange" , "red")
 acgt=c("A","C","G","T")
