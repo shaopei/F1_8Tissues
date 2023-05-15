@@ -471,7 +471,30 @@ done
 ln -s /workdir/sc2457/F1_Tissues/TSN_SingleBaseRunOn/P.CAST.EiJ_M.C57BL.6J_*aternal_all.fa* .
 
 j=Tissues3_maxPause_map3AllReadsSites
-d=10
+d=4
+#if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
+ # get sequence from maternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &
+ # get sequence from paternal genome
+ bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_paternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_paternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt &
+ wait
+ paste ${j}.bed  ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt ${j}_P.CAST.EiJ_M.C57BL.6J_paternal.txt > ${j}_+-${d}_mat_patSeq.bed 
+ #cat ${j}_+-${d}_mat_patSeq.bed  | awk '{OFS="\t"} (substr($4,1,1)=="M") {print $1,$2,$3,$4,$5, $6, $7, $8, $9} 
+ #(substr($4,1,1)=="P") {print  $1,$2,$3,$4,$5, $6, $7, $9, $8}' > ${j}_+-${d}_Early_LateAlleleSeq.bed 
+
+streme --oc Tissues3_maxPause_both_streme_output --dna --nmotifs 1 --p Tissues3_maxPause_both.fasta
+
+mast -oc mast_fromStreme -remcorr -ev 10.0 Tissues3_maxPause_both_streme_output/streme.xml Tissues3_maxPause_both.fasta
+fimo --norc --oc fimo_from_streme_mat --verbosity 1 --thresh 10 Tissues3_maxPause_both_streme_output/streme.xml Tissues3_maxPause_mat.fasta
+fimo --norc --oc fimo_from_streme_pat --verbosity 1 --thresh 10 Tissues3_maxPause_both_streme_output/streme.xml Tissues3_maxPause_pat.fasta
+
+mast -oc mast_frommy_pause_motif -remcorr -ev 10.0 my_pause_motif Tissues3_maxPause_both.fasta
+fimo --norc --oc fimo_from_my_pause_motif_mat --verbosity 1 --thresh 10 my_pause_motif Tissues3_maxPause_mat.fasta
+fimo --norc --oc fimo_from_my_pause_motif_pat --verbosity 1 --thresh 10 my_pause_motif Tissues3_maxPause_pat.fasta
+
+
+j=Tissues3_earlyPauseSites
+d=4
 #if [ ! -f ${j}_+-${d}_High_LowAlleleSeq.bed ]; then
  # get sequence from maternal genome
  bedtools getfasta -s -fi P.CAST.EiJ_M.C57BL.6J_maternal_all.fa -bed <(cat ${j}.bed |awk -v d=$d  '{OFS="\t";p="_maternal"} {print substr($1,4)p, $2-d, $3+d, $4,$5,$6}')  | grep -v \> > ${j}_P.CAST.EiJ_M.C57BL.6J_maternal.txt &

@@ -374,6 +374,7 @@ a;b;c;d
 fisher.test(data.frame(c(b, a), c(d, c)))
 #p-value = 0.0000003912
 
+### for Alex's paper  ###
 ### maxTSN centered pause analysis ###
 # use the shared allelic maxTSN
 # SNP analysis
@@ -403,16 +404,12 @@ for (i in 1:dim(df)[1]){
   }
   
 }
-
-df_temp = getmaxPause_map3AllReadsSites(df)
-View(df_temp)
-dim(df_temp) #5774
-df_temp = unique(df_temp ) #duplicates from different organs
-dim(df_temp) #4387
-write.table(df_temp, file="Tissues3_maxPause_map3AllReadsSites.bed", quote = F, sep="\t", row.names = F, col.names = F)
-
-
-
+dim(df)
+sum(df$maxPause_map3AllReads != df$earlyPause) 
+sum(df$maxPause_map3AllReads == df$earlyPause)
+sum(df$latePause != df$earlyPause) 
+sum(df$latePause == df$earlyPause)
+dim(unique(df[1:6]))
 
 getmaxPause_map3AllReadsSites <- function(subdf){
   bed6 <- subdf[1:6]
@@ -431,6 +428,38 @@ getmaxPause_map3AllReadsSites <- function(subdf){
   #dim(unique(data.frame(subdf$V1, subdf$V2+subdf$earlyPause)))[1]
 }
 
+df_temp = getmaxPause_map3AllReadsSites(df)
+View(df_temp)
+dim(df_temp) #5774
+df_temp = unique(df_temp ) #duplicates from different organs
+dim(df_temp) #4387
+write.table(df_temp, file="Tissues3_maxPause_map3AllReadsSites.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+getEarlyPauseSites <- function(subdf){
+  bed6 <- subdf[1:6]
+  for (i in 1:NROW(bed6)){
+    if(bed6[i,6]=="-") {
+      bed6[i,3] <- subdf[i,3] - subdf$earlyPause[i]
+      bed6[i,2] <- subdf[i,2] - subdf$earlyPause[i]
+    } else {
+      bed6[i,2] <- subdf[i,2] + subdf$earlyPause[i]
+      bed6[i,3] <- subdf[i,3] + subdf$earlyPause[i]
+    }
+  }
+  bed6[,4]=111
+  bed6[,5]=111
+  return((bed6))
+  #dim(unique(data.frame(subdf$V1, subdf$V2+subdf$earlyPause)))[1]
+}
+
+df_temp = getEarlyPauseSites(df)
+View(df_temp)
+dim(df_temp) #5774
+df_temp = unique(df_temp ) #duplicates from different organs
+dim(df_temp) #4479
+write.table(df_temp, file="Tissues3_earlyPauseSites.bed", quote = F, sep="\t", row.names = F, col.names = F)
+
+### for Alex's paper END  ###
 
 # with or without indel 
 Tissue_list= c("HT", "SK", "KD")
@@ -1361,11 +1390,20 @@ SeqLogo <- function(seq, output, range=NULL) {
 }
 
 #### make fasta files center at macPause from streme, mast, and fimo ######
+### for Alex's paper ###
 seq_a=read.table("Tissues3_maxPause_map3AllReadsSites_+-4_mat_patSeq.bed")
 dim(seq_a)
 View(seq_a)
 Tissues3_maxPause_mat=SeqLogo(seq_a$V7, "Tissues3_maxPause_mat.pdf")
 Tissues3_maxPause_pat=SeqLogo(seq_a$V8, "Tissues3_maxPause_pat.pdf")
+
+seq_a=read.table("Tissues3_earlyPauseSites_+-4_mat_patSeq.bed")
+dim(seq_a)
+View(seq_a)
+Tissues3_earlyPause_mat=SeqLogo(seq_a$V7, "Tissues3_earlyPause_mat.pdf")
+Tissues3_earlyPause_pat=SeqLogo(seq_a$V8, "Tissues3_earlyPause_pat.pdf")
+
+
 
 # Extract the necessary columns for sequence names and sequences
 my_table=seq_a
@@ -1374,28 +1412,28 @@ sequences_col <- my_table$V7
 # Create the FASTA entries
 fasta_entries <- paste(">", name_cols, "\n", sequences_col, sep = "")
 # Write the FASTA entries to a file
-writeLines(fasta_entries, "Tissues3_maxPause_mat.fasta")
+writeLines(fasta_entries, "Tissues3_earlyPause_mat.fasta")
 sequences_col <- my_table$V8
 # Create the FASTA entries
 fasta_entries <- paste(">", name_cols, "\n", sequences_col, sep = "")
 # Write the FASTA entries to a file
-writeLines(fasta_entries, "Tissues3_maxPause_pat.fasta")
+writeLines(fasta_entries, "Tissues3_earlyPause_pat.fasta")
 # output for streme, mast and fimo
 
 ### process fimo output
-fimo_mat = read.table("fimo_from_streme_mat.tsv", sep ="\t", header = T)
-fimo_pat = read.table("fimo_from_streme_pat.tsv", sep ="\t", header = T)
+fimo_mat = read.table("fimo_from_streme_earlyPause_mat.tsv", sep ="\t", header = T)
+fimo_pat = read.table("fimo_from_streme_earlyPause_pat.tsv", sep ="\t", header = T)
 fimo <- merge(fimo_mat, fimo_pat, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
 fimo$score_diff = fimo$score.m - fimo$score.p
 #fimo <- fimo[fimo$score.m != fimo$score.p, ]
 sum(fimo$score.m != fimo$score.p)
-fimo_mat1 = read.table("fimo_from_my_pause_motif_mat.tsv", sep ="\t", header = T)
-fimo_pat1 = read.table("fimo_from_my_pause_motif_pat.tsv", sep ="\t", header = T)
-fimo1 <- merge(fimo_mat1, fimo_pat1, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
-fimo1$score_diff = fimo1$score.m - fimo1$score.p
-sum(fimo1$score.m != fimo1$score.p)
-fimo_all <- merge(fimo, fimo1, by = c("sequence_name"), suffixes = c(".streme", ".my"))
-plot(fimo_all$score_diff.streme, fimo_all$score_diff.streme)
+#fimo_mat1 = read.table("fimo_from_my_pause_motif_mat.tsv", sep ="\t", header = T)
+#fimo_pat1 = read.table("fimo_from_my_pause_motif_pat.tsv", sep ="\t", header = T)
+#fimo1 <- merge(fimo_mat1, fimo_pat1, by = c("motif_id", "motif_alt_id", "sequence_name", "start", "stop", "strand"), suffixes = c(".m", ".p"))
+#fimo1$score_diff = fimo1$score.m - fimo1$score.p
+#sum(fimo1$score.m != fimo1$score.p)
+#fimo_all <- merge(fimo, fimo1, by = c("sequence_name"), suffixes = c(".streme", ".my"))
+#plot(fimo_all$score_diff.streme, fimo_all$score_diff.streme)
 
 fimo$win_genotype = "mat"
 fimo$win_genotype[fimo$score.m < fimo$score.p] = 'pat'
@@ -1410,10 +1448,10 @@ fimo$chr <- sapply(split_cols, `[`, 1)
 fimo$chrStart <- sapply(split_cols, `[`, 2)
 fimo$chrEnd <- sapply(split_cols, `[`, 3)
 fimo$strand <- sapply(split_cols, `[`, 4)
-write.table(fimo, file = 'fimo_streme_motif.tsv', sep = "\t", quote = FALSE, row.names = FALSE)
-
+write.table(fimo, file = 'fimo_streme_earlyPause_motif.tsv', sep = "\t", quote = FALSE, row.names = FALSE)
+hist(fimo$score_diff)
 colnames(fimo)
-
+### for Alex's paper END  ###
 ###### fimo end #########
 
 # Panel58_short_pause_site_seqlogo
